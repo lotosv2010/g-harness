@@ -48,8 +48,16 @@ g-forge/
         │   ├── rules/
         │   ├── protocols/
         │   ├── guardrails/
-        │   └── prompts/
+        │   ├── prompts/
+        │   ├── skills/
+        │   └── hooks/
         ├── docs/              # → 目标项目 docs/
+        │   ├── decisions/
+        │   ├── tasks/
+        │   ├── team/
+        │   └── runbooks/
+        ├── tests/             # → 目标项目 tests/
+        ├── tools/             # → 目标项目 tools/
         ├── AGENTS.template.md
         └── CLAUDE.template.md
 ```
@@ -144,11 +152,16 @@ src/templates/
 │   ├── rules/             # 通用规则（安全、代码质量、架构）
 │   ├── protocols/         # 执行协议（功能开发、Bug 修复、重构、审查）
 │   ├── guardrails/        # 护栏定义（边界检查、提交前检查）
-│   └── prompts/           # Prompt 模板（Bug 报告、代码审查等）
+│   ├── prompts/           # Prompt 模板（Bug 报告、代码审查等）
+│   ├── skills/            # 可复用技能（analyze、scaffold、test-gen）
+│   └── hooks/             # 事件钩子
 ├── docs/                  # → 目标项目 docs/
-│   ├── ADR.template.md
-│   ├── BOARD.template.md
-│   └── ROLES.template.md
+│   ├── decisions/         # ADR 模板
+│   ├── tasks/             # 任务看板、活跃任务
+│   ├── team/              # 角色分工
+│   └── runbooks/          # 运维操作手册
+├── tests/                 # → 目标项目 tests/
+├── tools/                 # → 目标项目 tools/
 ├── AGENTS.template.md     # → 目标项目 AGENTS.md
 └── CLAUDE.template.md     # → 目标项目 CLAUDE.md
 ```

@@ -110,42 +110,43 @@ export class FileGenerator {
   private async collectFiles(options: GenerateOptions): Promise<FileEntry[]> {
     const { gforgeRoot } = options
     const tplRoot = join(gforgeRoot, 'src', 'templates')
-    const files: FileEntry[] = []
 
-    // 1. 根级模板（AGENTS.md、CLAUDE.md）
-    files.push(...await this.collectFromDir(tplRoot, '', '.template.md'))
+    // 递归遍历 templates/，目录结构即输出结构
+    const files = await this.collectRecursive(tplRoot, tplRoot)
 
-    // 2. 文档模板（docs/）
-    files.push(...await this.collectFromDir(join(tplRoot, 'docs'), 'docs', '.template.md'))
-
-    // 3. .claude/ 规范文件（rules、protocols、guardrails、prompts）
-    const claudeDirs = ['rules', 'protocols', 'guardrails', 'prompts']
-    for (const dir of claudeDirs) {
-      files.push(...await this.collectFromDir(join(tplRoot, '.claude', dir), `.claude/${dir}`))
-    }
-
-    // 4. 预设特定规则
+    // 追加预设特定规则
     if (options.preset) {
       const presetRulesDir = join(gforgeRoot, 'src', 'presets', options.preset.name, 'rules')
-      files.push(...await this.collectFromDir(presetRulesDir, '.claude/rules'))
+      const presetFiles = await this.collectRecursive(presetRulesDir, presetRulesDir)
+      for (const f of presetFiles) {
+        files.push({ outputPath: `.claude/rules/${f.outputPath}`, content: f.content })
+      }
     }
 
     return files
   }
 
-  private async collectFromDir(srcDir: string, destPrefix: string, ext = '.md'): Promise<FileEntry[]> {
-    const srcFiles = await this.readDirSafe(srcDir)
-    const isTemplate = ext === '.template.md'
-    return Promise.all(
-      srcFiles
-        .filter((f) => f.endsWith(ext))
-        .map(async (file) => {
-          const content = await readFile(join(srcDir, file), 'utf-8')
-          const outputName = isTemplate ? file.replace('.template.md', '.md') : file
-          const outputPath = destPrefix ? `${destPrefix}/${outputName}` : outputName
-          return { outputPath, content }
-        }),
-    )
+  private async collectRecursive(dir: string, root: string): Promise<FileEntry[]> {
+    const entries = await this.readDirSafe(dir)
+    const files: FileEntry[] = []
+
+    for (const entry of entries) {
+      const fullPath = join(dir, entry)
+      const isDir = await this.isDirectory(fullPath)
+
+      if (isDir) {
+        files.push(...await this.collectRecursive(fullPath, root))
+        continue
+      }
+      if (!entry.endsWith('.md')) continue
+
+      const content = await readFile(fullPath, 'utf-8')
+      const relPath = relative(root, fullPath).replace(/\\/g, '/')
+      const outputPath = relPath.replace('.template.md', '.md')
+      files.push({ outputPath, content })
+    }
+
+    return files
   }
 
   private async readDirSafe(dirPath: string): Promise<string[]> {
@@ -153,6 +154,14 @@ export class FileGenerator {
       return await readdir(dirPath)
     } catch {
       return []
+    }
+  }
+
+  private async isDirectory(path: string): Promise<boolean> {
+    try {
+      return (await stat(path)).isDirectory()
+    } catch {
+      return false
     }
   }
 

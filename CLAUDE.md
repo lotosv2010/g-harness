@@ -84,8 +84,16 @@ g-forge/
         │   ├── rules/
         │   ├── protocols/
         │   ├── guardrails/
-        │   └── prompts/
+        │   ├── prompts/
+        │   ├── skills/
+        │   └── hooks/
         ├── docs/              # → 目标项目 docs/
+        │   ├── decisions/
+        │   ├── tasks/
+        │   ├── team/
+        │   └── runbooks/
+        ├── tests/             # → 目标项目 tests/
+        ├── tools/             # → 目标项目 tools/
         ├── AGENTS.template.md # → 目标项目 AGENTS.md
         └── CLAUDE.template.md # → 目标项目 CLAUDE.md
 ```
