@@ -59,7 +59,7 @@ export class RuleValidator {
 
     for (const filePath of sourceFiles) {
       const content = await readFile(join(targetDir, filePath), 'utf-8')
-      const lines = content.split('\n')
+      const lines = content.endsWith('\n') ? content.slice(0, -1).split('\n') : content.split('\n')
 
       for (const check of this.checks) {
         if (!options?.ruleId || options.ruleId === check.ruleId) {

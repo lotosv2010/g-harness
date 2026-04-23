@@ -66,11 +66,11 @@ export class FileGenerator {
       commands: this.formatCommands(preset),
       module_map: '（请根据项目实际结构更新）',
       reference_files: '',
-      language_and_style: '（请根据项目技术栈补充）',
-      naming_conventions: '（请根据项目约定补充）',
-      file_organization: '（请根据项目结构补充）',
-      architecture_constraints: '（请根据项目架构补充）',
-      test_standards: '（请根据项目测试框架补充）',
+      language_and_style: this.formatLanguageStyle(scanResult),
+      naming_conventions: '- 文件名：kebab-case（`user-service.ts`）\n- 类名：PascalCase（`UserService`）\n- 函数/变量：camelCase（`getUserById`）\n- 常量：UPPER_SNAKE_CASE（`MAX_RETRY_COUNT`）\n- 接口：PascalCase，不加 I 前缀（`UserProfile`）',
+      file_organization: '- 源码统一放 `src/` 目录\n- 测试文件与源文件同级（`foo.test.ts`）\n- 公共模块通过 `index.ts` 导出',
+      architecture_constraints: '- 模块间单向依赖，禁止循环依赖\n- 外部请求集中在 API/Service 层\n- 每个模块通过入口文件暴露公共 API',
+      test_standards: this.formatTestStandards(scanResult),
       branch_strategy: 'main ← 稳定版本\ndevelop ← 开发主线\nfeat/* ← 功能分支\nfix/* ← 修复分支',
       additional_roles: '',
       module_ownership_table: '| （待填写） | （待填写） | （待填写） |',
@@ -98,6 +98,25 @@ export class FileGenerator {
   private formatCodeStyle(preset: Preset | null): string {
     if (!preset?.codeStyle?.length) return '- （请根据项目约定补充）'
     return preset.codeStyle.map((s) => `- ${s}`).join('\n')
+  }
+
+  private formatLanguageStyle(scanResult: ScanResult): string {
+    const { techStack } = scanResult
+    const lines: string[] = []
+    if (techStack.language) lines.push(`- 语言：${techStack.language}`)
+    if (techStack.language?.includes('TypeScript')) {
+      lines.push('- 启用 `strict: true`，禁止 `any`')
+      lines.push('- 使用命名导出，禁止 `export default`')
+    }
+    if (techStack.framework) lines.push(`- 框架：遵循 ${techStack.framework} 官方最佳实践`)
+    return lines.length > 0 ? lines.join('\n') : '- （请根据项目技术栈补充）'
+  }
+
+  private formatTestStandards(scanResult: ScanResult): string {
+    const { techStack } = scanResult
+    const lines = ['- 单元测试与源文件同级（`foo.test.ts`）', '- 每个测试用例独立，无顺序依赖']
+    if (techStack.testRunner) lines.unshift(`- 测试框架：${techStack.testRunner}`)
+    return lines.join('\n')
   }
 
   private formatCommands(preset: Preset | null): string {

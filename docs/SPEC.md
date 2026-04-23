@@ -81,7 +81,7 @@ G-Forge 是一套**面向 AI 编程助手优化的通用工程化规范框架 + 
 - [x] 模板变量 `{{variable}}` 被预设值正确替换
 - [x] `--dry-run` 不写入任何文件
 - [x] 已有文件默认跳过，`--force` 时覆盖
-- [ ] 无预设匹配时使用 `base` 预设兜底
+- [x] 无预设匹配时使用 `base` 预设兜底（`detectPreset()` 默认返回 'base'）
 
 #### FR-02：规范校验（gforge validate）
 

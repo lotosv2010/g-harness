@@ -146,14 +146,18 @@ pnpm typecheck        # 类型检查
 
 ## 关键区分
 
-| 目录 | 用途 | 面向 |
-|------|------|------|
-| `.claude/rules/` | 开发 g-forge 本身的规则 | 本项目开发者 |
-| `src/templates/.claude/rules/` | 框架输出给目标项目的规则 | 目标项目 |
-| `.claude/protocols/` | 开发 g-forge 本身的协议 | 本项目开发者 |
-| `src/templates/.claude/protocols/` | 框架输出给目标项目的协议 | 目标项目 |
-| `src/templates/` | 所有可分发内容，1:1 镜像目标项目 | 目标项目 |
-| `src/presets/` | 技术栈预设，CLI init 时选择 | 目标项目 |
+| 目录 | 用途 | 面向 | 特点 |
+|------|------|------|------|
+| `.claude/rules/` | 开发 g-forge 本身的规则 | 本项目 | 具体化，g-forge 特定 |
+| `src/templates/.claude/rules/` | 输出给目标项目的规则 | 目标项目 | 通用化，带 `{{variable}}` 占位符 |
+| `.claude/protocols/` | 开发 g-forge 本身的协议 | 本项目 | 具体化 |
+| `src/templates/.claude/protocols/` | 输出给目标项目的协议 | 目标项目 | 通用化 |
+| `src/templates/` | 所有可分发内容，1:1 镜像目标项目 | 目标项目 | 技术栈无关 |
+| `src/presets/` | 技术栈预设，CLI init 时选择 | 目标项目 | 补充 templates 的栈特定内容 |
+
+> **设计说明：** 根 `.claude/` 和 `src/templates/.claude/` 内容有意不同。
+> 根版本是 g-forge 项目自身的具体规则（如引用 `src/core/`），
+> 模板版本是面向任意目标项目的通用版本（更完整，使用 `{{variable}}`）。
 
 ## 引用文件
 

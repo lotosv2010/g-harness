@@ -77,7 +77,9 @@ gforge validate [options]
   gforge validate --format json --severity error
 ```
 
-### 1.3 gforge context
+### 1.3 gforge context（v0.2 计划）
+
+> **当前状态：** 命令已注册，执行时提示"尚未实现"。
 
 管理 CLAUDE.md 上下文文件。
 
@@ -93,7 +95,9 @@ gforge context <subcommand>
   gforge context check
 ```
 
-### 1.4 gforge migrate
+### 1.4 gforge migrate（v0.3 计划）
+
+> **当前状态：** 命令已注册，执行时提示"尚未实现"。
 
 规范版本升级时迁移配置文件。
 
