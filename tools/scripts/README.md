@@ -1,18 +1,7 @@
 # 自动化脚本
 
 > 本目录存放 g-forge 开发和维护的自动化脚本。
-
----
-
-## 脚本列表
-
-| 脚本 | 说明 | 用法 |
-|------|------|------|
-| `validate-structure.sh` | 校验项目目录结构是否符合规范 | `bash scripts/validate-structure.sh` |
-| `sync-claude-md.sh` | 同步更新所有 CLAUDE.md 文件 | `bash scripts/sync-claude-md.sh` |
-| `check-boundaries.sh` | 检查模块导入边界 | `bash scripts/check-boundaries.sh` |
-
-> 以上脚本待实现，将逐步被 CLI 命令（`gforge validate` 等）替代。
+> 目前脚本功能由 CLI 命令（`gforge validate` 等）承担，本目录按需添加。
 
 ## 脚本开发规范
 

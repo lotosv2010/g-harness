@@ -66,8 +66,8 @@ g-forge/
 │   └── hooks/                 # 事件钩子
 │
 ├── tools/                     # 工具层
-│   ├── prompts/               # AI 开发流程 Prompt 模板
-│   └── scripts/               # 自动化脚本
+│   ├── prompts/               # 通用 Prompt（非 Claude 专用）
+│   └── scripts/               # 自动化脚本（按需添加）
 │
 ├── tests/                     # 全局测试（E2E 等）
 │

@@ -1,6 +1,7 @@
 # 全局测试
 
-> 本目录存放跨包的集成测试和端到端测试。
+> 本目录存放跨模块的集成测试和端到端测试。
+> 单元测试与源文件同级放置（如 `src/core/scanner/project-scanner.test.ts`）。
 
 ---
 
@@ -8,37 +9,26 @@
 
 ```
 tests/
-├── e2e/                  # 端到端测试
-│   ├── cli/              # CLI 命令 E2E 测试
-│   └── web/              # Web 应用 E2E 测试
-├── integration/          # 集成测试
-│   └── cross-package/    # 跨包集成测试
+├── e2e/                  # CLI 命令端到端测试
+├── integration/          # 跨模块集成测试
 ├── fixtures/             # 测试用的样本项目
 │   ├── react-project/    # React 示例项目
-│   └── vue-project/      # Vue 示例项目
+│   └── empty-project/    # 空项目
 └── helpers/              # 测试辅助工具
-    └── setup.ts          # 全局测试初始化
 ```
 
 ## 测试工具
 
 | 类型 | 工具 |
 |------|------|
+| 单元测试 | Vitest |
 | E2E（CLI） | Vitest + execa |
-| E2E（Web） | Playwright |
-| 集成测试 | Vitest |
 
 ## 运行方式
 
 ```bash
-# 运行所有全局测试
-pnpm test:e2e
-
-# 仅 CLI E2E 测试
-pnpm test:e2e:cli
-
-# 仅 Web E2E 测试
-pnpm test:e2e:web
+pnpm test             # 运行所有单元测试
+pnpm test:e2e         # 运行 E2E 测试（待实现）
 ```
 
 ## 编写规范
