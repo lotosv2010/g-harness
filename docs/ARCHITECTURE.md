@@ -36,20 +36,22 @@ g-forge/
 ├── tests/                     # 全局测试
 │
 └── src/                       # 全部业务代码
-    ├── cli/                   # CLI 命令入口
-    ├── core/                  # 核心逻辑模块
+    ├── core/                  # CLI 引擎（命令、扫描、生成、校验、迁移）
+    │   ├── commands/          # CLI 命令入口
     │   ├── scanner/           # 项目扫描与技术栈检测
     │   ├── generator/         # 模板渲染与文件生成
     │   ├── validator/         # 规范校验引擎
     │   └── migrator/          # 规范版本迁移
-    ├── utils/                 # 通用工具函数
-    ├── content/               # 可分发的框架规范内容（技术栈无关）
-    │   ├── rules/             # 规则定义
-    │   ├── protocols/         # 执行协议
-    │   ├── prompts/           # Prompt 模板
-    │   └── guardrails/        # 护栏定义
     ├── presets/               # 技术栈特定预设
-    └── templates/             # 通用文件模板（CLI 渲染后输出）
+    └── templates/             # 可分发内容（1:1 镜像目标项目）
+        ├── .claude/           # → 目标项目 .claude/
+        │   ├── rules/
+        │   ├── protocols/
+        │   ├── guardrails/
+        │   └── prompts/
+        ├── docs/              # → 目标项目 docs/
+        ├── AGENTS.template.md
+        └── CLAUDE.template.md
 ```
 
 ## 2. 技术栈（g-forge 自身）
@@ -120,19 +122,7 @@ migrator/
 输入：目标目录、源版本、目标版本
 输出：`MigrateResult`（已迁移文件、需手动处理的文件）
 
-### 3.5 src/content/ — 框架核心规范
-
-存放技术栈无关的规范文件，由 CLI 工具读取并应用到目标项目。
-
-```
-src/content/
-├── rules/                 # 通用规则（安全、代码质量、架构模板）
-├── protocols/             # 执行协议（功能开发、Bug 修复、重构、审查）
-├── prompts/               # Prompt 模板（Bug 报告、代码审查、功能开发、重构）
-└── guardrails/            # 护栏定义（边界检查、提交前检查）
-```
-
-### 3.6 src/presets/ — 技术栈预设
+### 3.5 src/presets/ — 技术栈预设
 
 每个预设补充通用规范，提供技术栈特定的规则、技能和模板。
 
@@ -143,17 +133,24 @@ src/presets/<name>/
 └── skills/                # 栈特定技能
 ```
 
-### 3.7 src/templates/ — 文件模板
+### 3.6 src/templates/ — 可分发内容
 
-CLI `init` 命令读取模板，结合预设变量渲染后输出到目标项目。
+所有输出给目标项目的内容，目录结构 1:1 镜像目标项目。
+CLI `init` 命令读取此目录，渲染模板变量后输出。
 
 ```
 src/templates/
-├── CLAUDE.template.md     # 基础 CLAUDE.md 模板
-├── AGENTS.template.md     # 基础 AGENTS.md 模板
-├── ROLES.template.md      # 团队角色模板
-├── ADR.template.md        # 架构决策模板
-└── BOARD.template.md      # 任务看板模板
+├── .claude/               # → 目标项目 .claude/
+│   ├── rules/             # 通用规则（安全、代码质量、架构）
+│   ├── protocols/         # 执行协议（功能开发、Bug 修复、重构、审查）
+│   ├── guardrails/        # 护栏定义（边界检查、提交前检查）
+│   └── prompts/           # Prompt 模板（Bug 报告、代码审查等）
+├── docs/                  # → 目标项目 docs/
+│   ├── ADR.template.md
+│   ├── BOARD.template.md
+│   └── ROLES.template.md
+├── AGENTS.template.md     # → 目标项目 AGENTS.md
+└── CLAUDE.template.md     # → 目标项目 CLAUDE.md
 ```
 
 ## 4. 数据流
@@ -170,8 +167,7 @@ src/templates/
          │
          ▼
    加载预设（src/presets/react-vite/preset.json）
-   加载模板（src/templates/*.template.md）
-   加载规范（src/content/rules/*.md）
+   加载模板（src/templates/）
          │
          ▼
    Generator 渲染模板

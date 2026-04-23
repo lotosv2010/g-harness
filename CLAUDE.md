@@ -72,20 +72,22 @@ g-forge/
 ├── tests/                     # 全局测试（E2E 等）
 │
 └── src/                       # 业务代码（全部收纳于此）
-    ├── cli/                   # CLI 命令入口
-    ├── core/                  # 核心逻辑模块
+    ├── core/                  # CLI 引擎（命令、扫描、生成、校验、迁移）
+    │   ├── commands/          # CLI 命令入口
     │   ├── scanner/           # 项目扫描与检测
     │   ├── generator/         # 文件生成引擎
     │   ├── validator/         # 规范校验引擎
     │   └── migrator/          # 规范版本迁移
-    ├── utils/                 # 通用工具函数
-    ├── content/               # 可分发的框架规范内容（技术栈无关）
-    │   ├── rules/             # 规则定义
-    │   ├── protocols/         # 执行协议
-    │   ├── prompts/           # Prompt 模板
-    │   └── guardrails/        # 护栏定义
     ├── presets/               # 技术栈预设
-    └── templates/             # 通用文件模板
+    └── templates/             # 可分发内容（1:1 镜像目标项目）
+        ├── .claude/           # → 目标项目 .claude/
+        │   ├── rules/
+        │   ├── protocols/
+        │   ├── guardrails/
+        │   └── prompts/
+        ├── docs/              # → 目标项目 docs/
+        ├── AGENTS.template.md # → 目标项目 AGENTS.md
+        └── CLAUDE.template.md # → 目标项目 CLAUDE.md
 ```
 
 ## 工作规则
@@ -139,10 +141,10 @@ pnpm typecheck        # 类型检查
 | 目录 | 用途 | 面向 |
 |------|------|------|
 | `.claude/rules/` | 开发 g-forge 本身的规则 | 本项目开发者 |
-| `src/content/rules/` | 框架输出给目标项目的规则 | 目标项目 |
+| `src/templates/.claude/rules/` | 框架输出给目标项目的规则 | 目标项目 |
 | `.claude/protocols/` | 开发 g-forge 本身的协议 | 本项目开发者 |
-| `src/content/protocols/` | 框架输出给目标项目的协议 | 目标项目 |
-| `src/templates/` | 模板文件，CLI 渲染后输出 | 目标项目 |
+| `src/templates/.claude/protocols/` | 框架输出给目标项目的协议 | 目标项目 |
+| `src/templates/` | 所有可分发内容，1:1 镜像目标项目 | 目标项目 |
 | `src/presets/` | 技术栈预设，CLI init 时选择 | 目标项目 |
 
 ## 引用文件

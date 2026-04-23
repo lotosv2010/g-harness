@@ -19,7 +19,7 @@ CLI `init` 命令需要将模板文件中的占位符替换为预设变量值后
 - 需求简单：当前只需要纯字符串替换，不需要条件、循环等逻辑
 - 零依赖：避免引入重量级模板引擎
 - 可控性：行为完全透明，未匹配变量保留原样而非报错
-- 实现仅 9 行代码（`src/utils/variables.ts`）
+- 实现仅 9 行代码（`src/core/variables.ts`）
 
 ## 风险
 
@@ -27,6 +27,6 @@ CLI `init` 命令需要将模板文件中的占位符替换为预设变量值后
 
 ## AI 指引
 
-- 变量替换逻辑在 `src/utils/variables.ts`
+- 变量替换逻辑在 `src/core/variables.ts`
 - 变量名仅限 `\w+`（字母、数字、下划线）
 - 预设变量定义在 `src/presets/<name>/preset.json` 的 `variables` 字段

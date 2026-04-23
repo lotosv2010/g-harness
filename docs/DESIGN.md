@@ -63,10 +63,9 @@ src/presets/<name>/
 ### 3.1 模块依赖方向
 
 ```
-cli → core → utils
-          ↘ content (规范文件，仅读取)
-          ↘ presets (预设文件，仅读取)
-          ↘ templates (模板文件，仅读取)
+core (CLI 引擎)
+  ↘ templates (可分发内容，仅读取)
+  ↘ presets (预设文件，仅读取)
 ```
 
 代码只能向右依赖，禁止反向依赖。

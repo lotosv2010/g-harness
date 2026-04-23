@@ -19,7 +19,7 @@ src/
 ├── cli/         # CLI 命令入口
 ├── core/        # 核心逻辑（scanner, generator, validator, migrator）
 ├── utils/       # 通用工具函数
-├── content/     # 可分发的框架规范内容（Markdown，技术栈无关）
+├── templates/   # 可分发的框架规范内容（Markdown，技术栈无关）
 ├── presets/     # 技术栈预设（preset.json + 栈特定规则）
 └── templates/   # 文件模板（*.template.md）
 ```
@@ -33,6 +33,6 @@ src/
 ## AI 指引
 
 - 代码逻辑只放 `src/cli`、`src/core`、`src/utils`
-- 规范内容只放 `src/content/`，禁止包含 TypeScript 代码
+- 规范内容只放 `src/templates/`，禁止包含 TypeScript 代码
 - 技术栈特定内容只放 `src/presets/`，每个预设自包含
 - 模板文件只放 `src/templates/`，使用 `{{variable}}` 占位符

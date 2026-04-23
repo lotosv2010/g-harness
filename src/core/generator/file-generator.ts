@@ -109,28 +109,22 @@ export class FileGenerator {
 
   private async collectFiles(options: GenerateOptions): Promise<FileEntry[]> {
     const { gforgeRoot } = options
+    const tplRoot = join(gforgeRoot, 'src', 'templates')
     const files: FileEntry[] = []
 
-    // 1. 渲染模板文件
-    files.push(...await this.collectFromDir(join(gforgeRoot, 'src', 'templates'), '', '.template.md'))
+    // 1. 根级模板（AGENTS.md、CLAUDE.md）
+    files.push(...await this.collectFromDir(tplRoot, '', '.template.md'))
 
-    // 2. 渲染文档模板
-    files.push(...await this.collectFromDir(join(gforgeRoot, 'src', 'docs'), 'docs', '.template.md'))
+    // 2. 文档模板（docs/）
+    files.push(...await this.collectFromDir(join(tplRoot, 'docs'), 'docs', '.template.md'))
 
-    // 3. 复制规范文件到 .claude/
-    const coreMapping: Array<[string, string]> = [
-      ['src/ai/rules', '.claude/rules'],
-      ['src/ai/protocols', '.claude/protocols'],
-      ['src/ai/guardrails', '.claude/guardrails'],
-    ]
-    for (const [srcRel, destRel] of coreMapping) {
-      files.push(...await this.collectFromDir(join(gforgeRoot, srcRel), destRel))
+    // 3. .claude/ 规范文件（rules、protocols、guardrails、prompts）
+    const claudeDirs = ['rules', 'protocols', 'guardrails', 'prompts']
+    for (const dir of claudeDirs) {
+      files.push(...await this.collectFromDir(join(tplRoot, '.claude', dir), `.claude/${dir}`))
     }
 
-    // 4. 复制 prompts 到目标
-    files.push(...await this.collectFromDir(join(gforgeRoot, 'src', 'ai', 'prompts'), '.claude/prompts'))
-
-    // 5. 复制预设特定规则
+    // 4. 预设特定规则
     if (options.preset) {
       const presetRulesDir = join(gforgeRoot, 'src', 'presets', options.preset.name, 'rules')
       files.push(...await this.collectFromDir(presetRulesDir, '.claude/rules'))

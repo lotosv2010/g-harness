@@ -67,10 +67,10 @@ g-forge 项目的目录职责：
 
 | 目录 | 职责 | 允许的内容 |
 |------|------|-----------|
-| `src/` | 全部业务代码 | CLI 源码 + content + presets + templates |
-| `src/content/` | 通用规范 | Markdown 规范文件（技术栈无关） |
+| `src/` | 全部业务代码 | core + presets + templates |
+| `src/core/` | 核心逻辑模块 | 命令、扫描、生成、校验、迁移、工具函数 |
 | `src/presets/` | 技术栈预设 | preset.json + 栈特定规范 |
-| `src/templates/` | 文件模板 | `*.template.md` 模板 |
+| `src/templates/` | 可分发的模板 | 镜像目标项目结构：`.claude/`（规则/协议/护栏/Prompt）、`docs/`、模板文件 |
 | `.claude/` | Claude Code 配置 | 开发 g-forge 自身的规则/协议 |
 | `tools/` | 工具层 | Prompt 模板 + 自动化脚本 |
 
@@ -81,23 +81,21 @@ g-forge 项目的目录职责：
 ### 3.1 目录职责分离
 
 ```
-src/cli        ← CLI 命令入口
-src/core       ← 核心逻辑模块
-src/content    ← 只放通用规范，不放代码和技术栈特定内容
-src/presets    ← 只放技术栈特定内容，不依赖其他预设
-src/templates  ← 只放文件模板
+src/core           ← 核心逻辑模块（含 commands/ 命令入口、工具函数）
+src/presets        ← 只放技术栈特定内容，不依赖其他预设
+src/templates      ← 可分发的模板（镜像目标项目结构），不放代码逻辑
 ```
 
-### 3.2 src/content/ 技术栈无关
+### 3.2 src/templates/ 技术栈无关
 
-src/content/ 中的文件禁止引用特定框架或工具，使用 `{{variable}}` 占位符。
+src/templates/ 中的通用规范文件禁止引用特定框架或工具，使用 `{{variable}}` 占位符。
 
 ### 3.3 模块依赖方向
 
 ```
-src/utils      ← 不依赖任何其他 src/ 模块
-src/core/*     ← 可依赖 utils
-src/cli        ← 可依赖 core、utils
+src/core/utils     ← 不依赖其他 src/core/ 子模块
+src/core/*         ← 可依赖 core/utils
+src/core/commands  ← 可依赖 core/ 中的其他模块
 ```
 
 ---

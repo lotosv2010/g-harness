@@ -28,7 +28,7 @@ arguments:
 
 ### cli（CLI 命令）
 
-生成路径：`src/cli/`
+生成路径：`src/core/commands/`
 
 ```
 commands/
@@ -58,7 +58,7 @@ $name/
 
 ### rule（规则文件）
 
-生成路径：`src/content/rules/`
+生成路径：`src/templates/.claude/rules/`
 
 ```
 $name.md                   # 规则定义（参数化模板）
@@ -66,7 +66,7 @@ $name.md                   # 规则定义（参数化模板）
 
 ### protocol（协议文件）
 
-生成路径：`src/content/protocols/`
+生成路径：`src/templates/.claude/protocols/`
 
 ```
 $name.md                   # 协议定义
@@ -87,4 +87,4 @@ $name.md                   # 协议定义
 - 遵循 `.claude/rules/` 所有硬性规则
 - 使用命名导出，禁止 `export default`
 - 禁止 `export *`
-- `src/content/` 中的规则和协议必须技术栈无关
+- `src/templates/` 中的规则和协议必须技术栈无关

@@ -18,7 +18,7 @@ arguments:
 ```
 /test-gen src/core/scanner/project-scanner.ts
 /test-gen src/core/generator/file-generator.ts
-/test-gen src/utils/variables.ts
+/test-gen src/core/variables.ts
 ```
 
 ## 执行步骤

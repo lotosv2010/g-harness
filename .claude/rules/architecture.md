@@ -1,7 +1,7 @@
 # 架构硬性规则（g-forge 项目自身）
 
 > 维护 g-forge 框架项目自身架构完整性的规则。
-> 目标项目的架构规则见 `src/content/rules/architecture.md`。
+> 目标项目的架构规则见 `src/templates/.claude/rules/architecture.md`。
 
 ---
 
@@ -9,21 +9,19 @@
 
 ```
 src/              ← 全部业务代码
-src/cli           ← CLI 命令入口
-src/core          ← 核心逻辑模块
-src/content       ← 通用规范文件，不含代码逻辑
+src/core          ← CLI 引擎（命令、扫描、生成、校验、迁移）
 src/presets       ← 技术栈预设，不含通用规范
-src/templates     ← 文件模板，不含代码逻辑
+src/templates     ← 可分发内容，1:1 镜像目标项目，不含代码逻辑
 .claude/          ← 开发 g-forge 自身的 Claude Code 配置
 docs/             ← 约束与规格文档
 tools/            ← Prompt 模板与自动化脚本
 ```
 
-禁止混放：代码逻辑不进 content/，规范内容不进 core/。
+禁止混放：代码逻辑不进 templates/，规范内容不进 core/。
 
-## A002：src/content/ 技术栈无关
+## A002：src/templates/ 技术栈无关
 
-`src/content/` 目录中的规范文件必须技术栈无关：
+`src/templates/` 目录中的规范文件必须技术栈无关：
 - 不引用特定框架（React、Vue、Angular 等）
 - 不引用特定构建工具（Vite、Webpack 等）
 - 使用 `{{variable}}` 占位符替代具体路径
@@ -43,4 +41,4 @@ tools/            ← Prompt 模板与自动化脚本
 - `eslint.config.*`
 - `package.json` 的 scripts 和 dependencies
 - `.claude/rules/*`
-- `src/content/rules/*`
+- `src/templates/.claude/rules/*`

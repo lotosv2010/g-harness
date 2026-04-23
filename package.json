@@ -16,8 +16,6 @@
   },
   "files": [
     "dist",
-    "src/ai",
-    "src/docs",
     "src/presets",
     "src/templates"
   ],

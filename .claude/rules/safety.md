@@ -1,7 +1,7 @@
 # 安全硬性规则（g-forge 项目自身）
 
 > 开发 g-forge 时 AI 必须遵守的安全规则。
-> 目标项目的安全规则见 `src/content/rules/safety.md`。
+> 目标项目的安全规则见 `src/templates/.claude/rules/safety.md`。
 
 ---
 

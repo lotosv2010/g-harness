@@ -31,8 +31,8 @@
 |----------|----------|----------|
 | `CLAUDE.md` / `AGENTS.md` | 项目负责人 | 需审批 |
 | `.claude/rules/` | 项目负责人 | 需审批 |
-| `src/content/rules/` | 项目负责人 | 需审批 |
-| `src/content/protocols/` | 核心开发 | 需审批 |
+| `src/templates/.claude/rules/` | 项目负责人 | 需审批 |
+| `src/templates/.claude/protocols/` | 核心开发 | 需审批 |
 | `src/` | 核心开发 | 需审批 |
 | `src/presets/` | 预设维护 | 需审批 |
 | `src/templates/` | 核心开发 | 需审批 |
