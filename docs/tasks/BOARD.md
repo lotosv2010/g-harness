@@ -9,22 +9,19 @@
 
 ### P0 — 紧急
 
-- [ ] **TASK-002**：实现 CLI 基础框架（命令注册、参数解析、帮助文本）
-- [ ] **TASK-003**：实现 ProjectScanner（技术栈检测、结构分析）
-- [ ] **TASK-004**：实现 FileGenerator（模板读取、变量替换、文件输出）
+（暂无）
 
 ### P1 — 重要
 
-- [ ] **TASK-005**：实现 `gforge init` 命令端到端流程
-- [ ] **TASK-006**：实现 RuleValidator 基础校验逻辑
-- [ ] **TASK-007**：完善 react-vite 预设（补充 skills、完整变量映射）
-- [ ] **TASK-008**：实现 `gforge validate` 命令
+- [ ] **TASK-006**：补充 generator、commands 单元测试，提升覆盖率至 80%
+- [ ] **TASK-007**：实现 `gforge context sync/check`
+- [ ] **TASK-008**：实现 `gforge migrate`
 
 ### P2 — 一般
 
 - [ ] **TASK-009**：创建 vue-nuxt 预设
 - [ ] **TASK-010**：创建 node-api 预设
-- [ ] **TASK-011**：实现 ConfigMigrator
+- [ ] **TASK-011**：创建 base 预设
 - [ ] **TASK-012**：编写用户文档（getting-started）
 
 ---
@@ -37,8 +34,12 @@
 
 ## 已完成（DONE）
 
-- [x] **TASK-000**：完成项目架构设计与目录结构搭建 — 2026-04-23
-- [x] **TASK-001**：P0 结构重构（移除 packages、建立 core/src/presets/templates、文档更新）— 2026-04-23
+- [x] **TASK-005** — src/ 结构重组：core/ + presets/ + templates/，templates 1:1 镜像目标项目 — 2026-04-23
+- [x] **TASK-004** — 实现 FileGenerator，支持递归遍历 templates/ 和预设叠加 — 2026-04-23
+- [x] **TASK-003** — 实现 ProjectScanner + 技术栈检测（含测试） — 2026-04-23
+- [x] **TASK-002** — 实现 CLI 基础框架（init、validate、context stub、migrate stub） — 2026-04-23
+- [x] **TASK-001** — P0 结构重构（单包结构，全部文档更新） — 2026-04-23
+- [x] **TASK-000** — 项目初始架构设计与文档体系 — 2026-04-23
 
 ---
 

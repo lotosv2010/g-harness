@@ -17,19 +17,19 @@ interface ScanResult {
 }
 
 interface TechStack {
-  language: string                    // 'TypeScript' | 'JavaScript' | 'Python' | ...
-  runtime: string                     // 'Node.js 20+' | 'Bun' | ...
-  framework: string | null            // 'React' | 'Vue' | 'Next.js' | null
-  buildTool: string | null            // 'Vite' | 'Webpack' | null
-  testRunner: string | null           // 'Vitest' | 'Jest' | 'Pytest' | null
-  packageManager: string | null       // 'pnpm' | 'npm' | 'yarn' | null
+  language: string | null
+  runtime: string | null
+  framework: string | null
+  buildTool: string | null
+  testRunner: string | null
+  packageManager: string | null
 }
 
 interface ProjectStructure {
   rootDir: string
   isMonorepo: boolean
-  packages: string[]                  // monorepo 子包路径
-  srcDir: string | null               // 源码目录
+  packages: string[]
+  srcDir: string | null
 }
 
 interface ExistingConfig {
@@ -48,12 +48,12 @@ interface ExistingConfig {
 
 ```typescript
 interface Preset {
-  name: string                        // 'react-vite' | 'vue-nuxt' | 'node-api'
+  name: string
   description: string
-  techStack: TechStack
-  variables: Record<string, string>   // 模板变量映射
-  codeStyle: string[]                 // 代码风格规则
-  commands: Record<string, string>    // 常用命令
+  techStack: Record<string, string>
+  variables: Record<string, string>
+  codeStyle: string[]
+  commands: Record<string, string>
 }
 ```
 
@@ -93,12 +93,22 @@ interface ValidationResult {
   passed: boolean
   violations: Violation[]
   warnings: Warning[]
+  summary: {
+    filesScanned: number
+    errors: number
+    warnings: number
+  }
 }
 
 interface Warning {
   ruleId: string
   file: string
   message: string
+}
+
+interface ValidateOptions {
+  severity?: 'error' | 'warning'
+  ruleId?: string
 }
 ```
 
@@ -110,16 +120,18 @@ interface Warning {
 
 ```typescript
 interface GenerateOptions {
-  preset: string
+  gforgeRoot: string
+  preset: Preset | null
   targetDir: string
-  variables: Record<string, string>
+  scanResult: ScanResult
   overwrite: boolean
+  dryRun: boolean
 }
 
 interface GenerateResult {
-  created: string[]                   // 新创建的文件
-  skipped: string[]                   // 已存在而跳过的文件
-  overwritten: string[]               // 被覆盖的文件
+  created: string[]
+  skipped: string[]
+  overwritten: string[]
 }
 ```
 
@@ -133,8 +145,8 @@ interface MigrateOptions {
 }
 
 interface MigrateResult {
-  migrated: string[]                  // 自动迁移的文件
-  manualRequired: string[]            // 需手动处理的文件
+  migrated: string[]
+  manualRequired: string[]
 }
 ```
 
@@ -166,7 +178,7 @@ gforge init --preset react-vite
    加载 Preset（src/presets/react-vite/preset.json）
          │ → Preset
          ▼
-   Generator.generate({ preset, targetDir, variables })
+   Generator.generate({ gforgeRoot, preset, targetDir, scanResult, overwrite, dryRun })
          │ → GenerateResult
          ▼
    输出文件到目标项目

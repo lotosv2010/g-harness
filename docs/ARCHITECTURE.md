@@ -44,7 +44,7 @@ g-forge/
     │   └── migrator/          # 规范版本迁移
     ├── presets/               # 技术栈特定预设
     └── templates/             # 可分发内容（1:1 镜像目标项目）
-        ├── .claude/           # → 目标项目 .claude/
+        ├── .ai/               # AI 通用规范 → 输出到目标项目 .claude/
         │   ├── rules/
         │   ├── protocols/
         │   ├── guardrails/
@@ -148,7 +148,7 @@ CLI `init` 命令读取此目录，渲染模板变量后输出。
 
 ```
 src/templates/
-├── .claude/               # → 目标项目 .claude/
+├── .ai/                   # AI 通用规范 → 输出到目标项目 .claude/
 │   ├── rules/             # 通用规则（安全、代码质量、架构）
 │   ├── protocols/         # 执行协议（功能开发、Bug 修复、重构、审查）
 │   ├── guardrails/        # 护栏定义（边界检查、提交前检查）

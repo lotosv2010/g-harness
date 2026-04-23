@@ -1,7 +1,7 @@
 # 架构硬性规则（g-forge 项目自身）
 
 > 维护 g-forge 框架项目自身架构完整性的规则。
-> 目标项目的架构规则见 `src/templates/.claude/rules/architecture.md`。
+> 目标项目的架构规则见 `src/templates/.ai/rules/architecture.md`。
 
 ---
 
@@ -41,4 +41,4 @@ tools/            ← Prompt 模板与自动化脚本
 - `eslint.config.*`
 - `package.json` 的 scripts 和 dependencies
 - `.claude/rules/*`
-- `src/templates/.claude/rules/*`
+- `src/templates/.ai/rules/*`

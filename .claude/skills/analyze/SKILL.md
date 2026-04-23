@@ -20,7 +20,7 @@ agent: Explore
 ```
 /analyze                     # 全项目分析
 /analyze src/core             # 分析 CLI 核心模块
-/analyze src/templates/.claude/rules    # 分析规范规则
+/analyze src/templates/.ai/rules    # 分析规范规则
 ```
 
 ## 分析维度

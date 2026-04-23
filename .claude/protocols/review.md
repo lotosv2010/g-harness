@@ -18,7 +18,7 @@
 - 是否遵循 `.claude/rules/` 中的规则
 - 模块边界是否正确
 - 依赖方向是否合规
-- 是否遵循既定模式（`docs/patterns/`）
+- 是否遵循既定模式（参考 `.claude/rules/` 和 `docs/decisions/`）
 
 ### 3. 代码质量
 - 命名是否清晰且一致

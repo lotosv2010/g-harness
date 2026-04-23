@@ -136,20 +136,21 @@ const result: ScanResult = await scanner.scan('/path/to/project')
 ### 2.2 文件生成
 
 ```typescript
-import { FileGenerator } from 'gforge'
+import { FileGenerator, ProjectScanner, loadPreset, getGForgeRoot } from 'gforge'
 
-interface GenerateResult {
-  created: string[]
-  skipped: string[]
-  overwritten: string[]
-}
+const gforgeRoot = getGForgeRoot()
+const scanner = new ProjectScanner()
+const scanResult = await scanner.scan('/path/to/project')
+const preset = await loadPreset(gforgeRoot, 'react-vite')
 
 const generator = new FileGenerator()
-const result: GenerateResult = await generator.generate({
-  preset: 'react-vite',
+const result = await generator.generate({
+  gforgeRoot,
+  preset,
   targetDir: '/path/to/project',
-  variables: { /* 预设变量 */ },
+  scanResult,
   overwrite: false,
+  dryRun: false,
 })
 ```
 
@@ -158,14 +159,11 @@ const result: GenerateResult = await generator.generate({
 ```typescript
 import { RuleValidator } from 'gforge'
 
-interface ValidationResult {
-  passed: boolean
-  violations: Violation[]
-  warnings: Warning[]
-}
-
 const validator = new RuleValidator()
-const result: ValidationResult = await validator.validate('/path/to/project')
+const result = await validator.validate('/path/to/project', {
+  severity: 'warning',  // 可选：'error' | 'warning'
+  ruleId: 'R005',       // 可选：仅检查指定规则
+})
 ```
 
 ### 2.4 配置迁移

@@ -58,7 +58,7 @@ $name/
 
 ### rule（规则文件）
 
-生成路径：`src/templates/.claude/rules/`
+生成路径：`src/templates/.ai/rules/`
 
 ```
 $name.md                   # 规则定义（参数化模板）
@@ -66,7 +66,7 @@ $name.md                   # 规则定义（参数化模板）
 
 ### protocol（协议文件）
 
-生成路径：`src/templates/.claude/protocols/`
+生成路径：`src/templates/.ai/protocols/`
 
 ```
 $name.md                   # 协议定义

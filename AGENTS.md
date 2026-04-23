@@ -93,9 +93,9 @@ src/templates/ 中的通用规范文件禁止引用特定框架或工具，使�
 ### 3.3 模块依赖方向
 
 ```
-src/core/utils     ← 不依赖其他 src/core/ 子模块
-src/core/*         ← 可依赖 core/utils
-src/core/commands  ← 可依赖 core/ 中的其他模块
+src/core/ 顶层工具文件（paths.ts、variables.ts、template.ts、preset-loader.ts）← 不依赖 core 子模块
+src/core/scanner、generator、validator、migrator  ← 可依赖 core 顶层工具文件
+src/core/commands  ← 可依赖 core/ 中的所有模块
 ```
 
 ---

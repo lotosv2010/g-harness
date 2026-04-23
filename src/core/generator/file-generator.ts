@@ -161,7 +161,8 @@ export class FileGenerator {
 
       const content = await readFile(fullPath, 'utf-8')
       const relPath = relative(root, fullPath).replace(/\\/g, '/')
-      const outputPath = relPath.replace('.template.md', '.md')
+      // .ai/ → .claude/（模板源码用通用名，输出到目标项目时映射回 Claude Code 目录）
+      const outputPath = relPath.replace('.template.md', '.md').replace(/^\.ai\//, '.claude/')
       files.push({ outputPath, content })
     }
 
