@@ -1,34 +1,37 @@
-# G-Forge — AI 驱动的前端工程化规范框架
+# G-Forge — AI 驱动的工程化规范框架 + CLI 工具
 
 > Harness Engineering：让 AI 在约束中写出更好的代码。
 
 ## 是什么
 
-G-Forge 是一套**面向 AI 编程助手优化的工程化规范框架**。它不是又一个脚手架，而是一个**工程治具（Engineering Harness）**——通过结构化的上下文、约定、约束和工作流，引导 AI（以 Claude Code 为首）持续输出一致的、生产级的代码。
+G-Forge 是一套**面向 AI 编程助手优化的通用工程化规范框架**。它不是又一个脚手架，而是一个**工程治具（Engineering Harness）**——通过结构化的规则、协议、模板和预设，引导 AI 在任意技术栈的项目中持续输出一致的、生产级的代码。
+
+**G-Forge = 通用规范 + CLI 工具 + 预设系统**
 
 ## 解决什么问题
 
 | 痛点 | G-Forge 方案 |
 |------|-------------|
-| AI 生成代码风格不一致 | 约定层：模板 + 模式库 + 命名规范 |
-| AI 不了解项目架构 | 上下文层：CLAUDE.md 层级 + ADR + 术语表 |
-| AI 违反架构边界 | 约束层：规则引擎 + 依赖守卫 + 钩子 |
-| 团队成员 AI 用法各异 | 工作流层：标准命令 + 协议 + 技能模板 |
-| 已有项目难以接入 | 渐进式采纳：4 阶段，第 1 天即生效 |
+| AI 生成代码风格不一致 | 约定层：模板 + Prompt + 命名规范 |
+| AI 不了解项目架构 | 上下文层：CLAUDE.md + AGENTS.md + ADR |
+| AI 违反架构边界 | 约束层：规则引擎 + 护栏 + 校验器 |
+| 团队成员 AI 用法各异 | 工作流层：标准协议 + 技能 + 钩子 |
+| 已有项目难以接入 | 渐进式采纳：第 1 天即生效 |
+| 不同技术栈需重新配置 | 预设系统：开箱即用的技术栈支持 |
 
 ## 核心架构
 
 ```
 ┌──────────────────────────────────────────┐
-│            应用层 Application             │
+│            应用层 Application             │  ← 用户项目源码
 ├──────────────────────────────────────────┤
-│           工作流层 Workflow               │
+│           工作流层 Workflow               │  ← 协议、技能、钩子
 ├──────────────────────────────────────────┤
-│            约定层 Convention              │
+│            约定层 Convention              │  ← 模板、Prompt、命名规范
 ├──────────────────────────────────────────┤
-│            约束层 Constraint              │
+│            约束层 Constraint              │  ← 规则引擎、护栏、校验器
 ├──────────────────────────────────────────┤
-│           上下文层 Context                │
+│           上下文层 Context                │  ← CLAUDE.md、AGENTS.md、ADR
 └──────────────────────────────────────────┘
 ```
 
@@ -36,39 +39,28 @@ G-Forge 是一套**面向 AI 编程助手优化的工程化规范框架**。它�
 
 ```
 g-forge/
-├── AGENTS.md                  # 通用 AI 开发规范（所有 AI 工具共享）
-├── CLAUDE.md                  # Claude Code 专用配置
-├── README.md                  # 本文件
+├── src/                       # CLI 工具源码
+│   ├── cli/                   # 命令入口（init, validate, context, migrate）
+│   ├── core/                  # 核心逻辑（scanner, generator, validator, migrator）
+│   └── utils/                 # 通用工具函数
 │
-├── docs/                      # 约束与规格层
-│   ├── PRODUCT.md             # 产品范围与边界
-│   ├── ARCHITECTURE.md        # 架构白皮书
-│   ├── API_SPEC.md            # API 契约定义
-│   ├── DATA_MODEL.md          # 数据模型规格
-│   ├── decisions/             # 架构决策记录（ADR）
-│   ├── runbooks/              # 运维操作手册
-│   ├── team/                  # 团队相关
-│   └── tasks/                 # 任务管理
+├── core/                      # 框架核心规范（技术栈无关）
+│   ├── rules/                 # 规则定义（安全、代码质量、架构）
+│   ├── protocols/             # 执行协议（功能开发、Bug 修复、重构、审查）
+│   ├── prompts/               # Prompt 模板
+│   └── guardrails/            # 护栏定义
 │
-├── .claude/                   # Claude 行为控制层
-│   ├── rules/                 # 硬性规则
-│   ├── protocols/             # 任务执行协议
-│   ├── skills/                # 可复用能力模板
-│   ├── memory/                # 项目长期记忆
-│   ├── guardrails/            # 自动约束检查
-│   └── hooks/                 # 事件钩子
+├── presets/                   # 技术栈预设
+│   ├── react-vite/            # React + Vite 预设
+│   └── _template/             # 预设创建模板
 │
-├── packages/                  # 源码
-│   ├── web/                   # 前端应用
-│   ├── server/                # 服务端应用
-│   ├── ai/                    # AI 能力层
-│   └── shared/                # 通用共享库
+├── templates/                 # 通用文件模板（CLI 渲染后输出）
+├── docs/                      # 框架文档
+├── tests/                     # 测试
 │
-├── tools/                     # 工具层
-│   ├── prompts/               # AI 开发流程 Prompt 模板
-│   └── scripts/               # 自动化脚本
-│
-└── tests/                     # 全局测试（E2E 等）
+├── CLAUDE.md                  # Claude Code 配置
+├── AGENTS.md                  # 通用 AI 开发规范
+└── README.md                  # 本文件
 ```
 
 ## 快速开始
@@ -77,10 +69,13 @@ g-forge/
 # 新项目
 npx gforge init --preset react-vite
 
-# 已有项目
-npx gforge init --scan --mode progressive
+# 已有项目（自动扫描技术栈）
+npx gforge init --scan
 
-# 日常同步
+# 校验规范
+npx gforge validate
+
+# 同步上下文
 npx gforge context sync
 ```
 
@@ -89,14 +84,24 @@ npx gforge context sync
 | 阶段 | 时间 | 做什么 | 效果 |
 |------|------|--------|------|
 | 1 | 第 1 天 | 添加 CLAUDE.md + AGENTS.md | 零代码变更，AI 立即理解项目 |
-| 2 | 第 1 周 | 添加 .claude/ 规则与协议 | 新代码自动遵循约定 |
-| 3 | 第 2-4 周 | 启用守卫与钩子 | 阻止架构违规 |
+| 2 | 第 1 周 | 添加规则与协议 | 新代码自动遵循约定 |
+| 3 | 第 2-4 周 | 启用护栏与钩子 | 阻止架构违规 |
 | 4 | 持续 | 逐模块迁移 | AI 辅助，渐进式，可回退 |
+
+## 支持的技术栈
+
+| 预设 | 状态 |
+|------|------|
+| React + Vite | 开发中 |
+| Vue + Nuxt | 计划中 |
+| Node.js API | 计划中 |
+| Python FastAPI | 计划中 |
 
 ## 设计原则
 
 - **上下文优先** — AI 输出质量 ∝ 上下文质量
 - **约定优于配置** — 减少决策，提升一致性
+- **技术栈无关** — 通用规范 + 预设系统适配任何技术栈
 - **渐进式采纳** — 新老项目通吃
 - **验证闭环** — 每个 AI 动作都有校验点
 

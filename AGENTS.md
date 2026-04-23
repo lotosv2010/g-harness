@@ -2,6 +2,9 @@
 
 > 本文件定义所有 AI 编程助手（Claude Code、Cursor、Copilot、Windsurf 等）共同遵守的开发规范。
 > 与具体 AI 工具无关，是团队与 AI 协作的基础契约。
+> 
+> 注意：本文件为开发 g-forge 项目本身的规范。
+> 目标项目的通用规范模板见 `templates/AGENTS.template.md`。
 
 ---
 
@@ -15,8 +18,8 @@
 ```
 
 AI 在执行任何代码变更前，必须：
-1. 读取当前目录及上级目录的上下文文件（CLAUDE.md / AGENTS.md）
-2. 读取相关的架构决策记录（docs/decisions/）
+1. 读取 `CLAUDE.md` 和本文件
+2. 读取相关的 `docs/decisions/` ADR
 3. 识别受影响的模块和依赖关系
 4. 确认要遵循的模式和约定
 
@@ -39,95 +42,72 @@ AI 在执行任何代码变更前，必须：
 
 ### 2.1 语言与风格
 
-```yaml
-language: TypeScript（严格模式）
-style:
-  - 使用函数式组件，禁止 class 组件
-  - 使用 const 优于 let，禁止 var
-  - 使用命名导出优于默认导出
-  - 使用 interface 优于 type（除非需要联合类型）
-  - 错误处理使用 Result 模式，减少 try-catch 滥用
-```
+- 语言：TypeScript 严格模式
+- 使用 `const` 优于 `let`，禁止 `var`
+- 使用命名导出优于默认导出
+- 使用 `interface` 优于 `type`（除非需要联合类型）
+- 错误处理使用 Result 模式，减少 try-catch 滥用
 
 ### 2.2 命名约定
 
 | 对象 | 规则 | 示例 |
 |------|------|------|
-| 文件 - 组件 | PascalCase | `UserProfile.tsx` |
-| 文件 - Hook | camelCase + use 前缀 | `useAuth.ts` |
-| 文件 - 工具函数 | camelCase | `formatDate.ts` |
-| 文件 - 常量 | SCREAMING_SNAKE | `API_ENDPOINTS.ts` |
-| 文件 - 类型 | PascalCase | `UserTypes.ts` |
-| 文件 - 测试 | `{name}.test.{ext}` | `UserProfile.test.tsx` |
-| 目录 - 功能模块 | kebab-case | `user-profile/` |
-| 目录 - 组件 | PascalCase | `UserProfile/` |
-| 代码 - 组件 | PascalCase | `function UserProfile()` |
-| 代码 - Hook | useCamelCase | `function useAuth()` |
-| 代码 - 处理函数 | handle + 动作 | `handleSubmit` |
-| 代码 - 布尔值 | is/has/should | `isLoading` |
-| 代码 - 常量 | SCREAMING_SNAKE | `MAX_RETRY_COUNT` |
-| 代码 - 枚举 | PascalCase.UPPER | `Status.ACTIVE` |
+| 文件 - 模块 | kebab-case | `file-generator.ts` |
+| 文件 - 类型 | kebab-case | `scan-result.ts` |
+| 文件 - 测试 | `{name}.test.{ext}` | `file-generator.test.ts` |
+| 目录 | kebab-case | `core/scanner/` |
+| 代码 - 类/接口 | PascalCase | `FileGenerator` |
+| 代码 - 函数 | camelCase | `resolveVariables` |
+| 代码 - 常量 | SCREAMING_SNAKE | `MAX_FILE_SIZE` |
+| 代码 - 布尔值 | is/has/should | `isMonorepo` |
 
 ### 2.3 文件组织
 
-每个功能模块的标准结构：
+g-forge 项目的目录职责：
 
-```
-features/[feature-name]/
-├── components/           # 功能专属组件
-├── hooks/                # 功能专属 Hook
-├── services/             # 功能专属 API 调用
-├── stores/               # 功能专属状态
-├── types/                # 功能专属类型
-├── utils/                # 功能专属工具
-├── __tests__/            # 功能测试
-└── index.ts              # 公共 API（桶文件）
-```
+| 目录 | 职责 | 允许的内容 |
+|------|------|-----------|
+| `src/` | CLI 工具代码 | TypeScript 源码 |
+| `core/` | 通用规范 | Markdown 规范文件（技术栈无关） |
+| `presets/` | 技术栈预设 | preset.json + 栈特定规范 |
+| `templates/` | 文件模板 | `*.template.md` 模板 |
+| `.claude/` | Claude Code 配置 | 开发 g-forge 自身的规则/协议 |
 
 ---
 
 ## 3. 架构约束
 
-### 3.1 模块边界
+### 3.1 目录职责分离
 
 ```
-严禁：features/A → features/B（跨功能模块直接导入）
-允许：features/A → shared/*（通过共享层通信）
-允许：features/A → api/*（通过 API 层获取数据）
-允许：features/A → core/*（使用核心工具）
+src/     ← 只放代码逻辑，不放规范内容
+core/    ← 只放通用规范，不放代码和技术栈特定内容
+presets/ ← 只放技术栈特定内容，不依赖其他预设
 ```
 
-### 3.2 层级依赖规则
+### 3.2 core/ 技术栈无关
+
+core/ 中的文件禁止引用特定框架或工具，使用 `{{variable}}` 占位符。
+
+### 3.3 模块依赖方向
 
 ```
-core     ← 不依赖任何业务层
-shared   ← 只依赖 core
-api      ← 只依赖 core、shared
-features ← 可依赖 core、shared、api
-app      ← 可依赖所有层
+src/utils      ← 不依赖任何其他 src/ 模块
+src/core/*     ← 可依赖 utils
+src/cli        ← 可依赖 core、utils
 ```
-
-### 3.3 HTTP 请求集中管理
-
-所有 HTTP 请求必须通过 `packages/*/api/` 或 `packages/server/` 层发起，禁止在组件或 Hook 中直接调用 `fetch` / `axios`。
 
 ---
 
 ## 4. 测试标准
 
-### 4.1 测试策略
-
 | 类型 | 覆盖目标 | 工具 |
 |------|----------|------|
-| 单元测试 | 工具函数、Hook、Store | Vitest |
-| 组件测试 | 交互逻辑、渲染行为 | Testing Library |
-| 集成测试 | API 层、跨模块交互 | Vitest + MSW |
-| E2E 测试 | 核心用户流程 | Playwright |
-
-### 4.2 测试原则
+| 单元测试 | scanner、generator、validator、migrator | Vitest |
+| 集成测试 | CLI 端到端命令 | Vitest |
+| 夹具测试 | 模拟项目结构校验 | tests/fixtures/ |
 
 - 业务逻辑必须有单元测试
-- 新增组件必须有基础渲染测试
 - 修复 Bug 必须附带回归测试
 - 测试应验证行为，而非实现细节
 
@@ -140,71 +120,39 @@ app      ← 可依赖所有层
 格式：`<type>(<scope>): <description>`
 
 ```
-feat(auth):     添加微信扫码登录
-fix(payment):   修复重复扣款问题
-refactor(user): 将用户模块迁移至功能模块结构
-docs(api):      更新支付接口文档
-test(cart):     补充购物车边界条件测试
-chore(deps):    升级 React 至 19.x
+feat(cli):       添加 init 命令
+fix(validator):  修复规则匹配逻辑
+refactor(core):  重构模板渲染引擎
+docs(arch):      更新架构文档
+test(scanner):   补充扫描器边界测试
+chore(deps):     升级 vitest 至最新版
 ```
 
 ### 5.2 分支策略
 
 ```
-main          ← 生产环境，受保护
+main          ← 稳定版本，受保护
 develop       ← 开发主线
 feat/*        ← 功能分支
 fix/*         ← 修复分支
-refactor/*    ← 重构分支
 ```
 
 ---
 
 ## 6. AI 协作安全规则
 
-### 6.1 禁止事项
-
 - **禁止**提交 `.env` 文件或任何包含密钥的文件
 - **禁止**在代码中硬编码密钥、Token、密码
-- **禁止**未经确认执行破坏性操作（删除文件、重置分支、修改数据库结构）
-- **禁止**修改 CI/CD 配置而不说明原因
-- **禁止**绕过 pre-commit 钩子（`--no-verify`）
-
-### 6.2 需确认事项
-
-以下操作必须先向用户确认：
-- 删除文件或目录
-- 修改数据库 Schema
-- 升级核心依赖版本
-- 修改构建或部署配置
-- 向第三方服务发送数据
+- **禁止**未经确认执行破坏性操作
+- **禁止**绕过 pre-commit 钩子
+- 删除文件、修改配置、升级依赖等操作必须先确认
 
 ---
 
 ## 7. 文档维护
 
-### 7.1 代码注释
-
-- 注释语言与代码库现有注释保持一致
+- 注释语言：中文
 - 只注释"为什么"，不注释"是什么"
-- 公共 API 必须有 JSDoc 类型标注
-- 复杂算法必须有简要说明
-
-### 7.2 架构文档同步
-
-当代码变更涉及以下内容时，必须同步更新对应文档：
-- 新增模块 → 更新 `docs/ARCHITECTURE.md`
-- API 变更 → 更新 `docs/API_SPEC.md`
-- 数据模型变更 → 更新 `docs/DATA_MODEL.md`
+- 代码变更涉及架构时，必须同步更新 `docs/ARCHITECTURE.md`
+- 新增 API → 更新 `docs/API_SPEC.md`
 - 架构决策 → 新增 `docs/decisions/` ADR
-
----
-
-## 8. 适用范围
-
-本文件规范适用于：
-- 所有 AI 编程助手（Claude Code、Cursor、Copilot 等）
-- 所有人类开发者
-- 所有代码审查流程
-
-具体 AI 工具的专属配置见各自配置文件（如 `CLAUDE.md`）。

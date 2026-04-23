@@ -1,44 +1,56 @@
 ---
 id: ADR-001
+status: superseded
+date: 2026-04-23
+superseded_by: ADR-001-v2
+---
+
+# [已废弃] Monorepo + pnpm Workspace 项目结构
+
+> 本 ADR 已被废弃。G-Forge 已从 Monorepo 结构转为单包结构。
+> 见下方 ADR-001-v2。
+
+---
+
+---
+id: ADR-001-v2
 status: accepted
 date: 2026-04-23
 superseded_by: null
 ---
 
-# Monorepo + pnpm Workspace 项目结构
+# 单包结构 + CLI-first 设计
 
 ## 背景
 
-G-Forge 包含多个独立但相关的包（core、cli、presets、web、server），需要选择代码组织方式。
+G-Forge 最初设计为 Monorepo（packages/web, server, ai, shared），但经审查发现 G-Forge 是一个**规范框架 + CLI 工具**，不是一个含业务模块的应用。Monorepo 结构引入了不必要的复杂度。
 
 ## 决策
 
-采用 pnpm workspace + Turborepo 的 Monorepo 结构。
+采用单包结构：`src/`（CLI 代码）+ `core/`（规范文件）+ `presets/`（技术栈预设）+ `templates/`（文件模板）。
 
 ## 备选方案
 
-### 方案 A：Monorepo（选定）
-- 优点：共享类型安全、统一构建流程、开发体验好
-- 缺点：仓库体积增长、CI 复杂度略高
+### 方案 A：单包结构（选定）
+- 优点：简单、职责清晰、无 workspace 配置开销
+- 缺点：如果未来需要拆包需要迁移
 
-### 方案 B：多仓库（Multi-repo）
-- 优点：各包完全独立、CI 简单
-- 缺点：类型同步困难、跨包修改需多次发版、开发体验差
+### 方案 B：Monorepo（原方案，已废弃）
+- 优点：各包独立版本
+- 缺点：框架不需要 web/server 包，过度设计
 
 ## 影响
 
 ### 正面影响
-- 所有包共享 TypeScript 类型定义，接口变更即时可见
-- Turborepo 增量构建提升 CI 效率
-- 本地开发无需 `npm link`，pnpm workspace 自动解析
+- 消除了"框架即应用"的身份混淆
+- 简化了构建和发布流程
+- 目录结构清晰反映框架的两个交付物：规范 + CLI
 
 ### 负面影响 / 权衡
-- 需要理解 pnpm workspace 和 Turborepo 配置
-- 新包必须按既定目录结构组织
+- 如果未来需要独立发布子包，需要拆分
 
 ## AI 指引
 
-- 新建包时放在 `packages/` 目录下
-- 包间引用使用 workspace 协议（`"@gforge/shared": "workspace:*"`）
-- 共享类型定义统一放在 `packages/shared/types/`
-- 跨包导入必须通过包的公共 API（index.ts），禁止深度路径导入
+- 代码放 `src/`，规范放 `core/`，技术栈特定内容放 `presets/`
+- 禁止在 `core/` 中放代码逻辑
+- 禁止在 `src/` 中放规范内容

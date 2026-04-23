@@ -1,0 +1,36 @@
+{
+  "name": "react-vite",
+  "description": "React 19 + Vite 6 单页应用预设",
+  "techStack": {
+    "language": "TypeScript",
+    "runtime": "Node.js 20+",
+    "framework": "React 19",
+    "buildTool": "Vite 6",
+    "testRunner": "Vitest",
+    "packageManager": "pnpm"
+  },
+  "variables": {
+    "shared_dir": "src/shared",
+    "feature_dir": "src/features",
+    "api_dir": "src/api",
+    "core_dir": "src/core",
+    "app_dir": "src",
+    "shared_package": "src/shared",
+    "core_package": "src/core",
+    "app_package": "src"
+  },
+  "codeStyle": [
+    "使用命名导出，非默认导出",
+    "组件使用函数式声明",
+    "类型使用 interface 优先",
+    "测试文件与源文件同级或在 __tests__/ 目录"
+  ],
+  "commands": {
+    "install": "pnpm install",
+    "dev": "pnpm dev",
+    "build": "pnpm build",
+    "test": "pnpm test",
+    "lint": "pnpm lint",
+    "typecheck": "pnpm typecheck"
+  }
+}

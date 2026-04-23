@@ -1,45 +1,31 @@
-# 边界检查守卫
+# 边界检查守卫（g-forge 项目自身）
 
-> 定义 AI 编写代码时的自动边界检查规则。
-> 对应 Claude Code Hooks 的 PostToolUse 事件。
+> AI 编写 g-forge 代码时的自动边界检查。
+> 目标项目的边界检查见 `core/guardrails/boundary-check.md`。
 
 ---
 
 ## 检查项
 
-### 1. 模块依赖方向
+### 1. 目录职责边界
 
-当 AI 修改或创建文件时，检查其导入语句：
+| 操作位置 | 允许的内容 | 禁止的内容 |
+|----------|-----------|-----------|
+| `src/` | TypeScript 代码 | 规范文件（.md） |
+| `core/` | 规范文件（.md） | TypeScript 代码 |
+| `presets/` | preset.json + 栈特定规范 | 通用规范、代码逻辑 |
+| `templates/` | 模板文件（.template.md） | 代码逻辑 |
 
-| 源文件位置 | 允许导入 | 禁止导入 |
-|-----------|----------|----------|
-| `packages/shared/` | 仅第三方依赖 | web, server, ai |
-| `packages/ai/` | shared, 第三方 | web, server |
-| `packages/web/` | shared, ai, 第三方 | server |
-| `packages/server/` | shared, ai, 第三方 | web |
-| `*/features/A/` | shared, api, core | features/B（其他功能模块） |
+### 2. core/ 技术栈无关性
 
-### 2. 文件位置合规
-
-- 组件文件（.tsx）必须在 `components/` 目录下
-- Hook 文件（use*.ts）必须在 `hooks/` 目录下
-- API 调用文件必须在 `api/` 或 `services/` 目录下
-- 类型文件（*Types.ts）必须在 `types/` 目录下
+在 `core/` 目录的文件中检测以下违规模式：
+- 引用特定框架名（React、Vue、Angular、Next.js 等）
+- 引用特定构建工具（Vite、Webpack 等）
+- 硬编码特定目录路径（应使用 `{{variable}}`）
 
 ### 3. 命名合规
 
-- 组件文件名：PascalCase
-- Hook 文件名：camelCase + use 前缀
-- 目录名（功能模块）：kebab-case
-- 测试文件：`{name}.test.{ext}`
-
-### 4. 禁止模式
-
-在非 API 层文件中检测以下模式：
-- `fetch(` — 直接 HTTP 调用
-- `axios.` — 直接 axios 调用
-- `new XMLHttpRequest` — 直接 XHR
-
-## 实现方式
-
-通过 Claude Code 的 PostToolUse Hook，在 AI 每次写入/编辑文件后自动检查。检查结果反馈给 AI，AI 必须修正违规后才能继续。
+- `src/` 中的文件：kebab-case（`file-generator.ts`）
+- `core/` 中的文件：kebab-case（`code-quality.md`）
+- `presets/` 中的目录：kebab-case（`react-vite/`）
+- `templates/` 中的文件：`*.template.md`

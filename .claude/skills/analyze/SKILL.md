@@ -19,17 +19,18 @@ agent: Explore
 
 ```
 /analyze                     # 全项目分析
-/analyze packages/web        # 仅分析前端包
-/analyze packages/web/src/features/auth  # 分析单个模块
+/analyze src/core             # 分析 CLI 核心模块
+/analyze core/rules           # 分析规范规则
 ```
 
 ## 分析维度
 
-### 1. 模块边界（权重 30%）
-- 检查跨功能模块的直接导入（违反 features/A → features/B 规则）
-- 检查依赖方向是否合规（shared 不依赖 features）
-- 识别循环依赖
-- 检查桶文件（index.ts）是否使用命名导出
+### 1. 目录职责边界（权重 30%）
+- 检查 `src/` 是否只包含代码文件
+- 检查 `core/` 是否只包含规范文件（无代码逻辑）
+- 检查 `core/` 中的文件是否技术栈无关（无硬编码框架引用）
+- 检查 `presets/` 中各预设是否自包含（有 preset.json）
+- 检查模块依赖方向是否合规
 
 ### 2. 代码复杂度（权重 20%）
 - 文件行数超过 300 行的文件
@@ -48,9 +49,9 @@ agent: Explore
 - 检查核心依赖版本是否过时
 
 ### 5. 文档同步（权重 15%）
-- 检查 CLAUDE.md 文件是否与实际目录结构一致
+- 检查 CLAUDE.md 目录结构是否与实际一致
 - 检查 docs/ARCHITECTURE.md 模块列表是否最新
-- 检查 ADR 是否有 deprecated 但仍被引用的记录
+- 检查 ADR 是否有废弃但仍被引用的记录
 
 ## 输出格式
 
@@ -64,7 +65,7 @@ agent: Explore
 
 | 维度 | 得分 | 问题数 |
 |------|------|--------|
-| 模块边界 | X/30 | N |
+| 目录职责边界 | X/30 | N |
 | 代码复杂度 | X/20 | N |
 | 测试覆盖 | X/20 | N |
 | 依赖健康度 | X/15 | N |
@@ -72,10 +73,10 @@ agent: Explore
 
 ### 问题清单
 
-#### 🔴 Error（必须修复）
+#### Error（必须修复）
 - [文件:行号] 问题描述
 
-#### 🟡 Warning（建议修复）
+#### Warning（建议修复）
 - [文件:行号] 问题描述
 
 ### 改进建议（按优先级排序）

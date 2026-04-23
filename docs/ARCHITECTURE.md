@@ -1,183 +1,192 @@
 # 架构白皮书
 
-> 定义 G-Forge 框架的技术架构、技术栈选型、模块划分与部署方案。
+> 定义 G-Forge 框架的技术架构、模块划分与部署方案。
 > AI 在做任何架构决策前必须参考本文件。
 
 ---
 
 ## 1. 架构总览
 
-### 1.1 五层治具架构
+### 1.1 五层 Harness 架构
+
+G-Forge 通过五层结构将规范应用到目标项目：
 
 ```
 ┌──────────────────────────────────────────┐
 │            应用层 Application             │  ← 用户的项目源码
 ├──────────────────────────────────────────┤
-│           工作流层 Workflow               │  ← 命令、技能、钩子、协议
+│           工作流层 Workflow               │  ← 协议、技能、钩子
 ├──────────────────────────────────────────┤
-│            约定层 Convention              │  ← 模板、模式库、命名规范
+│            约定层 Convention              │  ← 模板、Prompt、命名规范
 ├──────────────────────────────────────────┤
-│            约束层 Constraint              │  ← 规则引擎、依赖守卫
+│            约束层 Constraint              │  ← 规则引擎、护栏、校验器
 ├──────────────────────────────────────────┤
-│           上下文层 Context                │  ← CLAUDE.md 层级、ADR、术语表
+│           上下文层 Context                │  ← CLAUDE.md、AGENTS.md、ADR
 └──────────────────────────────────────────┘
 ```
 
-### 1.2 Monorepo 结构
+### 1.2 项目结构
 
 ```
 g-forge/
-├── packages/
-│   ├── web/              # 前端应用（文档站 / Dashboard）
-│   ├── server/           # 后端服务（CLI 后端 / API）
-│   ├── ai/               # AI 能力层（上下文生成、规则推理）
-│   └── shared/           # 共享类型、工具函数
-├── tools/                # 开发工具
-└── tests/                # 全局 E2E 测试
+├── src/                    # CLI 工具源码
+│   ├── cli/                # 命令入口
+│   ├── core/               # 核心逻辑模块
+│   │   ├── scanner/        # 项目扫描与技术栈检测
+│   │   ├── generator/      # 模板渲染与文件生成
+│   │   ├── validator/      # 规范校验引擎
+│   │   └── migrator/       # 规范版本迁移
+│   └── utils/              # 通用工具函数
+│
+├── core/                   # 框架核心规范（技术栈无关）
+│   ├── rules/              # 规则定义
+│   ├── protocols/          # 执行协议
+│   ├── prompts/            # Prompt 模板
+│   └── guardrails/         # 护栏定义
+│
+├── presets/                # 技术栈特定预设
+│   ├── react-vite/         # React + Vite 预设
+│   └── _template/          # 预设创建模板
+│
+├── templates/              # 通用文件模板（CLI 渲染后输出）
+├── docs/                   # 框架文档
+├── tests/                  # 测试
+└── .claude/                # Claude Code 行为控制（开发 g-forge 用）
 ```
 
-## 2. 技术栈
-
-### 2.1 核心依赖
+## 2. 技术栈（g-forge 自身）
 
 | 层级 | 技术选型 | 理由 |
 |------|----------|------|
 | 语言 | TypeScript 5.x（strict） | 类型安全 + AI 友好 |
 | 运行时 | Node.js 20+ | LTS 稳定版 |
-| 包管理 | pnpm 9+ | 快速、严格、workspace 原生支持 |
-| Monorepo | Turborepo | 增量构建、任务编排 |
-| 测试 | Vitest | 与 Vite 生态一致，速度快 |
+| 包管理 | pnpm | 快速、严格 |
+| 测试 | Vitest | 速度快、TypeScript 原生支持 |
 | Lint | ESLint 9 (flat config) | 新标准，可扩展 |
 | 格式化 | Prettier | 团队一致性 |
-| 模板引擎 | Handlebars | 成熟、逻辑简单 |
-| YAML 解析 | yaml (npm) | YAML 1.2 完整支持 |
 | CLI 框架 | citty 或 commander | 轻量、TypeScript 友好 |
-
-### 2.2 前端应用（packages/web）
-
-| 项目 | 技术 |
-|------|------|
-| 框架 | React 19 + TypeScript |
-| 构建 | Vite 6 |
-| 路由 | React Router 7 |
-| 状态 | Zustand |
-| 样式 | Tailwind CSS 4 |
-| 组件 | shadcn/ui |
-
-### 2.3 服务端（packages/server）
-
-| 项目 | 技术 |
-|------|------|
-| 运行时 | Node.js 20+ |
-| 框架 | Hono / Express |
-| 验证 | Zod |
-| 数据库 | SQLite（本地）/ PostgreSQL（云端） |
-| ORM | Drizzle |
-
-### 2.4 AI 能力层（packages/ai）
-
-| 项目 | 技术 |
-|------|------|
-| LLM 调用 | Anthropic SDK（Claude API） |
-| 上下文分析 | AST 解析（ts-morph） |
-| 规则推理 | 自研规则引擎 |
+| 模板引擎 | 自研变量替换 | `{{variable}}` 简单替换，避免重依赖 |
+| YAML 解析 | yaml (npm) | YAML 1.2 完整支持 |
 
 ## 3. 模块划分
 
-### 3.1 packages/shared — 共享层
+### 3.1 src/core/scanner — 项目扫描器
+
+职责：检测目标项目的技术栈、目录结构、现有配置。
 
 ```
-shared/
-├── types/                # 全局类型定义
-│   ├── config.ts         # 配置文件类型
-│   ├── rules.ts          # 规则定义类型
-│   ├── templates.ts      # 模板类型
-│   └── index.ts
-├── utils/                # 工具函数
-│   ├── fs.ts             # 文件系统工具
-│   ├── yaml.ts           # YAML 解析工具
-│   ├── naming.ts         # 命名转换工具
-│   └── index.ts
-└── constants/            # 共享常量
-    └── index.ts
+scanner/
+├── index.ts               # 公共 API
+└── project-scanner.ts     # 扫描实现
 ```
 
-### 3.2 packages/ai — AI 能力层
+输入：目标项目根目录路径
+输出：`ScanResult`（技术栈、项目结构、现有配置）
+
+### 3.2 src/core/generator — 文件生成器
+
+职责：读取模板 + 预设变量，渲染输出到目标项目。
 
 ```
-ai/
-├── context/              # 上下文管理
-│   ├── analyzer.ts       # 项目结构分析
-│   ├── generator.ts      # CLAUDE.md 生成
-│   └── updater.ts        # CLAUDE.md 同步更新
-├── rules/                # 规则引擎
-│   ├── parser.ts         # YAML 规则解析
-│   ├── validator.ts      # 代码规则校验
-│   └── reporter.ts       # 违规报告
-├── templates/            # 模板引擎
-│   ├── renderer.ts       # 模板渲染
-│   └── registry.ts       # 模板注册与发现
-└── hooks/                # Claude Code 钩子
-    ├── prompt-enhancer.ts
-    ├── post-write.ts
-    └── pre-commit.ts
+generator/
+├── index.ts               # 公共 API
+└── file-generator.ts      # 生成实现
 ```
 
-### 3.3 packages/web — 前端应用
+输入：预设名、目标目录、变量映射
+输出：`GenerateResult`（已创建/跳过/覆盖的文件列表）
+
+### 3.3 src/core/validator — 规范校验器
+
+职责：检查目标项目是否符合规范规则。
 
 ```
-web/
-├── src/
-│   ├── app/              # 应用外壳
-│   ├── features/         # 功能模块
-│   │   ├── dashboard/    # 项目仪表盘
-│   │   ├── rules/        # 规则管理
-│   │   └── templates/    # 模板管理
-│   ├── shared/           # 共享 UI 组件
-│   └── api/              # API 层
-└── vite.config.ts
+validator/
+├── index.ts               # 公共 API
+└── rule-validator.ts      # 校验实现
 ```
 
-### 3.4 packages/server — 服务端
+输入：目标项目根目录路径
+输出：`ValidationResult`（通过与否、违规列表、警告列表）
+
+### 3.4 src/core/migrator — 配置迁移器
+
+职责：规范版本升级时，迁移目标项目的配置文件。
 
 ```
-server/
-├── src/
-│   ├── routes/           # API 路由
-│   ├── services/         # 业务逻辑
-│   ├── middleware/        # 中间件
-│   └── db/               # 数据库
-└── tsconfig.json
+migrator/
+├── index.ts               # 公共 API
+└── config-migrator.ts     # 迁移实现
 ```
 
-## 4. 环境变量
+输入：目标目录、源版本、目标版本
+输出：`MigrateResult`（已迁移文件、需手动处理的文件）
 
-```bash
-# .env.example（提交到 Git）
-# ============================
+### 3.5 core/ — 框架核心规范
 
-# 应用
-NODE_ENV=development
-PORT=3000
-LOG_LEVEL=info
+存放技术栈无关的规范文件，由 CLI 工具读取并应用到目标项目。
 
-# 数据库
-DATABASE_URL=sqlite://./data/gforge.db
-
-# AI（可选 — 仅 AI 增强功能需要）
-ANTHROPIC_API_KEY=
-AI_MODEL=claude-sonnet-4-6
-
-# 安全
-JWT_SECRET=
-CORS_ORIGIN=http://localhost:5173
+```
+core/
+├── rules/                 # 通用规则（安全、代码质量、架构模板）
+├── protocols/             # 执行协议（功能开发、Bug 修复、重构、审查）
+├── prompts/               # Prompt 模板（Bug 报告、代码审查、功能开发、重构）
+└── guardrails/            # 护栏定义（边界检查、提交前检查）
 ```
 
-**环境变量管理规则：**
-- `.env` 文件永远不提交到 Git
-- `.env.example` 记录所有变量的键名和示例值
-- 敏感值通过环境注入，不通过文件
-- 本地开发使用 `.env.local`（gitignored）
+### 3.6 presets/ — 技术栈预设
+
+每个预设补充 core/ 的通用规范，提供技术栈特定的规则、技能和模板。
+
+```
+presets/<name>/
+├── preset.json            # 预设元数据（技术栈、变量值、命令）
+├── rules/                 # 栈特定规则
+└── skills/                # 栈特定技能
+```
+
+### 3.7 templates/ — 文件模板
+
+CLI `init` 命令读取模板，结合预设变量渲染后输出到目标项目。
+
+```
+templates/
+├── CLAUDE.template.md     # 基础 CLAUDE.md 模板
+├── AGENTS.template.md     # 基础 AGENTS.md 模板
+├── ROLES.template.md      # 团队角色模板
+├── ADR.template.md        # 架构决策模板
+└── BOARD.template.md      # 任务看板模板
+```
+
+## 4. 数据流
+
+```
+用户运行 gforge init --preset react-vite
+         │
+         ▼
+   CLI 解析命令参数
+         │
+         ▼
+   Scanner 扫描目标项目
+   （检测技术栈、目录结构、现有配置）
+         │
+         ▼
+   加载预设（presets/react-vite/preset.json）
+   加载模板（templates/*.template.md）
+   加载规范（core/rules/*.md）
+         │
+         ▼
+   Generator 渲染模板
+   （{{variable}} → 预设变量值）
+         │
+         ▼
+   输出文件到目标项目
+   ├── CLAUDE.md
+   ├── AGENTS.md
+   ├── .claude/rules/*.md
+   ├── .claude/protocols/*.md
+   └── ...
+```
 
 ## 5. 部署架构
 
@@ -189,26 +198,20 @@ npm publish → npmjs.com → npx gforge init
 
 CLI 是纯本地工具，不需要服务端。
 
-### 5.2 文档站 / Dashboard（可选）
+### 5.2 文档站（可选，未来）
 
 ```
 构建 → 静态文件 → Vercel / Cloudflare Pages
-```
-
-### 5.3 API 服务（可选 — 团队协作功能）
-
-```
-构建 → Docker 镜像 → Fly.io / Railway / 自建服务器
 ```
 
 ## 6. 关键架构决策
 
 | ID | 决策 | 理由 |
 |----|------|------|
-| ADR-001 | Monorepo + pnpm workspace | 共享类型、统一构建、便于开发 |
+| ADR-001 | 单包结构 + CLI-first | 框架定位是规范工具，不需要 monorepo |
 | ADR-002 | YAML 作为规则定义格式 | 人和 AI 都可读写，比 JSON 更易维护 |
-| ADR-003 | Handlebars 作为模板引擎 | 简单、成熟、逻辑受限（减少模板复杂度） |
-| ADR-004 | CLI-first，Web 可选 | 降低使用门槛，CLI 是核心体验 |
+| ADR-003 | 自研变量替换替代 Handlebars | `{{var}}` 足够简单，避免引入重依赖 |
+| ADR-004 | core/ 与 presets/ 分离 | 通用规范技术栈无关，预设补充特定规则 |
 | ADR-005 | 预设系统（Presets） | 不同框架开箱即用，减少配置成本 |
 
 详细 ADR 记录见 `docs/decisions/` 目录。

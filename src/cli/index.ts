@@ -1,0 +1,25 @@
+#!/usr/bin/env node
+
+import { Command } from 'commander'
+import { initCommand } from './commands/init.js'
+import { validateCommand } from './commands/validate.js'
+import { contextCommand } from './commands/context.js'
+import { migrateCommand } from './commands/migrate.js'
+
+const program = new Command()
+
+program
+  .name('gforge')
+  .description('AI 驱动的工程化规范框架 CLI')
+  .version('0.1.0')
+
+program.addCommand(initCommand)
+program.addCommand(validateCommand)
+program.addCommand(contextCommand)
+program.addCommand(migrateCommand)
+
+export function run(): void {
+  program.parse()
+}
+
+run()

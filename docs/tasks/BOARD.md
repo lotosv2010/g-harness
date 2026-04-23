@@ -9,21 +9,23 @@
 
 ### P0 — 紧急
 
-（暂无）
+- [ ] **TASK-002**：实现 CLI 基础框架（命令注册、参数解析、帮助文本）
+- [ ] **TASK-003**：实现 ProjectScanner（技术栈检测、结构分析）
+- [ ] **TASK-004**：实现 FileGenerator（模板读取、变量替换、文件输出）
 
 ### P1 — 重要
 
-- [ ] **TASK-001**：搭建 Monorepo 基础结构（pnpm + Turbo）
-- [ ] **TASK-002**：实现 @gforge/shared 基础类型定义
-- [ ] **TASK-003**：实现 @gforge/ai 规则引擎核心
-- [ ] **TASK-004**：实现 @gforge/cli `init` 命令
+- [ ] **TASK-005**：实现 `gforge init` 命令端到端流程
+- [ ] **TASK-006**：实现 RuleValidator 基础校验逻辑
+- [ ] **TASK-007**：完善 react-vite 预设（补充 skills、完整变量映射）
+- [ ] **TASK-008**：实现 `gforge validate` 命令
 
 ### P2 — 一般
 
-- [ ] **TASK-005**：创建 react-vite 预设
-- [ ] **TASK-006**：实现 CLAUDE.md 自动生成器
-- [ ] **TASK-007**：实现 Claude Code 钩子脚本
-- [ ] **TASK-008**：编写用户文档（getting-started）
+- [ ] **TASK-009**：创建 vue-nuxt 预设
+- [ ] **TASK-010**：创建 node-api 预设
+- [ ] **TASK-011**：实现 ConfigMigrator
+- [ ] **TASK-012**：编写用户文档（getting-started）
 
 ---
 
@@ -36,6 +38,7 @@
 ## 已完成（DONE）
 
 - [x] **TASK-000**：完成项目架构设计与目录结构搭建 — 2026-04-23
+- [x] **TASK-001**：P0 结构重构（移除 packages、建立 core/src/presets/templates、文档更新）— 2026-04-23
 
 ---
 

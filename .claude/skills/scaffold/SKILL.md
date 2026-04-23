@@ -17,90 +17,74 @@ arguments:
 ## 用法
 
 ```
-/scaffold feature user-auth
-/scaffold component Button
-/scaffold hook useAuth
-/scaffold api users
-/scaffold store auth
+/scaffold cli <command-name>      # 新增 CLI 命令
+/scaffold module <name>           # 新增 src/core/ 模块
+/scaffold preset <name>           # 新增技术栈预设
+/scaffold rule <id>               # 新增 core/ 规则文件
+/scaffold protocol <name>         # 新增 core/ 协议文件
 ```
 
 ## 支持的模块类型
 
-### feature（功能模块）
+### cli（CLI 命令）
 
-生成路径：`packages/web/src/features/$name/`
+生成路径：`src/cli/`
+
+```
+commands/
+└── $name.ts                # 命令实现
+```
+
+### module（核心模块）
+
+生成路径：`src/core/$name/`
 
 ```
 $name/
-├── components/
-│   └── .gitkeep
-├── hooks/
-│   └── .gitkeep
-├── services/
-│   └── .gitkeep
-├── stores/
-│   └── .gitkeep
-├── types/
-│   └── index.ts
-├── utils/
-│   └── .gitkeep
-├── __tests__/
-│   └── .gitkeep
-└── index.ts
+├── index.ts               # 公共 API（命名导出）
+├── $name.ts               # 实现
+└── $name.test.ts          # 测试
 ```
 
-### component（UI 组件）
+### preset（技术栈预设）
 
-生成路径：由上下文推断，默认 `packages/web/src/shared/components/$Name/`
-
-```
-$Name/
-├── $Name.tsx
-├── $Name.test.tsx
-└── index.ts
-```
-
-### hook
-
-生成路径：由上下文推断
+生成路径：`presets/$name/`
 
 ```
-use$Name.ts
-use$Name.test.ts
+$name/
+├── preset.json            # 预设元数据
+└── rules/                 # 栈特定规则（可选）
 ```
 
-### api（API 端点）
+### rule（规则文件）
 
-生成路径：`packages/web/src/api/endpoints/`
-
-```
-$name.ts
-$name.test.ts
-```
-
-### store（状态 Store）
-
-生成路径：由上下文推断
+生成路径：`core/rules/`
 
 ```
-$nameStore.ts
-$nameStore.test.ts
+$name.md                   # 规则定义（参数化模板）
+```
+
+### protocol（协议文件）
+
+生成路径：`core/protocols/`
+
+```
+$name.md                   # 协议定义
 ```
 
 ## 执行步骤
 
 1. 解析参数 `$type` 和 `$name`
-2. 按 `AGENTS.md` 命名约定转换名称（PascalCase / camelCase / kebab-case）
+2. 按命名约定转换名称（kebab-case）
 3. 确认生成路径和文件列表
-4. 生成所有文件（包含基础骨架代码，不留空文件）
-5. 更新最近的桶文件（index.ts）
-6. 测试文件至少包含一个基础测试用例
-7. 报告生成结果
+4. 生成所有文件（包含基础骨架，不留空文件）
+5. 更新相关的入口文件（index.ts）
+6. 报告生成结果
 
 ## 约束
 
 - 遵循 `AGENTS.md` 命名约定
 - 遵循 `.claude/rules/` 所有硬性规则
-- 组件使用函数式声明 + 命名导出
-- 禁止 `export default`
+- 使用命名导出，禁止 `export default`
 - 禁止 `export *`
+- `core/` 中的规则和协议必须技术栈无关

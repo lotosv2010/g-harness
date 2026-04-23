@@ -1,7 +1,7 @@
-# 角色分工与模块归属
+# 角色分工与模块归属（g-forge 项目）
 
-> 定义团队成员的职责范围和模块归属关系。
-> AI 在涉及跨模块变更时应参考本文件确认审批人。
+> 定义 g-forge 项目团队的职责范围和模块归属。
+> 目标项目的角色模板见 `templates/ROLES.template.md`。
 
 ---
 
@@ -12,20 +12,16 @@
 - **归属模块**：全局
 
 ### 核心开发（Core Dev）
-- **职责**：核心包开发（core、cli、shared）
-- **归属模块**：`packages/ai/`、`packages/shared/`
+- **职责**：CLI 工具开发、核心规范维护
+- **归属模块**：`src/`、`core/`
 
-### 前端开发（Frontend Dev）
-- **职责**：Web 端应用开发
-- **归属模块**：`packages/web/`
-
-### 后端开发（Backend Dev）
-- **职责**：服务端开发
-- **归属模块**：`packages/server/`
+### 预设维护（Preset Maintainer）
+- **职责**：技术栈预设开发与维护
+- **归属模块**：`presets/`
 
 ### 文档维护（Doc Maintainer）
 - **职责**：文档更新、ADR 管理
-- **归属模块**：`docs/`
+- **归属模块**：`docs/`、`templates/`
 
 ---
 
@@ -34,28 +30,22 @@
 | 模块路径 | 归属角色 | 变更审批 |
 |----------|----------|----------|
 | `CLAUDE.md` / `AGENTS.md` | 项目负责人 | 需审批 |
+| `.claude/rules/` | 项目负责人 | 需审批 |
+| `core/rules/` | 项目负责人 | 需审批 |
+| `core/protocols/` | 核心开发 | 需审批 |
+| `src/` | 核心开发 | 需审批 |
+| `presets/` | 预设维护 | 需审批 |
+| `templates/` | 核心开发 | 需审批 |
 | `docs/` | 文档维护 | 自审 |
 | `docs/decisions/` | 项目负责人 | 需审批 |
-| `.claude/rules/` | 项目负责人 | 需审批 |
-| `.claude/protocols/` | 核心开发 | 需审批 |
-| `packages/shared/` | 核心开发 | 需审批 |
-| `packages/ai/` | 核心开发 | 需审批 |
-| `packages/web/` | 前端开发 | 需审批 |
-| `packages/server/` | 后端开发 | 需审批 |
-| `tools/` | 核心开发 | 自审 |
+| `scripts/` | 核心开发 | 自审 |
 | `tests/` | 对应模块开发 | 需审批 |
 
 ---
 
 ## 审批规则
 
-1. **核心文件变更**（CLAUDE.md、AGENTS.md、.claude/rules/）必须经项目负责人审批
+1. **核心文件变更**（CLAUDE.md、AGENTS.md、规则文件）必须经项目负责人审批
 2. **跨模块变更**必须通知所有相关模块归属人
 3. **架构决策**必须以 ADR 形式记录并经团队讨论
 4. **依赖升级**必须由核心开发审批
-
-## AI 指引
-
-- AI 修改某个模块时，应在输出中注明该模块的归属角色
-- AI 进行跨模块变更时，应列出所有受影响的模块及其归属人
-- AI 不应主动修改非当前任务范围内的模块

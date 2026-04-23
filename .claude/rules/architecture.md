@@ -1,58 +1,42 @@
-# 架构硬性规则
+# 架构硬性规则（g-forge 项目自身）
 
-> 维护系统架构完整性的不可违反规则。
+> 维护 g-forge 框架项目自身架构完整性的规则。
+> 目标项目的架构规则见 `core/rules/architecture.md`。
 
 ---
 
-## A001：模块边界
+## A001：目录职责分离
 
 ```
-packages/shared  ← 不依赖任何其他业务包
-packages/ai      ← 可依赖 shared
-packages/web     ← 可依赖 shared、ai
-packages/server  ← 可依赖 shared、ai
+src/          ← CLI 工具源码，不含规范内容
+core/         ← 通用规范文件，不含代码逻辑
+presets/      ← 技术栈预设，不含通用规范
+templates/    ← 文件模板，不含代码逻辑
+.claude/      ← 开发 g-forge 自身的 Claude Code 配置
 ```
 
-禁止循环依赖。禁止 shared 依赖 web/server/ai。
+禁止混放：代码逻辑不进 core/，规范内容不进 src/。
 
-## A002：功能模块隔离
+## A002：core/ 技术栈无关
 
-Feature 模块之间禁止直接导入：
+`core/` 目录中的规范文件必须技术栈无关：
+- 不引用特定框架（React、Vue、Angular 等）
+- 不引用特定构建工具（Vite、Webpack 等）
+- 使用 `{{variable}}` 占位符替代具体路径
+- 技术栈特定内容放 `presets/` 中
 
-```
-错误：features/auth → features/user（直接导入）
-正确：features/auth → shared/（通过共享层）
-正确：features/auth → api/（通过 API 层）
-```
+## A003：presets/ 自包含
 
-## A003：API 层集中
+每个预设目录必须自包含：
+- 包含 `preset.json` 描述元数据
+- 可包含栈特定的规则和技能
+- 不依赖其他预设
 
-所有 HTTP 请求（fetch、axios、HTTP client 调用）必须在 API 层发起：
-- 前端：`packages/web/src/api/`
-- 服务端：`packages/server/src/routes/` 或 `src/services/`
+## A004：配置文件不可随意修改
 
-禁止在组件、Hook、Store 中直接发起 HTTP 请求。
-
-## A004：状态管理边界
-
-- 全局状态：仅用于跨功能模块共享的数据（用户信息、主题等）
-- 功能状态：限定在功能模块内部
-- 组件状态：仅用于 UI 交互状态
-
-禁止将 UI 交互状态提升到全局。
-
-## A005：公共 API 原则
-
-每个功能模块通过 `index.ts` 暴露公共 API：
-- 只导出需要被外部使用的内容
-- 内部实现细节不暴露
-- 修改内部实现不应破坏外部使用
-
-## A006：配置文件不可随意修改
-
-以下文件修改需要明确的理由和审批：
-- `tsconfig.json` / `tsconfig.*.json`
-- `.eslintrc.*` / `eslint.config.*`
-- `vite.config.*` / `next.config.*`
+以下文件修改需要明确的理由：
+- `tsconfig.json`
+- `eslint.config.*`
 - `package.json` 的 scripts 和 dependencies
 - `.claude/rules/*`
+- `core/rules/*`
