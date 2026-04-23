@@ -4,7 +4,7 @@
   "description": "AI 驱动的工程化规范框架 + CLI 工具",
   "type": "module",
   "bin": {
-    "gforge": "./dist/cli/index.js"
+    "gforge": "./dist/core/index.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -16,7 +16,8 @@
   },
   "files": [
     "dist",
-    "src/content",
+    "src/ai",
+    "src/docs",
     "src/presets",
     "src/templates"
   ],

@@ -1,9 +1,9 @@
 import { Command } from 'commander'
 import pc from 'picocolors'
-import { ProjectScanner } from '../../core/scanner/project-scanner.js'
-import { FileGenerator } from '../../core/generator/file-generator.js'
-import { loadPreset } from '../../core/preset-loader.js'
-import { getGForgeRoot } from '../../utils/paths.js'
+import { ProjectScanner } from '../scanner/project-scanner.js'
+import { FileGenerator } from '../generator/file-generator.js'
+import { loadPreset } from '../preset-loader.js'
+import { getGForgeRoot } from '../paths.js'
 
 interface InitOptions {
   preset?: string

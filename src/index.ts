@@ -11,3 +11,6 @@ export { ConfigMigrator } from './core/migrator/config-migrator.js'
 
 export { loadPreset } from './core/preset-loader.js'
 export type { Preset } from './core/preset-loader.js'
+
+export { resolveVariables } from './core/variables.js'
+export { getGForgeRoot } from './core/paths.js'

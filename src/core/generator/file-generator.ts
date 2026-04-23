@@ -1,6 +1,6 @@
 import { readFile, writeFile, mkdir, access, readdir, stat } from 'node:fs/promises'
 import { join, relative, dirname } from 'node:path'
-import { resolveVariables } from '../../utils/variables.js'
+import { resolveVariables } from '../variables.js'
 import type { Preset } from '../preset-loader.js'
 import type { ScanResult } from '../scanner/project-scanner.js'
 
@@ -108,61 +108,50 @@ export class FileGenerator {
   }
 
   private async collectFiles(options: GenerateOptions): Promise<FileEntry[]> {
-    const files: FileEntry[] = []
     const { gforgeRoot } = options
+    const files: FileEntry[] = []
 
     // 1. 渲染模板文件
-    const templatesDir = join(gforgeRoot, 'src', 'templates')
-    const templateFiles = await this.readDirSafe(templatesDir)
+    files.push(...await this.collectFromDir(join(gforgeRoot, 'src', 'templates'), '', '.template.md'))
 
-    for (const file of templateFiles) {
-      if (!file.endsWith('.template.md')) continue
-      const content = await readFile(join(templatesDir, file), 'utf-8')
-      const outputName = file.replace('.template.md', '.md')
-      files.push({ outputPath: outputName, content })
-    }
+    // 2. 渲染文档模板
+    files.push(...await this.collectFromDir(join(gforgeRoot, 'src', 'docs'), 'docs', '.template.md'))
 
-    // 2. 复制规范文件到 .claude/
+    // 3. 复制规范文件到 .claude/
     const coreMapping: Array<[string, string]> = [
-      ['src/content/rules', '.claude/rules'],
-      ['src/content/protocols', '.claude/protocols'],
-      ['src/content/guardrails', '.claude/guardrails'],
+      ['src/ai/rules', '.claude/rules'],
+      ['src/ai/protocols', '.claude/protocols'],
+      ['src/ai/guardrails', '.claude/guardrails'],
     ]
-
     for (const [srcRel, destRel] of coreMapping) {
-      const srcDir = join(gforgeRoot, srcRel)
-      const srcFiles = await this.readDirSafe(srcDir)
-
-      for (const file of srcFiles) {
-        if (!file.endsWith('.md')) continue
-        const content = await readFile(join(srcDir, file), 'utf-8')
-        files.push({ outputPath: `${destRel}/${file}`, content })
-      }
+      files.push(...await this.collectFromDir(join(gforgeRoot, srcRel), destRel))
     }
 
-    // 3. 复制 prompts 到目标
-    const promptsDir = join(gforgeRoot, 'src', 'content', 'prompts')
-    const promptFiles = await this.readDirSafe(promptsDir)
+    // 4. 复制 prompts 到目标
+    files.push(...await this.collectFromDir(join(gforgeRoot, 'src', 'ai', 'prompts'), '.claude/prompts'))
 
-    for (const file of promptFiles) {
-      if (!file.endsWith('.md')) continue
-      const content = await readFile(join(promptsDir, file), 'utf-8')
-      files.push({ outputPath: `.claude/prompts/${file}`, content })
-    }
-
-    // 4. 复制预设特定规则
+    // 5. 复制预设特定规则
     if (options.preset) {
       const presetRulesDir = join(gforgeRoot, 'src', 'presets', options.preset.name, 'rules')
-      const presetRuleFiles = await this.readDirSafe(presetRulesDir)
-
-      for (const file of presetRuleFiles) {
-        if (!file.endsWith('.md')) continue
-        const content = await readFile(join(presetRulesDir, file), 'utf-8')
-        files.push({ outputPath: `.claude/rules/${file}`, content })
-      }
+      files.push(...await this.collectFromDir(presetRulesDir, '.claude/rules'))
     }
 
     return files
+  }
+
+  private async collectFromDir(srcDir: string, destPrefix: string, ext = '.md'): Promise<FileEntry[]> {
+    const srcFiles = await this.readDirSafe(srcDir)
+    const isTemplate = ext === '.template.md'
+    return Promise.all(
+      srcFiles
+        .filter((f) => f.endsWith(ext))
+        .map(async (file) => {
+          const content = await readFile(join(srcDir, file), 'utf-8')
+          const outputName = isTemplate ? file.replace('.template.md', '.md') : file
+          const outputPath = destPrefix ? `${destPrefix}/${outputName}` : outputName
+          return { outputPath, content }
+        }),
+    )
   }
 
   private async readDirSafe(dirPath: string): Promise<string[]> {

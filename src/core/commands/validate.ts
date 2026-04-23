@@ -1,7 +1,7 @@
 import { Command } from 'commander'
 import pc from 'picocolors'
-import { RuleValidator } from '../../core/validator/rule-validator.js'
-import type { ValidateOptions } from '../../core/validator/rule-validator.js'
+import { RuleValidator } from '../validator/rule-validator.js'
+import type { ValidateOptions } from '../validator/rule-validator.js'
 
 interface CliValidateOptions {
   fix?: boolean
