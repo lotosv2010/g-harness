@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+out/
+.next/
+.nuxt/
+.output/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Test
+coverage/
+.vitest/
+
+# Turbo
+.turbo/
+
+# Cache
+.cache/
+.eslintcache
+
+# Local Claude Code overrides
+.claude/settings.local.json
+
+# Temporary files
+*.tmp
+*.bak
