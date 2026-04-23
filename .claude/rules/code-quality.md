@@ -1,7 +1,7 @@
 # 代码质量硬性规则（g-forge 项目自身）
 
 > 开发 g-forge CLI 和框架代码时必须遵守的规则。
-> 目标项目的代码质量规则见 `core/rules/code-quality.md`。
+> 目标项目的代码质量规则见 `src/content/rules/code-quality.md`。
 
 ---
 

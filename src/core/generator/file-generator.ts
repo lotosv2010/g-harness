@@ -112,7 +112,7 @@ export class FileGenerator {
     const { gforgeRoot } = options
 
     // 1. 渲染模板文件
-    const templatesDir = join(gforgeRoot, 'templates')
+    const templatesDir = join(gforgeRoot, 'src', 'templates')
     const templateFiles = await this.readDirSafe(templatesDir)
 
     for (const file of templateFiles) {
@@ -122,11 +122,11 @@ export class FileGenerator {
       files.push({ outputPath: outputName, content })
     }
 
-    // 2. 复制 core/ 规范文件到 .claude/
+    // 2. 复制规范文件到 .claude/
     const coreMapping: Array<[string, string]> = [
-      ['core/rules', '.claude/rules'],
-      ['core/protocols', '.claude/protocols'],
-      ['core/guardrails', '.claude/guardrails'],
+      ['src/content/rules', '.claude/rules'],
+      ['src/content/protocols', '.claude/protocols'],
+      ['src/content/guardrails', '.claude/guardrails'],
     ]
 
     for (const [srcRel, destRel] of coreMapping) {
@@ -140,8 +140,8 @@ export class FileGenerator {
       }
     }
 
-    // 3. 复制 core/prompts/ 到目标
-    const promptsDir = join(gforgeRoot, 'core/prompts')
+    // 3. 复制 prompts 到目标
+    const promptsDir = join(gforgeRoot, 'src', 'content', 'prompts')
     const promptFiles = await this.readDirSafe(promptsDir)
 
     for (const file of promptFiles) {
@@ -152,7 +152,7 @@ export class FileGenerator {
 
     // 4. 复制预设特定规则
     if (options.preset) {
-      const presetRulesDir = join(gforgeRoot, 'presets', options.preset.name, 'rules')
+      const presetRulesDir = join(gforgeRoot, 'src', 'presets', options.preset.name, 'rules')
       const presetRuleFiles = await this.readDirSafe(presetRulesDir)
 
       for (const file of presetRuleFiles) {

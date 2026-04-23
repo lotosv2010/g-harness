@@ -35,8 +35,8 @@ gforge init [options]
 
 处理：
   1. Scanner 扫描目标项目
-  2. 加载预设（presets/<name>/preset.json）
-  3. 加载模板（templates/*.template.md）+ 通用规范（core/）
+  2. 加载预设（src/presets/<name>/preset.json）
+  3. 加载模板（src/templates/*.template.md）+ 通用规范（src/content/）
   4. Generator 渲染模板（{{variable}} → 预设变量值）
 
 输出：

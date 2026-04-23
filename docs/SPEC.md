@@ -154,7 +154,7 @@ G-Forge 是一套**面向 AI 编程助手优化的通用工程化规范框架 + 
 
 **预设结构：**
 ```
-presets/<name>/
+src/presets/<name>/
 ├── preset.json       # 元数据（名称、描述、变量、命令、代码风格）
 ├── rules/            # 技术栈特定规则
 └── skills/           # 技术栈特定技能（可选）

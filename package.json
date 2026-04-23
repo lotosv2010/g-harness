@@ -16,9 +16,9 @@
   },
   "files": [
     "dist",
-    "core",
-    "presets",
-    "templates"
+    "src/content",
+    "src/presets",
+    "src/templates"
   ],
   "scripts": {
     "build": "tsc",

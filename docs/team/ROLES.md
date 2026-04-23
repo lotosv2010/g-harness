@@ -1,7 +1,7 @@
 # 角色分工与模块归属（g-forge 项目）
 
 > 定义 g-forge 项目团队的职责范围和模块归属。
-> 目标项目的角色模板见 `templates/ROLES.template.md`。
+> 目标项目的角色模板见 `src/templates/ROLES.template.md`。
 
 ---
 
@@ -13,15 +13,15 @@
 
 ### 核心开发（Core Dev）
 - **职责**：CLI 工具开发、核心规范维护
-- **归属模块**：`src/`、`core/`
+- **归属模块**：`src/`
 
 ### 预设维护（Preset Maintainer）
 - **职责**：技术栈预设开发与维护
-- **归属模块**：`presets/`
+- **归属模块**：`src/presets/`
 
 ### 文档维护（Doc Maintainer）
 - **职责**：文档更新、ADR 管理
-- **归属模块**：`docs/`、`templates/`
+- **归属模块**：`docs/`、`src/templates/`
 
 ---
 
@@ -31,14 +31,14 @@
 |----------|----------|----------|
 | `CLAUDE.md` / `AGENTS.md` | 项目负责人 | 需审批 |
 | `.claude/rules/` | 项目负责人 | 需审批 |
-| `core/rules/` | 项目负责人 | 需审批 |
-| `core/protocols/` | 核心开发 | 需审批 |
+| `src/content/rules/` | 项目负责人 | 需审批 |
+| `src/content/protocols/` | 核心开发 | 需审批 |
 | `src/` | 核心开发 | 需审批 |
-| `presets/` | 预设维护 | 需审批 |
-| `templates/` | 核心开发 | 需审批 |
+| `src/presets/` | 预设维护 | 需审批 |
+| `src/templates/` | 核心开发 | 需审批 |
 | `docs/` | 文档维护 | 自审 |
 | `docs/decisions/` | 项目负责人 | 需审批 |
-| `scripts/` | 核心开发 | 自审 |
+| `tools/` | 核心开发 | 自审 |
 | `tests/` | 对应模块开发 | 需审批 |
 
 ---

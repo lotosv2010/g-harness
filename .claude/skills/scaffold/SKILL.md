@@ -20,8 +20,8 @@ arguments:
 /scaffold cli <command-name>      # 新增 CLI 命令
 /scaffold module <name>           # 新增 src/core/ 模块
 /scaffold preset <name>           # 新增技术栈预设
-/scaffold rule <id>               # 新增 core/ 规则文件
-/scaffold protocol <name>         # 新增 core/ 协议文件
+/scaffold rule <id>               # 新增规则文件
+/scaffold protocol <name>         # 新增协议文件
 ```
 
 ## 支持的模块类型
@@ -48,7 +48,7 @@ $name/
 
 ### preset（技术栈预设）
 
-生成路径：`presets/$name/`
+生成路径：`src/presets/$name/`
 
 ```
 $name/
@@ -58,7 +58,7 @@ $name/
 
 ### rule（规则文件）
 
-生成路径：`core/rules/`
+生成路径：`src/content/rules/`
 
 ```
 $name.md                   # 规则定义（参数化模板）
@@ -66,7 +66,7 @@ $name.md                   # 规则定义（参数化模板）
 
 ### protocol（协议文件）
 
-生成路径：`core/protocols/`
+生成路径：`src/content/protocols/`
 
 ```
 $name.md                   # 协议定义
@@ -87,4 +87,4 @@ $name.md                   # 协议定义
 - 遵循 `.claude/rules/` 所有硬性规则
 - 使用命名导出，禁止 `export default`
 - 禁止 `export *`
-- `core/` 中的规则和协议必须技术栈无关
+- `src/content/` 中的规则和协议必须技术栈无关

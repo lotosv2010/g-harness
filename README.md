@@ -39,28 +39,40 @@ G-Forge 是一套**面向 AI 编程助手优化的通用工程化规范框架**�
 
 ```
 g-forge/
-├── src/                       # CLI 工具源码
-│   ├── cli/                   # 命令入口（init, validate, context, migrate）
-│   ├── core/                  # 核心逻辑（scanner, generator, validator, migrator）
-│   └── utils/                 # 通用工具函数
-│
-├── core/                      # 框架核心规范（技术栈无关）
-│   ├── rules/                 # 规则定义（安全、代码质量、架构）
-│   ├── protocols/             # 执行协议（功能开发、Bug 修复、重构、审查）
-│   ├── prompts/               # Prompt 模板
-│   └── guardrails/            # 护栏定义
-│
-├── presets/                   # 技术栈预设
-│   ├── react-vite/            # React + Vite 预设
-│   └── _template/             # 预设创建模板
-│
-├── templates/                 # 通用文件模板（CLI 渲染后输出）
-├── docs/                      # 框架文档
-├── tests/                     # 测试
-│
-├── CLAUDE.md                  # Claude Code 配置
 ├── AGENTS.md                  # 通用 AI 开发规范
-└── README.md                  # 本文件
+├── CLAUDE.md                  # Claude Code 专用配置
+├── README.md                  # 本文件
+│
+├── docs/                      # 约束与规格层
+│   ├── SPEC.md                # 产品说明书 + 需求规格说明书
+│   ├── ARCHITECTURE.md        # 架构白皮书
+│   ├── DESIGN.md              # 技术 / UI 设计
+│   ├── API.md                 # API 契约定义
+│   ├── DATA_MODEL.md          # 数据模型规格
+│   ├── decisions/             # 架构决策记录（ADR）
+│   ├── runbooks/              # 运维操作手册
+│   ├── team/                  # 角色与分工
+│   └── tasks/                 # 任务看板
+│
+├── .claude/                   # Claude 行为控制层
+│   ├── rules/                 # 硬性规则
+│   ├── protocols/             # 任务执行协议
+│   ├── skills/                # 可复用能力模板
+│   └── guardrails/            # 自动约束检查
+│
+├── tools/                     # 工具层
+│   ├── prompts/               # AI 开发流程 Prompt 模板
+│   └── scripts/               # 自动化脚本
+│
+├── tests/                     # 全局测试
+│
+└── src/                       # 全部业务代码
+    ├── cli/                   # CLI 命令入口
+    ├── core/                  # 核心逻辑模块
+    ├── utils/                 # 通用工具函数
+    ├── content/               # 可分发的框架规范内容
+    ├── presets/               # 技术栈预设
+    └── templates/             # 通用文件模板
 ```
 
 ## 快速开始

@@ -20,16 +20,16 @@ agent: Explore
 ```
 /analyze                     # 全项目分析
 /analyze src/core             # 分析 CLI 核心模块
-/analyze core/rules           # 分析规范规则
+/analyze src/content/rules    # 分析规范规则
 ```
 
 ## 分析维度
 
 ### 1. 目录职责边界（权重 30%）
 - 检查 `src/` 是否只包含代码文件
-- 检查 `core/` 是否只包含规范文件（无代码逻辑）
-- 检查 `core/` 中的文件是否技术栈无关（无硬编码框架引用）
-- 检查 `presets/` 中各预设是否自包含（有 preset.json）
+- 检查 `src/content/` 是否只包含规范文件（无代码逻辑）
+- 检查 `src/content/` 中的文件是否技术栈无关（无硬编码框架引用）
+- 检查 `src/presets/` 中各预设是否自包含（有 preset.json）
 - 检查模块依赖方向是否合规
 
 ### 2. 代码复杂度（权重 20%）

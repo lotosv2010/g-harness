@@ -27,7 +27,7 @@ G-Forge 最初设计为 Monorepo（packages/web, server, ai, shared），但经�
 
 ## 决策
 
-采用单包结构：`src/`（CLI 代码）+ `core/`（规范文件）+ `presets/`（技术栈预设）+ `templates/`（文件模板）。
+采用单包结构，全部业务代码收纳于 `src/`：`src/cli`（CLI）+ `src/core`（核心逻辑）+ `src/content`（规范文件）+ `src/presets`（预设）+ `src/templates`（模板）。
 
 ## 备选方案
 
@@ -51,6 +51,6 @@ G-Forge 最初设计为 Monorepo（packages/web, server, ai, shared），但经�
 
 ## AI 指引
 
-- 代码放 `src/`，规范放 `core/`，技术栈特定内容放 `presets/`
-- 禁止在 `core/` 中放代码逻辑
-- 禁止在 `src/` 中放规范内容
+- 代码逻辑放 `src/cli`、`src/core`、`src/utils`
+- 规范内容放 `src/content/`，技术栈特定内容放 `src/presets/`
+- 禁止在 `src/content/` 中放代码逻辑

@@ -4,7 +4,7 @@
 > 与具体 AI 工具无关，是团队与 AI 协作的基础契约。
 > 
 > 注意：本文件为开发 g-forge 项目本身的规范。
-> 目标项目的通用规范模板见 `templates/AGENTS.template.md`。
+> 目标项目的通用规范模板见 `src/templates/AGENTS.template.md`。
 
 ---
 
@@ -67,11 +67,12 @@ g-forge 项目的目录职责：
 
 | 目录 | 职责 | 允许的内容 |
 |------|------|-----------|
-| `src/` | CLI 工具代码 | TypeScript 源码 |
-| `core/` | 通用规范 | Markdown 规范文件（技术栈无关） |
-| `presets/` | 技术栈预设 | preset.json + 栈特定规范 |
-| `templates/` | 文件模板 | `*.template.md` 模板 |
+| `src/` | 全部业务代码 | CLI 源码 + content + presets + templates |
+| `src/content/` | 通用规范 | Markdown 规范文件（技术栈无关） |
+| `src/presets/` | 技术栈预设 | preset.json + 栈特定规范 |
+| `src/templates/` | 文件模板 | `*.template.md` 模板 |
 | `.claude/` | Claude Code 配置 | 开发 g-forge 自身的规则/协议 |
+| `tools/` | 工具层 | Prompt 模板 + 自动化脚本 |
 
 ---
 
@@ -80,14 +81,16 @@ g-forge 项目的目录职责：
 ### 3.1 目录职责分离
 
 ```
-src/     ← 只放代码逻辑，不放规范内容
-core/    ← 只放通用规范，不放代码和技术栈特定内容
-presets/ ← 只放技术栈特定内容，不依赖其他预设
+src/cli        ← CLI 命令入口
+src/core       ← 核心逻辑模块
+src/content    ← 只放通用规范，不放代码和技术栈特定内容
+src/presets    ← 只放技术栈特定内容，不依赖其他预设
+src/templates  ← 只放文件模板
 ```
 
-### 3.2 core/ 技术栈无关
+### 3.2 src/content/ 技术栈无关
 
-core/ 中的文件禁止引用特定框架或工具，使用 `{{variable}}` 占位符。
+src/content/ 中的文件禁止引用特定框架或工具，使用 `{{variable}}` 占位符。
 
 ### 3.3 模块依赖方向
 
@@ -154,5 +157,5 @@ fix/*         ← 修复分支
 - 注释语言：中文
 - 只注释"为什么"，不注释"是什么"
 - 代码变更涉及架构时，必须同步更新 `docs/ARCHITECTURE.md`
-- 新增 API → 更新 `docs/API_SPEC.md`
+- 新增 API → 更新 `docs/API.md`
 - 架构决策 → 新增 `docs/decisions/` ADR

@@ -62,6 +62,6 @@
 
 如果变更涉及以下内容，必须同步更新文档：
 - 新增模块 → 更新 `docs/ARCHITECTURE.md` 模块部分
-- 新增 API → 更新 `docs/API_SPEC.md`
+- 新增 API → 更新 `docs/API.md`
 - 数据模型变更 → 更新 `docs/DATA_MODEL.md`
 - 架构级决策 → 新增 ADR

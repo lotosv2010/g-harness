@@ -1,6 +1,6 @@
 # React 特定规则
 
-> 适用于 React + Vite 项目的额外规则，补充 core/rules/ 中的通用规则。
+> 适用于 React + Vite 项目的额外规则，补充 src/content/rules/ 中的通用规则。
 
 ---
 

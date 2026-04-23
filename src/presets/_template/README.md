@@ -7,10 +7,10 @@
 ## 预设目录结构
 
 ```
-presets/<preset-name>/
+src/presets/<preset-name>/
 ├── preset.json              # 预设元数据（名称、描述、技术栈、变量值）
 ├── CLAUDE.template.md       # 覆盖基础 CLAUDE.md 模板的栈特定内容
-├── rules/                   # 栈特定规则（补充 core/rules/）
+├── rules/                   # 栈特定规则（补充 src/content/rules/）
 │   └── *.md
 └── skills/                  # 栈特定技能
     └── *.md

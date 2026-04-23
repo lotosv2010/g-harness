@@ -15,7 +15,7 @@ export async function loadPreset(
   presetName: string,
 ): Promise<Preset | null> {
   try {
-    const presetPath = join(gforgeRoot, 'presets', presetName, 'preset.json')
+    const presetPath = join(gforgeRoot, 'src', 'presets', presetName, 'preset.json')
     const content = await readFile(presetPath, 'utf-8')
     return JSON.parse(content) as Preset
   } catch {

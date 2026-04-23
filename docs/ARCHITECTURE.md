@@ -29,29 +29,27 @@ G-Forge 通过五层结构将规范应用到目标项目：
 
 ```
 g-forge/
-├── src/                    # CLI 工具源码
-│   ├── cli/                # 命令入口
-│   ├── core/               # 核心逻辑模块
-│   │   ├── scanner/        # 项目扫描与技术栈检测
-│   │   ├── generator/      # 模板渲染与文件生成
-│   │   ├── validator/      # 规范校验引擎
-│   │   └── migrator/       # 规范版本迁移
-│   └── utils/              # 通用工具函数
+├── AGENTS.md / CLAUDE.md / README.md
+├── docs/                      # 约束与规格层
+├── .claude/                   # Claude 行为控制层
+├── tools/                     # 工具层（prompts / scripts）
+├── tests/                     # 全局测试
 │
-├── core/                   # 框架核心规范（技术栈无关）
-│   ├── rules/              # 规则定义
-│   ├── protocols/          # 执行协议
-│   ├── prompts/            # Prompt 模板
-│   └── guardrails/         # 护栏定义
-│
-├── presets/                # 技术栈特定预设
-│   ├── react-vite/         # React + Vite 预设
-│   └── _template/          # 预设创建模板
-│
-├── templates/              # 通用文件模板（CLI 渲染后输出）
-├── docs/                   # 框架文档
-├── tests/                  # 测试
-└── .claude/                # Claude Code 行为控制（开发 g-forge 用）
+└── src/                       # 全部业务代码
+    ├── cli/                   # CLI 命令入口
+    ├── core/                  # 核心逻辑模块
+    │   ├── scanner/           # 项目扫描与技术栈检测
+    │   ├── generator/         # 模板渲染与文件生成
+    │   ├── validator/         # 规范校验引擎
+    │   └── migrator/          # 规范版本迁移
+    ├── utils/                 # 通用工具函数
+    ├── content/               # 可分发的框架规范内容（技术栈无关）
+    │   ├── rules/             # 规则定义
+    │   ├── protocols/         # 执行协议
+    │   ├── prompts/           # Prompt 模板
+    │   └── guardrails/        # 护栏定义
+    ├── presets/               # 技术栈特定预设
+    └── templates/             # 通用文件模板（CLI 渲染后输出）
 ```
 
 ## 2. 技术栈（g-forge 自身）
@@ -64,7 +62,7 @@ g-forge/
 | 测试 | Vitest | 速度快、TypeScript 原生支持 |
 | Lint | ESLint 9 (flat config) | 新标准，可扩展 |
 | 格式化 | Prettier | 团队一致性 |
-| CLI 框架 | citty 或 commander | 轻量、TypeScript 友好 |
+| CLI 框架 | commander | 轻量、TypeScript 友好 |
 | 模板引擎 | 自研变量替换 | `{{variable}}` 简单替换，避免重依赖 |
 | YAML 解析 | yaml (npm) | YAML 1.2 完整支持 |
 
@@ -122,35 +120,35 @@ migrator/
 输入：目标目录、源版本、目标版本
 输出：`MigrateResult`（已迁移文件、需手动处理的文件）
 
-### 3.5 core/ — 框架核心规范
+### 3.5 src/content/ — 框架核心规范
 
 存放技术栈无关的规范文件，由 CLI 工具读取并应用到目标项目。
 
 ```
-core/
+src/content/
 ├── rules/                 # 通用规则（安全、代码质量、架构模板）
 ├── protocols/             # 执行协议（功能开发、Bug 修复、重构、审查）
 ├── prompts/               # Prompt 模板（Bug 报告、代码审查、功能开发、重构）
 └── guardrails/            # 护栏定义（边界检查、提交前检查）
 ```
 
-### 3.6 presets/ — 技术栈预设
+### 3.6 src/presets/ — 技术栈预设
 
-每个预设补充 core/ 的通用规范，提供技术栈特定的规则、技能和模板。
+每个预设补充通用规范，提供技术栈特定的规则、技能和模板。
 
 ```
-presets/<name>/
+src/presets/<name>/
 ├── preset.json            # 预设元数据（技术栈、变量值、命令）
 ├── rules/                 # 栈特定规则
 └── skills/                # 栈特定技能
 ```
 
-### 3.7 templates/ — 文件模板
+### 3.7 src/templates/ — 文件模板
 
 CLI `init` 命令读取模板，结合预设变量渲染后输出到目标项目。
 
 ```
-templates/
+src/templates/
 ├── CLAUDE.template.md     # 基础 CLAUDE.md 模板
 ├── AGENTS.template.md     # 基础 AGENTS.md 模板
 ├── ROLES.template.md      # 团队角色模板
@@ -171,9 +169,9 @@ templates/
    （检测技术栈、目录结构、现有配置）
          │
          ▼
-   加载预设（presets/react-vite/preset.json）
-   加载模板（templates/*.template.md）
-   加载规范（core/rules/*.md）
+   加载预设（src/presets/react-vite/preset.json）
+   加载模板（src/templates/*.template.md）
+   加载规范（src/content/rules/*.md）
          │
          ▼
    Generator 渲染模板
@@ -211,7 +209,7 @@ CLI 是纯本地工具，不需要服务端。
 | ADR-001 | 单包结构 + CLI-first | 框架定位是规范工具，不需要 monorepo |
 | ADR-002 | YAML 作为规则定义格式 | 人和 AI 都可读写，比 JSON 更易维护 |
 | ADR-003 | 自研变量替换替代 Handlebars | `{{var}}` 足够简单，避免引入重依赖 |
-| ADR-004 | core/ 与 presets/ 分离 | 通用规范技术栈无关，预设补充特定规则 |
+| ADR-004 | content/ 与 presets/ 分离 | 通用规范技术栈无关，预设补充特定规则 |
 | ADR-005 | 预设系统（Presets） | 不同框架开箱即用，减少配置成本 |
 
 详细 ADR 记录见 `docs/decisions/` 目录。

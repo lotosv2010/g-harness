@@ -57,7 +57,7 @@ interface Preset {
 }
 ```
 
-对应文件：`presets/<name>/preset.json`
+对应文件：`src/presets/<name>/preset.json`
 
 ---
 
@@ -163,7 +163,7 @@ gforge init --preset react-vite
    Scanner.scan(targetDir)
          │ → ScanResult
          ▼
-   加载 Preset（presets/react-vite/preset.json）
+   加载 Preset（src/presets/react-vite/preset.json）
          │ → Preset
          ▼
    Generator.generate({ preset, targetDir, variables })
