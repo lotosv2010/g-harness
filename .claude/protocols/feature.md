@@ -8,7 +8,7 @@
 
 **必做：**
 1. 阅读 `docs/tasks/CURRENT.md` 确认当前上下文
-2. 阅读 `docs/PRODUCT.md` 确认功能在范围内
+2. 阅读 `docs/SPEC.md` 确认功能在范围内
 3. 阅读 `docs/ARCHITECTURE.md` 确认技术约束
 4. 阅读目标目录的 `CLAUDE.md`（如存在）
 5. 检查 `docs/decisions/` 中是否有相关 ADR

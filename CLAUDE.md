@@ -131,7 +131,7 @@ pnpm typecheck        # 类型检查
 ## 引用文件
 
 - 通用规范：`AGENTS.md`
-- 产品范围：`docs/PRODUCT.md`
+- 产品与需求规格：`docs/SPEC.md`
 - 架构说明：`docs/ARCHITECTURE.md`
 - API 规格：`docs/API_SPEC.md`
 - 数据模型：`docs/DATA_MODEL.md`

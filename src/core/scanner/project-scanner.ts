@@ -1,5 +1,12 @@
 import { readFile, access, readdir } from 'node:fs/promises'
 import { join } from 'node:path'
+import {
+  detectLanguage,
+  detectFramework,
+  detectBuildTool,
+  detectTestRunner,
+} from './detect-tech.js'
+import type { PackageJson } from './detect-tech.js'
 
 export interface ScanResult {
   techStack: TechStack
@@ -45,64 +52,13 @@ export class ProjectScanner {
     const pkg = await this.readPackageJson(rootDir)
 
     return {
-      language: this.detectLanguage(rootDir, pkg),
+      language: detectLanguage(pkg),
       runtime: pkg ? 'Node.js' : null,
-      framework: this.detectFramework(pkg),
-      buildTool: this.detectBuildTool(pkg),
-      testRunner: this.detectTestRunner(pkg),
+      framework: detectFramework(pkg),
+      buildTool: detectBuildTool(pkg),
+      testRunner: detectTestRunner(pkg),
       packageManager: await this.detectPackageManager(rootDir),
     }
-  }
-
-  private detectLanguage(_rootDir: string, pkg: PackageJson | null): string | null {
-    if (!pkg) return null
-    const allDeps = { ...pkg.dependencies, ...pkg.devDependencies }
-    if ('typescript' in allDeps) return 'TypeScript'
-    return 'JavaScript'
-  }
-
-  private detectFramework(pkg: PackageJson | null): string | null {
-    if (!pkg) return null
-    const allDeps = { ...pkg.dependencies, ...pkg.devDependencies }
-
-    const frameworks: Array<[string, string]> = [
-      ['next', 'Next.js'],
-      ['nuxt', 'Nuxt'],
-      ['react', 'React'],
-      ['vue', 'Vue'],
-      ['@angular/core', 'Angular'],
-      ['svelte', 'Svelte'],
-      ['express', 'Express'],
-      ['hono', 'Hono'],
-      ['fastify', 'Fastify'],
-    ]
-
-    for (const [dep, name] of frameworks) {
-      if (dep in allDeps) return name
-    }
-    return null
-  }
-
-  private detectBuildTool(pkg: PackageJson | null): string | null {
-    if (!pkg) return null
-    const allDeps = { ...pkg.dependencies, ...pkg.devDependencies }
-
-    if ('vite' in allDeps) return 'Vite'
-    if ('webpack' in allDeps) return 'Webpack'
-    if ('esbuild' in allDeps) return 'esbuild'
-    if ('rollup' in allDeps) return 'Rollup'
-    if ('next' in allDeps) return 'Next.js (built-in)'
-    return null
-  }
-
-  private detectTestRunner(pkg: PackageJson | null): string | null {
-    if (!pkg) return null
-    const allDeps = { ...pkg.dependencies, ...pkg.devDependencies }
-
-    if ('vitest' in allDeps) return 'Vitest'
-    if ('jest' in allDeps) return 'Jest'
-    if ('mocha' in allDeps) return 'Mocha'
-    return null
   }
 
   private async detectPackageManager(rootDir: string): Promise<string | null> {
@@ -207,11 +163,4 @@ export class ProjectScanner {
       return false
     }
   }
-}
-
-interface PackageJson {
-  name?: string
-  dependencies?: Record<string, string>
-  devDependencies?: Record<string, string>
-  workspaces?: string[]
 }

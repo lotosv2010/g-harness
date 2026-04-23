@@ -88,7 +88,7 @@ export class RuleValidator {
     const files: string[] = []
     const extensions = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs'])
     const ignoreDirs = new Set([
-      'node_modules', 'dist', '.git', '.next', '.nuxt', '.output', 'coverage',
+      'node_modules', 'dist', '.git', '.next', '.nuxt', '.output', 'coverage', '__fixtures__',
     ])
 
     const walk = async (dir: string): Promise<void> => {
@@ -106,6 +106,7 @@ export class RuleValidator {
         if (entry.isDirectory()) {
           await walk(fullPath)
         } else if (entry.isFile() && extensions.has(extname(entry.name))) {
+          if (this.isExcludedFile(entry.name)) continue
           files.push(relative(rootDir, fullPath))
         }
       }
@@ -113,5 +114,11 @@ export class RuleValidator {
 
     await walk(rootDir)
     return files
+  }
+
+  private isExcludedFile(name: string): boolean {
+    if (name.includes('.test.') || name.includes('.spec.')) return true
+    const configPatterns = ['vitest.config', 'eslint.config', 'jest.config', 'prettier.config']
+    return configPatterns.some((p) => name.startsWith(p))
   }
 }
