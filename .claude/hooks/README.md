@@ -9,18 +9,17 @@
 
 | 事件 | 触发时机 | 用途 |
 |------|----------|------|
-| `UserPromptSubmit` | 用户提交提示词后 | 注入上下文、校验指令 |
-| `PostToolUse` | AI 使用工具后 | 校验文件写入、检查边界 |
-| `PreCommit` | 提交前 | 完整校验 |
+| `PreToolUse` | 工具调用前 | 拦截危险操作、注入约束 |
+| `PostToolUse` | 工具调用后 | 校验文件写入、检查边界 |
 | `Notification` | 通知事件 | 状态反馈 |
+| `Stop` | Claude 停止响应时 | 自动总结、触发后续流程 |
 
 ## 钩子文件命名
 
 ```
 hooks/
-├── prompt-enhancer.mjs       # UserPromptSubmit — 提示词增强
 ├── post-write-validate.mjs   # PostToolUse(Write|Edit) — 写入校验
-└── pre-commit-check.mjs      # PreCommit — 提交前检查
+└── pre-tool-check.mjs        # PreToolUse — 工具调用前检查
 ```
 
 ## 注册方式
@@ -30,12 +29,6 @@ hooks/
 ```json
 {
   "hooks": {
-    "UserPromptSubmit": [
-      {
-        "command": "node .claude/hooks/prompt-enhancer.mjs",
-        "description": "向提示词注入项目上下文"
-      }
-    ],
     "PostToolUse": [
       {
         "matcher": "Write|Edit",

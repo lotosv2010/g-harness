@@ -1,7 +1,7 @@
 # 角色分工与模块归属（g-forge 项目）
 
 > 定义 g-forge 项目团队的职责范围和模块归属。
-> 目标项目的角色模板见 `src/templates/ROLES.template.md`。
+> 目标项目的角色模板见 `src/templates/docs/team/ROLES.template.md`。
 
 ---
 

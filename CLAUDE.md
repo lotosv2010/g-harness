@@ -61,7 +61,7 @@ g-forge/
 │   ├── rules/                 # 硬性规则
 │   ├── protocols/             # 任务执行协议
 │   ├── skills/                # 可复用能力模板
-│   ├── memory/                # 项目长期记忆
+│   ├── prompts/               # AI 开发 Prompt
 │   ├── guardrails/            # 自动约束检查
 │   └── hooks/                 # 事件钩子
 │
