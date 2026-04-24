@@ -1,14 +1,26 @@
 ---
 name: analyze
 description: 分析项目架构健康度，检查模块边界、代码复杂度、测试覆盖、依赖健康和文档同步状态。
-when_to_use: 分析架构, 检查结构, 项目健康度, 模块边界检查, 依赖分析
-user-invocable: true
-allowed-tools: "Read Glob Grep Bash(wc *) Bash(find *)"
-argument-hint: "[scope]"
+triggers:
+  - 分析架构
+  - 检查结构
+  - 项目健康度
+  - 模块边界检查
+  - 依赖分析
+invocable: true
 arguments:
-  - scope
-context: fork
-agent: Explore
+  - name: scope
+    hint: "[scope]"
+    required: false
+capabilities:
+  - read
+  - search
+  - execute
+extensions:
+  claude:
+    allowed-tools: "Read Glob Grep Bash(wc *) Bash(find *)"
+    context: fork
+    agent: Explore
 ---
 
 # 架构分析

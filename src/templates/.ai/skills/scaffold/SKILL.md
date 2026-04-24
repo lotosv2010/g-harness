@@ -1,13 +1,28 @@
 ---
 name: scaffold
 description: 按照项目约定快速生成代码模块脚手架。当用户请求"创建组件"、"新增模块"时使用。
-when_to_use: 创建组件, 新增模块, 生成 Hook, 添加 API, 新增功能模块, 脚手架
-user-invocable: true
-allowed-tools: Read Write Edit Glob Grep
-argument-hint: "[type] [name]"
+triggers:
+  - 创建组件
+  - 新增模块
+  - 生成 Hook
+  - 添加 API
+  - 新增功能模块
+  - 脚手架
+invocable: true
 arguments:
-  - type
-  - name
+  - name: type
+    hint: "module | component | hook | api | page"
+    required: true
+  - name: name
+    hint: "<name>"
+    required: true
+capabilities:
+  - read
+  - write
+  - search
+extensions:
+  claude:
+    allowed-tools: "Read Write Edit Glob Grep"
 ---
 
 # 脚手架生成

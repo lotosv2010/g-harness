@@ -103,9 +103,10 @@ npx gforge context sync
 
 | 预设 | 状态 |
 |------|------|
-| React + Vite | 开发中 |
-| Vue + Nuxt | 计划中 |
-| Node.js API | 计划中 |
+| React + Vite | 已完成 |
+| Vue + Nuxt | 已完成 |
+| Node.js API | 已完成 |
+| Base（通用） | 已完成 |
 | Python FastAPI | 计划中 |
 
 ## 设计原则

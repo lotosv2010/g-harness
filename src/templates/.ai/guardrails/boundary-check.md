@@ -1,46 +1,41 @@
 # 边界检查守卫
 
 > 定义 AI 编写代码时的自动边界检查规则。
-> 本文件为参数化模板，`{{variable}}` 由目标项目配置填充。
+> 规则配置见 `boundary-rules.json`，由 `post-write-boundary-check.mjs` hook 自动执行。
 
 ---
 
-## 检查项
+## 规则列表
 
-### 1. 模块依赖方向
+| ID | 名称 | 检查内容 |
+|----|------|----------|
+| B001 | 共享模块隔离 | 共享模块（shared/common/lib）不得导入业务模块 |
+| B002 | 功能模块隔离 | 功能模块间不得交叉导入（features/A 不导入 features/B） |
+| B003 | HTTP 调用限制 | 非 API 层不得直接调用 fetch/axios 等 |
 
-当 AI 修改或创建文件时，检查其导入语句：
+## 配置方式
 
-| 源文件位置 | 允许导入 | 禁止导入 |
-|-----------|----------|----------|
-| `{{shared_dir}}/` | 仅第三方依赖 | 业务模块 |
-| `{{core_dir}}/` | shared, 第三方 | app 层 |
-| `{{app_dir}}/` | shared, core, 第三方 | — |
-| `{{feature_dir}}/A/` | shared, api, core | `{{feature_dir}}/B/`（其他功能模块） |
+编辑 `.claude/guardrails/boundary-rules.json` 自定义规则参数：
 
-### 2. 文件位置合规
+```json
+{
+  "rules": [
+    {
+      "id": "B001",
+      "sharedDirs": ["src/shared/", "src/lib/"],
+      "forbiddenImports": ["features", "pages"]
+    }
+  ]
+}
+```
 
-- 组件文件必须在约定的组件目录下
-- 工具/Hook 文件必须在约定的工具目录下
-- API 调用文件必须在约定的 API 层目录下
-- 类型文件必须在约定的类型目录下
+## 执行方式
 
-> 具体目录约定由项目预设定义。
+- **自动**：PostToolUse(Write|Edit) hook 在每次文件写入后触发
+- **手动**：`gforge validate` 全量扫描，`gforge check` 增量扫描
 
-### 3. 命名合规
+## 自定义规则
 
-- 组件文件名：PascalCase
-- 工具/Hook 文件名：camelCase
-- 目录名（功能模块）：kebab-case
-- 测试文件：`{name}.test.{ext}` 或 `{name}.spec.{ext}`
-
-### 4. 禁止模式
-
-在非 API 层文件中检测以下模式：
-- 直接 HTTP 调用（fetch、axios、http.request 等）
-- 直接数据库查询（非 Service 层）
-- 硬编码的外部 URL
-
-## 实现方式
-
-通过 AI 工具的 Hook 机制，在每次写入/编辑文件后自动检查。检查结果反馈给 AI，AI 必须修正违规后才能继续。
+如需添加新的边界规则：
+1. 在 `boundary-rules.json` 中新增规则条目
+2. 在 `post-write-boundary-check.mjs` 中实现对应检查函数

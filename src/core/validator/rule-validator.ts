@@ -38,6 +38,8 @@ export interface Warning {
 export interface ValidateOptions {
   severity?: 'error' | 'warning'
   ruleId?: string
+  /** 指定文件列表时跳过目录扫描，直接校验这些文件 */
+  files?: string[]
 }
 
 type CheckFn = (file: string, lines: string[], violations: Violation[]) => void
@@ -55,7 +57,8 @@ export class RuleValidator {
 
   async validate(targetDir: string, options?: ValidateOptions): Promise<ValidationResult> {
     const violations: Violation[] = []
-    const sourceFiles = await this.collectSourceFiles(targetDir)
+    // 如果提供了显式文件列表，直接使用；否则扫描目录
+    const sourceFiles = options?.files ?? await this.collectSourceFiles(targetDir)
 
     for (const filePath of sourceFiles) {
       const content = await readFile(join(targetDir, filePath), 'utf-8')

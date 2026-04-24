@@ -7,23 +7,9 @@
 
 ## 待办（TODO）
 
-### P1 — 重要
-
-- [ ] **TASK-007**：实现 `gforge context sync/check`
-- [ ] **TASK-008**：实现 `gforge migrate`
-- [ ] **TASK-016**：guardrails 从文档变为代码 — 将 `.claude/guardrails/boundary-check.md` 的检查逻辑实现为可执行的 JS/TS 脚本，hook 调用
-- [ ] **TASK-017**：实现 `gforge check` 轻量级实时校验 — 对比 `validate` 的全量扫描，`check` 只校验当前变更文件（配合 git diff）
-- [ ] **TASK-018**：protocols 可检查化 — 协议改为 checklist 格式，配合 Stop 事件 hook 验证是否遗漏步骤
-- [x] **TASK-019**：docs/ 模板分层为核心 + 可选 — 已随 TASK-013 一并完成
-- [ ] **TASK-020**：实现 `--fix` 自动修复 — validate 基础规则的自动修复能力
-
 ### P2 — 一般
 
-- [ ] **TASK-009**：创建 vue-nuxt 预设
-- [ ] **TASK-010**：创建 node-api 预设
-- [ ] **TASK-011**：创建 base 预设
-- [ ] **TASK-012**：编写用户文档（getting-started）
-- [ ] **TASK-021**：skills 通用化 — 将 SKILL.md frontmatter 格式抽象为通用格式，支持非 Claude Code 工具解析
+（暂无）
 
 ---
 
@@ -35,6 +21,17 @@
 
 ## 已完成（DONE）
 
+- [x] **TASK-021** — skills 通用化（通用 frontmatter + extensions 扩展层） — 2026-04-24
+- [x] **TASK-012** — 编写用户文档（GETTING_STARTED.md） — 2026-04-24
+- [x] **TASK-011** — 创建 base 预设 — 2026-04-24
+- [x] **TASK-010** — 创建 node-api 预设 — 2026-04-24
+- [x] **TASK-009** — 创建 vue-nuxt 预设 — 2026-04-24
+- [x] **TASK-008** — gforge migrate 配置文件迁移 — 2026-04-24
+- [x] **TASK-007** — gforge context sync/check — 2026-04-24
+- [x] **TASK-020** — validate --fix 自动修复（R001、R002、R003） — 2026-04-24
+- [x] **TASK-018** — protocols 可检查化（checklist 格式 + Stop hook 验证） — 2026-04-24
+- [x] **TASK-017** — gforge check 增量校验（git diff 变更文件） — 2026-04-24
+- [x] **TASK-016** — guardrails 代码化（boundary-rules.json 配置驱动） — 2026-04-24
 - [x] **TASK-019** — docs/ 模板分层（随 TASK-013 完成） — 2026-04-23
 - [x] **TASK-015** — validate 接入 pre-commit hook — 2026-04-23
 - [x] **TASK-014** — 可执行 hook（PostToolUse boundary-check + settings.json） — 2026-04-23

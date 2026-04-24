@@ -5,6 +5,7 @@ import { initCommand } from './commands/init.js'
 import { validateCommand } from './commands/validate.js'
 import { contextCommand } from './commands/context.js'
 import { migrateCommand } from './commands/migrate.js'
+import { checkCommand } from './commands/check.js'
 
 const program = new Command()
 
@@ -17,6 +18,7 @@ program.addCommand(initCommand)
 program.addCommand(validateCommand)
 program.addCommand(contextCommand)
 program.addCommand(migrateCommand)
+program.addCommand(checkCommand)
 
 export function run(): void {
   program.parse()

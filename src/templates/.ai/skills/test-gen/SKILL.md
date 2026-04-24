@@ -1,12 +1,24 @@
 ---
 name: test-gen
 description: 为指定文件或模块自动生成测试用例。分析源码导出项，生成覆盖正常路径、边界条件和异常处理的测试。
-when_to_use: 写测试, 生成测试, 补充测试, 测试覆盖, 增加测试
-user-invocable: true
-allowed-tools: Read Write Edit Glob Grep
-argument-hint: "[filepath]"
+triggers:
+  - 写测试
+  - 生成测试
+  - 补充测试
+  - 测试覆盖
+  - 增加测试
+invocable: true
 arguments:
-  - filepath
+  - name: filepath
+    hint: "<filepath>"
+    required: true
+capabilities:
+  - read
+  - write
+  - search
+extensions:
+  claude:
+    allowed-tools: "Read Write Edit Glob Grep"
 ---
 
 # 测试生成

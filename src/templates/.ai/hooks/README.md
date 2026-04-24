@@ -10,6 +10,7 @@
 | 文件 | 事件 | 匹配器 | 功能 |
 |------|------|--------|------|
 | `post-write-boundary-check.mjs` | PostToolUse | Write\|Edit | 校验写入文件的架构边界合规性 |
+| `stop-protocol-check.mjs` | Stop | — | 验证协议阶段是否全部完成 |
 
 ## 可用事件
 

@@ -1,6 +1,7 @@
 import { Command } from 'commander'
 import pc from 'picocolors'
 import { RuleValidator } from '../validator/rule-validator.js'
+import { autoFix, isFixable } from '../validator/auto-fixer.js'
 import type { ValidateOptions } from '../validator/rule-validator.js'
 
 interface CliValidateOptions {
@@ -12,7 +13,7 @@ interface CliValidateOptions {
 
 export const validateCommand = new Command('validate')
   .description('校验项目是否符合 G-Forge 规则')
-  .option('--fix', '自动修复可修复的违规（暂未实现）')
+  .option('--fix', '自动修复可修复的违规（R001、R002、R003）')
   .option('--rule <id>', '仅检查指定规则（如 R005、A003）')
   .option('--format <format>', '输出格式（text | json）', 'text')
   .option('--severity <level>', '最低报告级别（error | warning）', 'warning')
@@ -66,6 +67,29 @@ export const validateCommand = new Command('validate')
     console.log(
       pc.dim(`总计: ${result.summary.errors} error, ${result.summary.warnings} warning\n`),
     )
+
+    // --fix 自动修复
+    if (options.fix && result.violations.length > 0) {
+      const fixable = result.violations.filter(isFixable)
+      if (fixable.length > 0) {
+        const fixResult = await autoFix(targetDir, result.violations)
+
+        if (fixResult.fixed.length > 0) {
+          console.log(pc.green(pc.bold(`自动修复 ${fixResult.fixed.length} 项：`)))
+          for (const f of fixResult.fixed) {
+            const loc = f.line ? `${f.file}:${f.line}` : f.file
+            console.log(pc.green(`  ✓ [${f.ruleId}] ${loc} — ${f.description}`))
+          }
+          console.log()
+        }
+
+        if (fixResult.skipped.length > 0) {
+          console.log(pc.dim(`${fixResult.skipped.length} 项需手动修复（不可自动修复）\n`))
+        }
+      } else {
+        console.log(pc.dim('所有违规项均需手动修复（不可自动修复）\n'))
+      }
+    }
 
     process.exitCode = result.passed ? 0 : 1
   })

@@ -11,6 +11,17 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/stop-protocol-check.mjs",
+            "timeout": 10
+          }
+        ]
+      }
     ]
   }
 }

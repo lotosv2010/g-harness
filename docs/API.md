@@ -81,10 +81,15 @@ gforge init [options]
 gforge validate [options]
 
 选项：
-  --fix                 自动修复可修复的违规
+  --fix                 自动修复可修复的违规（R001、R002、R003）
   --rule <id>           仅检查指定规则
   --format <format>     输出格式（text | json），默认 text
   --severity <level>    最低报告级别（error | warning），默认 warning
+
+可自动修复的规则：
+  R001  @ts-ignore → @ts-expect-error
+  R002  export default → 命名导出（function/class）
+  R003  空 catch 块 → 添加 TODO 注释
 
 示例：
   gforge validate
@@ -92,36 +97,54 @@ gforge validate [options]
   gforge validate --format json --severity error
 ```
 
-### 1.3 gforge context（v0.2 计划）
+### 1.3 gforge check
 
-> **当前状态：** 命令已注册，执行时提示"尚未实现"。
+轻量级增量校验，只检查 git diff 变更文件。
 
-管理 CLAUDE.md 上下文文件。
+```bash
+gforge check [options]
+
+选项：
+  --staged              仅检查暂存区文件（git diff --cached）
+  --format <format>     输出格式（text | json），默认 text
+
+示例：
+  gforge check                    # 检查工作区变更
+  gforge check --staged           # 检查暂存区变更
+  gforge check --format json      # JSON 输出
+```
+
+### 1.4 gforge context
+
+管理 CLAUDE.md 上下文文件，确保与项目实际结构一致。
 
 ```bash
 gforge context <subcommand>
 
 子命令：
-  sync                  分析项目结构，更新所有 CLAUDE.md
-  check                 检查 CLAUDE.md 是否与代码结构一致
+  sync                  扫描项目结构，自动更新 CLAUDE.md 中的技术栈和模块地图
+  check                 检查 CLAUDE.md 是否与代码结构一致，报告不一致项
 
 示例：
-  gforge context sync
-  gforge context check
+  gforge context sync             # 自动更新 CLAUDE.md
+  gforge context check            # 检查一致性
 ```
 
-### 1.4 gforge migrate（v0.3 计划）
+**检查项：**
+- 技术栈信息（语言、框架、包管理器）是否与实际依赖匹配
+- 模块地图是否反映 src/ 目录结构
+- 引用的文件路径是否存在
 
-> **当前状态：** 命令已注册，执行时提示"尚未实现"。
+### 1.5 gforge migrate
 
-规范版本升级时迁移配置文件。
+规范版本升级时迁移目标项目的 G-Forge 配置文件。
 
 ```bash
 gforge migrate [options]
 
 选项：
-  --from <version>      源版本
-  --to <version>        目标版本
+  --from <version>      源版本（省略则自动检测）
+  --to <version>        目标版本（默认使用当前 G-Forge 版本）
   --dry-run             仅预览迁移方案
 
 示例：
