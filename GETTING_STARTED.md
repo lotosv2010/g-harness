@@ -284,6 +284,6 @@ gforge init --preset vue-nuxt --force
 
 ## 下一步
 
-- 查看 [架构说明](ARCHITECTURE.md) 了解五层架构设计
-- 查看 [产品说明书](SPEC.md) 了解完整需求
-- 查看 [API 文档](API.md) 了解 CLI 和 Node.js API 细节
+- 查看 [架构说明](docs/ARCHITECTURE.md) 了解五层架构设计
+- 查看 [产品说明书](docs/SPEC.md) 了解完整需求
+- 查看 [API 文档](docs/API.md) 了解 CLI 和 Node.js API 细节

@@ -90,6 +90,8 @@ npx gforge validate
 npx gforge context sync
 ```
 
+> 详细用法请参阅 [快速入门指南](GETTING_STARTED.md)。
+
 ## 渐进式采纳
 
 | 阶段 | 时间 | 做什么 | 效果 |

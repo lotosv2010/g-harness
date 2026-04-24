@@ -170,3 +170,4 @@ pnpm typecheck        # 类型检查
 - 数据模型：`docs/DATA_MODEL.md`
 - 任务看板：`docs/tasks/BOARD.md`
 - 活跃任务：`docs/tasks/CURRENT.md`
+- 快速入门：`GETTING_STARTED.md`
