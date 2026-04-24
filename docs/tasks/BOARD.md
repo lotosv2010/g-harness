@@ -23,6 +23,16 @@
 
 ## 已完成（DONE）
 
+- [x] **TASK-064** — feat skill 模板补充（src/templates/.ai/skills/feat/SKILL.md 通用化版本） — 2026-04-24
+- [x] **TASK-063** — 文档更新（SPEC/README/GETTING_STARTED 同步 6 阶段交互流程） — 2026-04-24
+- [x] **TASK-062** — init.ts 编排重构 + --name/--conflict/--yes flag — 2026-04-24
+- [x] **TASK-061** — Stage 6 确认预览 & 执行（dry-run + confirm + 文件树） — 2026-04-24
+- [x] **TASK-060** — Stage 5 输出配置交互（层级/冲突策略/hook 开关） — 2026-04-24
+- [x] **TASK-059** — Stage 4 项目元信息收集（名称/描述/源码目录） — 2026-04-24
+- [x] **TASK-058** — Stage 3 技术栈 & 预设交互（推荐确认 + 分组列表） — 2026-04-24
+- [x] **TASK-057** — Stage 2 Agent 选择增强（智能预选已有配置的 agent） — 2026-04-24
+- [x] **TASK-056** — Stage 1 项目检测 + 分支路由（new/existing/reinit） — 2026-04-24
+- [x] **TASK-055** — Scanner 增强：项目检测信号扩展（13 个测试通过） — 2026-04-24
 - [x] **TASK-054** — 文档更新（SPEC.md / README.md / GETTING_STARTED.md 补充 agent 选择说明） — 2026-04-24
 - [x] **TASK-053** — Agent 适配测试（20 个用例，覆盖 6 个 agent 的输出路径和过滤） — 2026-04-24
 - [x] **TASK-051** — init 交互 Agent 多选（@clack/prompts multiselect + 能力提示） — 2026-04-24

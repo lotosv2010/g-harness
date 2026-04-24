@@ -10,13 +10,28 @@
 
 ## 当前阶段
 
-**v1.0 — Agent 适配层 ✓**
+**v1.1 — Init 交互流程重设计（ADR-007）✓**
 
-支持多 AI 开发助手（Claude Code / Cursor / Windsurf / Copilot / Trae / 通用），init 时选择 agent 并生成对应配置。全部完成。
+重设计 `gforge init` 的完整交互体验，6 阶段引导式 Wizard，同时适用于新建项目和已有项目。全部完成。
 
 ## 活跃任务
 
 无。
+
+## Init 交互流程完成概览
+
+| 任务 | 完成日期 | 说明 |
+|------|----------|------|
+| TASK-055 | 2026-04-24 | Scanner 增强：isEmpty/hasGit/existingAgents 检测 |
+| TASK-056 | 2026-04-24 | Stage 1 项目检测 + new/existing/reinit 路由 |
+| TASK-057 | 2026-04-24 | Stage 2 Agent 智能预选 |
+| TASK-058 | 2026-04-24 | Stage 3 预设推荐确认 + 分组列表 |
+| TASK-059 | 2026-04-24 | Stage 4 项目元信息收集 |
+| TASK-060 | 2026-04-24 | Stage 5 输出层级 + 冲突策略 + hook |
+| TASK-061 | 2026-04-24 | Stage 6 确认预览 + 执行 |
+| TASK-062 | 2026-04-24 | init.ts 编排重构 + --name/--conflict/--yes |
+| TASK-063 | 2026-04-24 | 文档更新（SPEC/README/GETTING_STARTED） |
+| TASK-064 | 2026-04-24 | feat skill 模板补充（通用化版本） |
 
 ## Agent 适配层完成概览
 

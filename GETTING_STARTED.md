@@ -32,31 +32,59 @@ npx gforge init
 gforge init
 ```
 
-G-Forge 会引导你选择 AI 助手和技术栈预设：
+G-Forge 通过 **6 阶段引导式 Wizard** 完成初始化，新建项目和已有项目都适用：
 
 ```
-◆  选择你的 AI 开发助手（空格选择，回车确认）
+◆  Stage 1: 项目检测
+│  检测到已有项目：React + Vite + pnpm
+│
+◆  Stage 2: 选择 AI 开发助手（空格选择，回车确认）
 │  ● Claude Code（Anthropic）— 完整支持（规则/钩子/协议/技能）
 │  ○ Cursor（Anysphere）— 支持规则
 │  ○ Windsurf（Codeium）— 支持规则
 │  ○ GitHub Copilot（GitHub）— 支持规则
 │  ○ Trae（ByteDance）— 支持规则
-│  ○ 通用模式（兼容所有 agent）— 仅生成 AGENTS.md
+│
+◆  Stage 3: 检测到 React，推荐预设：vite-react
+│  ● 使用推荐预设 vite-react
+│  ○ 选择其他预设
+│
+◆  Stage 4: 项目元信息
+│  项目名称: my-app
+│  项目描述: （可跳过）
+│  源码目录: src
+│
+◆  Stage 5: 输出配置
+│  ● 核心层（推荐）
+│  冲突策略: 跳过已有文件
+│  ☑ 安装 pre-commit hook
+│
+◆  Stage 6: 确认预览
+│  将创建 18 个文件...
+│  确认生成？(Y/n)
 ```
 
-支持多选——团队中不同成员用不同 AI 工具时，一次 init 全部搞定。
+**智能特性**：
+- 自动检测已有项目的技术栈并推荐预设
+- 检测到已有 AI 配置（如 `.cursorrules`）时自动预选对应 agent
+- 已接入 G-Forge 的项目会提示使用 `gforge context sync`
+- 所有步骤都有智能默认值，按回车即可快速通过
 
 ### 2.2 非交互式 — 指定参数
 
 ```bash
-# 指定 AI 助手 + 预设
-gforge init --agent claude --preset nextjs
+# CI/CD 友好：跳过所有交互
+gforge init --agent claude --preset vite-react --yes
 
 # 多个 AI 助手
-gforge init --agent claude,cursor --preset vite-react
+gforge init --agent claude,cursor --preset nextjs
 
-# 纯 HTML + JS 项目
-gforge init --agent cursor --preset vanilla
+# 已有项目：指定冲突策略
+gforge init --conflict prompt     # 逐文件确认
+gforge init --conflict overwrite  # 覆盖所有（等同 --force）
+
+# 指定项目名
+gforge init --name my-app --preset vanilla
 ```
 
 ### 2.3 已有项目 — 自动扫描
@@ -65,7 +93,7 @@ gforge init --agent cursor --preset vanilla
 gforge init --scan
 ```
 
-G-Forge 会扫描 `package.json`、目录结构和配置文件，自动选择最匹配的预设。
+G-Forge 会扫描 `package.json`、目录结构和配置文件，自动选择最匹配的预设。交互模式下，Stage 3 会展示推荐结果供你确认或修正。
 
 ### 2.3 预览模式
 

@@ -64,14 +64,19 @@ G-Forge 是一套**面向 AI 编程助手优化的通用工程化规范框架 + 
 - 目标项目目录（默认 cwd）
 - 预设名称（可选，如 `vite-react`）
 - AI 助手（可选，如 `--agent claude,cursor`）
-- 选项：`--scan`（自动检测）、`--dry-run`（预览）、`--force`（覆盖）
+- 项目名称（可选，`--name`）
+- 冲突策略（可选，`--conflict skip|overwrite|prompt`）
+- 选项：`--scan`、`--dry-run`、`--force`、`--full`、`--yes`
 
-**处理流程：**
-1. 交互式选择 AI 助手（或通过 `--agent` 指定）
-2. ProjectScanner 扫描目标项目（技术栈、目录结构、现有配置）
-3. 根据扫描结果或 `--preset` 参数加载预设
-4. AgentAdapter 将通用模板映射为 agent 特定目录和入口文件
-5. FileGenerator 读取模板 + 预设变量，渲染并输出文件
+**处理流程（6 阶段交互引导，ADR-007）：**
+1. **Stage 1 项目检测**：扫描目标目录，判定 new / existing / reinit 模式
+2. **Stage 2 AI 助手**：交互式多选或 `--agent` 指定，智能预选已有配置的 agent
+3. **Stage 3 技术栈**：已有项目推荐预设 + 确认/修正；新建项目分组列表选择
+4. **Stage 4 项目元信息**：收集项目名/描述/源码目录（从 package.json 推断默认值）
+5. **Stage 5 输出配置**：输出层级 + 冲突策略 + pre-commit hook 开关
+6. **Stage 6 确认预览**：汇总展示文件树 → 用户 confirm → 执行生成
+
+**动态裁剪**：CLI flag 已指定的跳过对应交互；`--yes` 跳过全部交互；非 TTY 自动非交互。
 
 **输出文件（按 agent 适配）：**
 - `AGENTS.md`（通用，所有 agent 共用）
@@ -101,6 +106,10 @@ G-Forge 是一套**面向 AI 编程助手优化的通用工程化规范框架 + 
 - [x] 无预设匹配时使用 `base` 预设兜底（`detectPreset()` 默认返回 'base'）
 - [x] 支持 6 种 AI 助手，交互式多选 + `--agent` 非交互模式
 - [x] 多 agent 同时选择时各自生成独立的入口文件和配置目录
+- [x] 6 阶段交互引导（ADR-007），区分新建/已有/reinit 模式
+- [x] 冲突策略三选（skip / overwrite / prompt 逐文件确认）
+- [x] 确认预览：执行前展示文件树和配置摘要
+- [x] `--yes` 跳过所有交互、`--name` 指定项目名、`--conflict` 指定冲突策略
 
 #### FR-02：规范校验（gforge validate）
 

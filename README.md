@@ -77,14 +77,18 @@ g-forge/
 ## 快速开始
 
 ```bash
-# 交互式初始化（自动引导选择 AI 助手和预设）
+# 交互式初始化（6 阶段引导：项目检测 → AI 助手 → 预设 → 元信息 → 输出配置 → 确认）
 npx gforge init
 
-# 指定 AI 助手和预设
-npx gforge init --agent claude --preset vite-react
+# 非交互模式（CI/CD 友好）
+npx gforge init --agent claude --preset vite-react --yes
 
 # 多个 AI 助手同时配置
 npx gforge init --agent claude,cursor --preset nextjs
+
+# 已有项目：指定冲突策略
+npx gforge init --conflict prompt    # 逐文件确认
+npx gforge init --force              # 覆盖所有
 
 # 校验规范
 npx gforge validate

@@ -16,6 +16,7 @@ export interface GenerateOptions {
   dryRun: boolean
   full: boolean
   agents: AgentDefinition[]
+  onConflict?: (filePath: string) => Promise<boolean>
 }
 
 export interface GenerateResult {
@@ -40,8 +41,16 @@ export class FileGenerator {
       const exists = await fileExists(targetPath)
 
       if (exists && !options.overwrite) {
-        result.skipped.push(file.outputPath)
-        continue
+        if (options.onConflict) {
+          const shouldOverwrite = await options.onConflict(file.outputPath)
+          if (!shouldOverwrite) {
+            result.skipped.push(file.outputPath)
+            continue
+          }
+        } else {
+          result.skipped.push(file.outputPath)
+          continue
+        }
       }
 
       const content = resolveVariables(file.content, variables)
