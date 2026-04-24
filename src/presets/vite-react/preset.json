@@ -1,27 +1,28 @@
 {
-  "name": "node-api",
-  "description": "Node.js API 服务预设（Express/Fastify/Hono）",
+  "name": "vite-react",
+  "description": "React 19 + Vite 6 单页应用预设",
   "techStack": {
     "language": "TypeScript",
     "runtime": "Node.js 20+",
-    "framework": "Express / Fastify / Hono",
-    "buildTool": "tsx / tsup",
+    "framework": "React 19",
+    "buildTool": "Vite 6",
     "testRunner": "Vitest",
     "packageManager": "pnpm"
   },
   "variables": {
     "shared_dir": "src/shared",
-    "feature_dir": "src/modules",
-    "api_dir": "src/routes",
+    "feature_dir": "src/features",
+    "api_dir": "src/api",
     "shared_package": "src/shared",
     "core_package": "src/core",
     "app_package": "src"
   },
   "codeStyle": [
+    "使用函数式组件，禁止 class 组件",
     "使用命名导出，非默认导出",
-    "路由处理函数独立抽取为 controller",
-    "业务逻辑封装在 service 层",
-    "类型使用 interface 优先"
+    "组件 Props 使用 interface 定义",
+    "自定义 Hook 以 use 前缀命名",
+    "测试文件与源文件同级或在 __tests__/ 目录"
   ],
   "commands": {
     "install": "pnpm install",

@@ -62,7 +62,7 @@ G-Forge 是一套**面向 AI 编程助手优化的通用工程化规范框架 + 
 
 **输入：**
 - 目标项目目录（默认 cwd）
-- 预设名称（可选，如 `react-vite`）
+- 预设名称（可选，如 `vite-react`）
 - 选项：`--scan`（自动检测）、`--dry-run`（预览）、`--force`（覆盖）
 
 **处理流程：**
@@ -164,10 +164,12 @@ src/presets/<name>/
 
 | 预设名 | 技术栈 | 优先级 | 状态 |
 |--------|--------|--------|------|
-| react-vite | React + Vite + TypeScript | P0 | 已完成 |
-| vue-nuxt | Vue 3 + Nuxt 3 + TypeScript | P1 | 已完成 |
-| node-api | Node.js + Express/Hono + TypeScript | P1 | 已完成 |
-| base | 纯 TypeScript（无框架） | P1 | 已完成 |
+| nextjs | Next.js 15 + App Router | P0 | 已完成 |
+| nestjs | NestJS 10+ 后端服务 | P0 | 已完成 |
+| vite-vue | Vue 3 + Vite 6 | P0 | 已完成 |
+| vite-react | React 19 + Vite 6 | P0 | 已完成 |
+| vanilla | 纯 HTML + JavaScript | P1 | 已完成 |
+| base | 通用基础（技术栈无关） | P1 | 已完成 |
 
 **验收标准：**
 - [x] 预设加载器能正确读取 `preset.json`

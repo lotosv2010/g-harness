@@ -11,7 +11,20 @@
 
 ## 待办（TODO）
 
-（暂无）
+### v1.0 — 预设扩展
+
+| 任务 | 优先级 | 预设名 | 技术栈 | 说明 |
+|------|--------|--------|--------|------|
+| TASK-037 | P0 | `nuxt` | Nuxt 3 + Vue 3 | 与 Next.js 对称，约定式路由/server 规则和 vite-vue 差异显著 |
+| TASK-038 | P0 | `electron` | Electron + React/Vue | 桌面端，主进程/渲染进程边界规则独特 |
+| TASK-039 | P1 | `tauri` | Tauri 2 + Rust + 前端 | 新一代桌面端，Rust 后端 + Web 前端跨语言约束 |
+| TASK-040 | P1 | `react-native` | React Native + Expo | 移动端头部方案，平台特定规则多 |
+| TASK-041 | P1 | `miniprogram` | 微信小程序 | 国内小程序开发量大，独特文件结构和 API 约束 |
+| TASK-042 | P2 | `fastapi` | Python + FastAPI | Python 后端头部方案，扩展非 JS 生态 |
+| TASK-043 | P2 | `express` | Express / Hono / Fastify | 轻量 Node.js API，不需要 NestJS 全套装饰器时使用 |
+| TASK-044 | P2 | `monorepo` | Turborepo / Nx + pnpm workspace | Monorepo 工程治理，跨包边界和发布规则 |
+| TASK-045 | P3 | `uniapp` | uni-app + Vue 3 | 跨端小程序方案 |
+| TASK-046 | P3 | `flutter` | Dart + Flutter | 跨端移动开发 |
 
 ---
 

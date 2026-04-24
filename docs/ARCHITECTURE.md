@@ -169,7 +169,7 @@ src/templates/
 ## 4. 数据流
 
 ```
-用户运行 gforge init --preset react-vite
+用户运行 gforge init --preset vite-react
          │
          ▼
    CLI 解析命令参数
@@ -179,7 +179,7 @@ src/templates/
    （检测技术栈、目录结构、现有配置）
          │
          ▼
-   加载预设（src/presets/react-vite/preset.json）
+   加载预设（src/presets/vite-react/preset.json）
    加载模板（src/templates/）
          │
          ▼

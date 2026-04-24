@@ -1,0 +1,35 @@
+{
+  "name": "vite-vue",
+  "description": "Vue 3 + Vite 6 单页应用预设",
+  "techStack": {
+    "language": "TypeScript",
+    "runtime": "Node.js 20+",
+    "framework": "Vue 3",
+    "buildTool": "Vite 6",
+    "testRunner": "Vitest",
+    "packageManager": "pnpm"
+  },
+  "variables": {
+    "shared_dir": "src/composables",
+    "feature_dir": "src/views",
+    "api_dir": "src/api",
+    "shared_package": "src/composables",
+    "core_package": "src/core",
+    "app_package": "src"
+  },
+  "codeStyle": [
+    "使用 Composition API + <script setup>",
+    "组合式函数使用 use 前缀",
+    "组件文件名使用 PascalCase",
+    "类型使用 interface 优先",
+    "测试文件与源文件同级或在 __tests__/ 目录"
+  ],
+  "commands": {
+    "install": "pnpm install",
+    "dev": "pnpm dev",
+    "build": "pnpm build",
+    "test": "pnpm test",
+    "lint": "pnpm lint",
+    "typecheck": "pnpm typecheck"
+  }
+}

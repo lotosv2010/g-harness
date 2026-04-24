@@ -1,6 +1,6 @@
 # React 特定规则
 
-> 适用于 React + Vite 项目的额外规则，补充 src/templates/.ai/rules/ 中的通用规则。
+> 适用于 React + Vite 项目的额外规则，补充通用规则。
 
 ---
 
@@ -22,7 +22,7 @@
 
 - 组件状态使用 `useState` / `useReducer`
 - 跨组件共享使用 Context 或状态管理库
-- 禁止将 UI 交互状态（modal open、tab index）提升到全局
+- 禁止将 UI 交互状态提升到全局
 - 服务端数据使用数据获取库（React Query / SWR），不手动管理
 
 ## RR004：性能

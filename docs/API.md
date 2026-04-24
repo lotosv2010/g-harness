@@ -15,14 +15,14 @@
 gforge init [options]
 
 选项：
-  --preset <name>       使用预设（react-vite | vue-nuxt | node-api | base）
+  --preset <name>       使用预设（nextjs | nestjs | vite-vue | vite-react | vanilla | base）
   --scan                扫描已有项目结构并生成匹配的配置
   --dry-run             仅预览将生成的文件，不实际写入
   --force               覆盖已有配置文件
   --full                输出完整文档体系（默认仅输出核心层）
 
 示例：
-  gforge init --preset react-vite
+  gforge init --preset vite-react
   gforge init --scan
   gforge init --dry-run
   gforge init --full              # 输出全部文件（含护栏、技能、Prompt、扩展文档）
@@ -179,7 +179,7 @@ import { FileGenerator, ProjectScanner, loadPreset, getGForgeRoot } from 'gforge
 const gforgeRoot = getGForgeRoot()
 const scanner = new ProjectScanner()
 const scanResult = await scanner.scan('/path/to/project')
-const preset = await loadPreset(gforgeRoot, 'react-vite')
+const preset = await loadPreset(gforgeRoot, 'vite-react')
 
 const generator = new FileGenerator()
 const result = await generator.generate({

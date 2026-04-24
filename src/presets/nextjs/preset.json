@@ -1,25 +1,26 @@
 {
-  "name": "react-vite",
-  "description": "React 19 + Vite 6 单页应用预设",
+  "name": "nextjs",
+  "description": "Next.js 15 + App Router 全栈应用预设",
   "techStack": {
     "language": "TypeScript",
     "runtime": "Node.js 20+",
-    "framework": "React 19",
-    "buildTool": "Vite 6",
+    "framework": "Next.js 15",
+    "buildTool": "Next.js (内置)",
     "testRunner": "Vitest",
     "packageManager": "pnpm"
   },
   "variables": {
-    "shared_dir": "src/shared",
+    "shared_dir": "src/lib",
     "feature_dir": "src/features",
-    "api_dir": "src/api",
-    "shared_package": "src/shared",
+    "api_dir": "src/app/api",
+    "shared_package": "src/lib",
     "core_package": "src/core",
-    "app_package": "src"
+    "app_package": "src/app"
   },
   "codeStyle": [
-    "使用命名导出，非默认导出",
-    "组件使用函数式声明",
+    "使用 App Router，禁止 Pages Router",
+    "组件默认 Server Component，需要交互时显式添加 'use client'",
+    "使用命名导出，页面组件除外（export default）",
     "类型使用 interface 优先",
     "测试文件与源文件同级或在 __tests__/ 目录"
   ],

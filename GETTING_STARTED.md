@@ -29,17 +29,20 @@ npx gforge init
 ### 2.1 新项目 — 使用预设
 
 ```bash
+# Next.js 全栈项目
+gforge init --preset nextjs
+
+# NestJS 后端项目
+gforge init --preset nestjs
+
+# Vue 3 + Vite 项目
+gforge init --preset vite-vue
+
 # React + Vite 项目
-gforge init --preset react-vite
+gforge init --preset vite-react
 
-# Vue + Nuxt 项目
-gforge init --preset vue-nuxt
-
-# Node.js API 项目
-gforge init --preset node-api
-
-# 通用项目（技术栈无关）
-gforge init --preset base
+# 纯 HTML + JS 项目
+gforge init --preset vanilla
 ```
 
 ### 2.2 已有项目 — 自动扫描
@@ -55,7 +58,7 @@ G-Forge 会扫描 `package.json`、目录结构和配置文件，自动选择最
 不确定会生成什么？先预览：
 
 ```bash
-gforge init --preset react-vite --dry-run
+gforge init --preset vite-react --dry-run
 ```
 
 ### 2.4 完整输出
@@ -63,7 +66,7 @@ gforge init --preset react-vite --dry-run
 默认 `gforge init` 只输出核心文件（上下文 + 约束层）。添加 `--full` 输出完整文档体系：
 
 ```bash
-gforge init --preset react-vite --full
+gforge init --preset vite-react --full
 ```
 
 **核心层（默认）：**
@@ -261,7 +264,7 @@ jobs:
 默认跳过已有文件。使用 `--force` 强制覆盖：
 
 ```bash
-gforge init --preset react-vite --force
+gforge init --preset vite-react --force
 ```
 
 ### 预设选错了怎么办？
@@ -269,7 +272,7 @@ gforge init --preset react-vite --force
 重新初始化并用 `--force` 覆盖：
 
 ```bash
-gforge init --preset vue-nuxt --force
+gforge init --preset vite-vue --force
 ```
 
 ### 不使用 Claude Code 可以用吗？

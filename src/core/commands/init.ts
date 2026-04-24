@@ -16,7 +16,7 @@ interface InitOptions {
 
 export const initCommand = new Command('init')
   .description('初始化 G-Forge 规范到项目中')
-  .option('--preset <name>', '使用预设（react-vite | vue-nuxt | node-api）')
+  .option('--preset <name>', '使用预设（nextjs | nestjs | vite-vue | vite-react | vanilla | base）')
   .option('--scan', '扫描已有项目结构并推荐预设')
   .option('--dry-run', '仅预览将生成的文件，不实际写入')
   .option('--force', '覆盖已有配置文件')
@@ -40,10 +40,10 @@ export const initCommand = new Command('init')
     const preset = await loadPreset(gforgeRoot, presetName)
 
     if (!preset) {
-      console.log(pc.yellow(`未找到预设 "${presetName}"，使用 base 预设`))
+      console.log(pc.yellow(`未找到预设 "${presetName}"，使用 vanilla 预设`))
     }
 
-    console.log(pc.cyan(`使用预设: ${preset?.name ?? 'base'}`))
+    console.log(pc.cyan(`使用预设: ${preset?.name ?? 'vanilla'}`))
     console.log()
 
     const generator = new FileGenerator()
@@ -102,12 +102,17 @@ export const initCommand = new Command('init')
   })
 
 function detectPreset(framework: string | null): string {
-  if (!framework) return 'base'
+  if (!framework) return 'vanilla'
   const map: Record<string, string> = {
-    react: 'react-vite',
-    vue: 'vue-nuxt',
-    next: 'next',
-    nuxt: 'vue-nuxt',
+    'next.js': 'nextjs',
+    react: 'vite-react',
+    vue: 'vite-vue',
+    nuxt: 'vite-vue',
+    nestjs: 'nestjs',
+    nest: 'nestjs',
+    express: 'nestjs',
+    fastify: 'nestjs',
+    hono: 'nestjs',
   }
-  return map[framework.toLowerCase()] ?? 'base'
+  return map[framework.toLowerCase()] ?? 'vanilla'
 }

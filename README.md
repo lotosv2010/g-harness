@@ -78,7 +78,7 @@ g-forge/
 
 ```bash
 # 新项目
-npx gforge init --preset react-vite
+npx gforge init --preset vite-react
 
 # 已有项目（自动扫描技术栈）
 npx gforge init --scan
@@ -103,13 +103,14 @@ npx gforge context sync
 
 ## 支持的技术栈
 
-| 预设 | 状态 |
-|------|------|
-| React + Vite | 已完成 |
-| Vue + Nuxt | 已完成 |
-| Node.js API | 已完成 |
-| Base（通用） | 已完成 |
-| Python FastAPI | 计划中 |
+| 预设 | 命令 | 状态 |
+|------|------|------|
+| Next.js | `--preset nextjs` | 已完成 |
+| NestJS | `--preset nestjs` | 已完成 |
+| Vue 3 + Vite | `--preset vite-vue` | 已完成 |
+| React + Vite | `--preset vite-react` | 已完成 |
+| 纯 HTML + JS | `--preset vanilla` | 已完成 |
+| 通用（技术栈无关） | `--preset base` | 已完成 |
 
 ## 设计原则
 

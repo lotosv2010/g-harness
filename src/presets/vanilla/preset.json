@@ -1,0 +1,31 @@
+{
+  "name": "vanilla",
+  "description": "纯 HTML + JavaScript 静态项目预设",
+  "techStack": {
+    "language": "JavaScript",
+    "runtime": "浏览器",
+    "framework": "无",
+    "buildTool": "无（或可选 Vite）",
+    "testRunner": "按项目配置",
+    "packageManager": "按项目配置"
+  },
+  "variables": {
+    "shared_dir": "src/utils",
+    "feature_dir": "src/pages",
+    "api_dir": "src/api",
+    "shared_package": "src/utils",
+    "core_package": "src/core",
+    "app_package": "src"
+  },
+  "codeStyle": [
+    "使用 ES Modules（type=\"module\"）",
+    "文件名使用 kebab-case",
+    "CSS 与 JS 文件按模块组织",
+    "避免全局变量污染，使用模块作用域"
+  ],
+  "commands": {
+    "dev": "npx serve . 或直接打开 index.html",
+    "build": "按项目配置",
+    "lint": "按项目配置"
+  }
+}

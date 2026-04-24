@@ -169,13 +169,13 @@ interface MigrateResult {
 ## 6. 数据流
 
 ```
-gforge init --preset react-vite
+gforge init --preset vite-react
          │
          ▼
    Scanner.scan(targetDir)
          │ → ScanResult
          ▼
-   加载 Preset（src/presets/react-vite/preset.json）
+   加载 Preset（src/presets/vite-react/preset.json）
          │ → Preset
          ▼
    Generator.generate({ gforgeRoot, preset, targetDir, scanResult, overwrite, dryRun })
