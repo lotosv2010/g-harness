@@ -77,11 +77,14 @@ g-forge/
 ## 快速开始
 
 ```bash
-# 新项目
-npx gforge init --preset vite-react
+# 交互式初始化（自动引导选择 AI 助手和预设）
+npx gforge init
 
-# 已有项目（自动扫描技术栈）
-npx gforge init --scan
+# 指定 AI 助手和预设
+npx gforge init --agent claude --preset vite-react
+
+# 多个 AI 助手同时配置
+npx gforge init --agent claude,cursor --preset nextjs
 
 # 校验规范
 npx gforge validate
@@ -121,6 +124,21 @@ npx gforge context sync
 | Flutter | `--preset flutter` | 已完成 |
 | 纯 HTML + JS | `--preset vanilla` | 已完成 |
 | 通用（技术栈无关） | `--preset base` | 已完成 |
+
+## 支持的 AI 助手
+
+| AI 助手 | 参数 | 入口文件 | 规则 | 钩子/协议/技能 |
+|---------|------|----------|------|---------------|
+| Claude Code | `--agent claude` | `CLAUDE.md` | `.claude/rules/` | 完整支持 |
+| Cursor | `--agent cursor` | `.cursorrules` | `.cursor/rules/` | — |
+| Windsurf | `--agent windsurf` | `.windsurfrules` | `.windsurf/rules/` | — |
+| GitHub Copilot | `--agent copilot` | `.github/copilot-instructions.md` | `.github/rules/` | — |
+| Trae | `--agent trae` | `.trae/rules/project.md` | `.trae/rules/` | — |
+| Kimi | `--agent kimi` | `AGENTS.md` | `.agents/rules/` | — |
+| Codex | `--agent codex` | `AGENTS.md` | `.codex/rules/` | — |
+| 通用模式 | `--agent generic` | 仅 `AGENTS.md` | — | — |
+
+> 支持多选：`--agent claude,cursor` 一次生成多个 AI 助手的配置文件。
 
 ## 设计原则
 

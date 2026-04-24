@@ -63,18 +63,35 @@ G-Forge 是一套**面向 AI 编程助手优化的通用工程化规范框架 + 
 **输入：**
 - 目标项目目录（默认 cwd）
 - 预设名称（可选，如 `vite-react`）
+- AI 助手（可选，如 `--agent claude,cursor`）
 - 选项：`--scan`（自动检测）、`--dry-run`（预览）、`--force`（覆盖）
 
 **处理流程：**
-1. ProjectScanner 扫描目标项目（技术栈、目录结构、现有配置）
-2. 根据扫描结果或 `--preset` 参数加载预设
-3. FileGenerator 读取模板 + 预设变量，渲染并输出文件
+1. 交互式选择 AI 助手（或通过 `--agent` 指定）
+2. ProjectScanner 扫描目标项目（技术栈、目录结构、现有配置）
+3. 根据扫描结果或 `--preset` 参数加载预设
+4. AgentAdapter 将通用模板映射为 agent 特定目录和入口文件
+5. FileGenerator 读取模板 + 预设变量，渲染并输出文件
 
-**输出文件：**
-- `CLAUDE.md`、`AGENTS.md`
-- `.claude/rules/*.md`、`.claude/protocols/*.md`、`.claude/guardrails/*.md`
-- `.claude/prompts/*.md`
+**输出文件（按 agent 适配）：**
+- `AGENTS.md`（通用，所有 agent 共用）
+- Agent 入口文件（如 `CLAUDE.md`、`.cursorrules`、`.windsurfrules`）
+- Agent 配置目录（如 `.claude/rules/`、`.cursor/rules/`）
+- 高级功能文件（协议/钩子/技能/护栏/Prompt，仅 Claude Code）
 - 预设特定规则（如 `react-specific.md`）
+
+**支持的 AI 助手：**
+
+| Agent | ID | 入口文件 | 配置目录 | 高级功能 |
+|-------|----|----------|----------|----------|
+| Claude Code | claude | `CLAUDE.md` | `.claude/` | 完整支持 |
+| Cursor | cursor | `.cursorrules` | `.cursor/` | 仅规则 |
+| Windsurf | windsurf | `.windsurfrules` | `.windsurf/` | 仅规则 |
+| GitHub Copilot | copilot | `.github/copilot-instructions.md` | `.github/` | 仅规则 |
+| Trae | trae | `.trae/rules/project.md` | `.trae/` | 仅规则 |
+| Kimi | kimi | `AGENTS.md` | `.agents/` | 仅规则 |
+| Codex | codex | `AGENTS.md` | `.codex/` | 仅规则 |
+| 通用模式 | generic | 仅 `AGENTS.md` | — | — |
 
 **验收标准：**
 - [x] 扫描器能正确检测 TypeScript/JavaScript、React/Vue/Next.js/Angular 等技术栈
@@ -82,6 +99,8 @@ G-Forge 是一套**面向 AI 编程助手优化的通用工程化规范框架 + 
 - [x] `--dry-run` 不写入任何文件
 - [x] 已有文件默认跳过，`--force` 时覆盖
 - [x] 无预设匹配时使用 `base` 预设兜底（`detectPreset()` 默认返回 'base'）
+- [x] 支持 6 种 AI 助手，交互式多选 + `--agent` 非交互模式
+- [x] 多 agent 同时选择时各自生成独立的入口文件和配置目录
 
 #### FR-02：规范校验（gforge validate）
 

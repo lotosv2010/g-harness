@@ -5,9 +5,13 @@ import { FileGenerator } from '../generator/file-generator.js'
 import { installPreCommitHook } from '../generator/hook-installer.js'
 import { loadPreset } from '../preset-loader.js'
 import { getGForgeRoot } from '../paths.js'
+import { getAgent, listAgentIds } from '../agents/agent-registry.js'
+import { selectAgents, printAgentSummary } from './init-interactive.js'
+import type { AgentDefinition } from '../agents/agent-registry.js'
 
 interface InitOptions {
   preset?: string
+  agent?: string
   scan?: boolean
   dryRun?: boolean
   force?: boolean
@@ -17,6 +21,7 @@ interface InitOptions {
 export const initCommand = new Command('init')
   .description('初始化 G-Forge 规范到项目中')
   .option('--preset <name>', '使用预设（nextjs | nuxt | nestjs | vite-vue | vite-react | electron | tauri | react-native | miniprogram | vanilla | base）')
+  .option('--agent <names>', 'AI 助手（claude,cursor,windsurf,copilot,trae,kimi,codex,generic），逗号分隔多选，默认 claude')
   .option('--scan', '扫描已有项目结构并推荐预设')
   .option('--dry-run', '仅预览将生成的文件，不实际写入')
   .option('--force', '覆盖已有配置文件')
@@ -26,6 +31,17 @@ export const initCommand = new Command('init')
     const gforgeRoot = getGForgeRoot()
 
     console.log(pc.bold('\n🔧 G-Forge 初始化\n'))
+
+    // 解析 agent：有 --agent 参数走非交互，否则交互选择
+    let agents: AgentDefinition[]
+    if (options.agent) {
+      agents = resolveAgents(options.agent)
+    } else {
+      const result = await selectAgents()
+      if (result.cancelled) return
+      agents = result.agents
+    }
+    printAgentSummary(agents)
 
     const scanner = new ProjectScanner()
     const scanResult = await scanner.scan(targetDir)
@@ -55,6 +71,7 @@ export const initCommand = new Command('init')
       overwrite: options.force ?? false,
       dryRun: options.dryRun ?? false,
       full: options.full ?? false,
+      agents,
     })
 
     if (options.dryRun) {
@@ -100,6 +117,25 @@ export const initCommand = new Command('init')
     }
     console.log()
   })
+
+function resolveAgents(agentArg?: string): AgentDefinition[] {
+  if (!agentArg) return [getAgent('claude')!]
+  const ids = agentArg.split(',').map((s) => s.trim()).filter(Boolean)
+  if (ids.length === 0) return [getAgent('claude')!]
+
+  const validIds = listAgentIds()
+  const agents: AgentDefinition[] = []
+  for (const id of ids) {
+    const agent = getAgent(id)
+    if (!agent) {
+      console.log(pc.red(`错误: 未知的 AI 助手 "${id}"`))
+      console.log(pc.dim(`支持的选项: ${validIds.join(', ')}`))
+      process.exit(1)
+    }
+    agents.push(agent)
+  }
+  return agents
+}
 
 function detectPreset(framework: string | null): string {
   if (!framework) return 'vanilla'

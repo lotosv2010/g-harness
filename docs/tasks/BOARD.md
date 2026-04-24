@@ -23,6 +23,14 @@
 
 ## 已完成（DONE）
 
+- [x] **TASK-054** — 文档更新（SPEC.md / README.md / GETTING_STARTED.md 补充 agent 选择说明） — 2026-04-24
+- [x] **TASK-053** — Agent 适配测试（20 个用例，覆盖 6 个 agent 的输出路径和过滤） — 2026-04-24
+- [x] **TASK-051** — init 交互 Agent 多选（@clack/prompts multiselect + 能力提示） — 2026-04-24
+- [x] **TASK-052** — `--agent` CLI 参数（非交互模式，默认 claude，逗号多选 + 友好错误提示） — 2026-04-24
+- [x] **TASK-050** — FileGenerator 多 Agent 改造（agents 参数 + AgentAdapter 集成） — 2026-04-24
+- [x] **TASK-049** — AgentAdapter 实现（目录映射 + 入口渲染 + 不支持文件过滤） — 2026-04-24
+- [x] **TASK-048** — Agent 入口模板（claude/cursor/windsurf/copilot/trae 五套） — 2026-04-24
+- [x] **TASK-047** — Agent 注册表（AgentDefinition 接口 + 6 个 agent 配置） — 2026-04-24
 - [x] **TASK-046** — 创建 flutter 预设（Feature-First/状态管理/数据层/测试规则） — 2026-04-24
 - [x] **TASK-045** — 创建 uniapp 预设（跨端兼容/条件编译/性能规则） — 2026-04-24
 - [x] **TASK-044** — 创建 monorepo 预设（包边界/依赖管理/构建缓存/发布规则） — 2026-04-24

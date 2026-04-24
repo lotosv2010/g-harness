@@ -17,3 +17,8 @@ export type { Preset } from './core/preset-loader.js'
 
 export { resolveVariables } from './core/variables.js'
 export { getGForgeRoot } from './core/paths.js'
+
+export { AGENT_REGISTRY, getAgent, getAgentOrThrow, listAgentIds } from './core/agents/agent-registry.js'
+export type { AgentDefinition } from './core/agents/agent-registry.js'
+export { AgentAdapter } from './core/agents/agent-adapter.js'
+export type { FileEntry } from './core/agents/agent-adapter.js'

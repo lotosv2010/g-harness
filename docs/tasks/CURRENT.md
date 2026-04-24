@@ -10,13 +10,26 @@
 
 ## 当前阶段
 
-**v0.3 — 全部完成 ✓**
+**v1.0 — Agent 适配层 ✓**
 
-P0（自洽性）、P1（代码质量）、P2（完善度）全部完成。
+支持多 AI 开发助手（Claude Code / Cursor / Windsurf / Copilot / Trae / 通用），init 时选择 agent 并生成对应配置。全部完成。
 
 ## 活跃任务
 
 无。
+
+## Agent 适配层完成概览
+
+| 任务 | 完成日期 | 说明 |
+|------|----------|------|
+| TASK-047 | 2026-04-24 | Agent 注册表（AgentDefinition + 6 个 agent） |
+| TASK-048 | 2026-04-24 | Agent 入口模板（claude/cursor/windsurf/copilot/trae） |
+| TASK-049 | 2026-04-24 | AgentAdapter（目录映射 + 能力过滤） |
+| TASK-050 | 2026-04-24 | FileGenerator 多 Agent 改造 |
+| TASK-051 | 2026-04-24 | init 交互 Agent 多选（@clack/prompts） |
+| TASK-052 | 2026-04-24 | `--agent` CLI 参数（非交互模式） |
+| TASK-053 | 2026-04-24 | Agent 适配测试（20 用例全部通过） |
+| TASK-054 | 2026-04-24 | 文档更新（SPEC/README/GETTING_STARTED） |
 
 ## v1.0 预设扩展规划
 

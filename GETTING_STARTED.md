@@ -26,26 +26,40 @@ npx gforge init
 
 ## 2. 初始化项目
 
-### 2.1 新项目 — 使用预设
+### 2.1 交互式初始化（推荐）
 
 ```bash
-# Next.js 全栈项目
-gforge init --preset nextjs
-
-# NestJS 后端项目
-gforge init --preset nestjs
-
-# Vue 3 + Vite 项目
-gforge init --preset vite-vue
-
-# React + Vite 项目
-gforge init --preset vite-react
-
-# 纯 HTML + JS 项目
-gforge init --preset vanilla
+gforge init
 ```
 
-### 2.2 已有项目 — 自动扫描
+G-Forge 会引导你选择 AI 助手和技术栈预设：
+
+```
+◆  选择你的 AI 开发助手（空格选择，回车确认）
+│  ● Claude Code（Anthropic）— 完整支持（规则/钩子/协议/技能）
+│  ○ Cursor（Anysphere）— 支持规则
+│  ○ Windsurf（Codeium）— 支持规则
+│  ○ GitHub Copilot（GitHub）— 支持规则
+│  ○ Trae（ByteDance）— 支持规则
+│  ○ 通用模式（兼容所有 agent）— 仅生成 AGENTS.md
+```
+
+支持多选——团队中不同成员用不同 AI 工具时，一次 init 全部搞定。
+
+### 2.2 非交互式 — 指定参数
+
+```bash
+# 指定 AI 助手 + 预设
+gforge init --agent claude --preset nextjs
+
+# 多个 AI 助手
+gforge init --agent claude,cursor --preset vite-react
+
+# 纯 HTML + JS 项目
+gforge init --agent cursor --preset vanilla
+```
+
+### 2.3 已有项目 — 自动扫描
 
 ```bash
 gforge init --scan
@@ -69,11 +83,11 @@ gforge init --preset vite-react --dry-run
 gforge init --preset vite-react --full
 ```
 
-**核心层（默认）：**
+**核心层（默认，以 Claude Code 为例）：**
 
 ```
-CLAUDE.md                    # AI 上下文配置
-AGENTS.md                    # 通用 AI 开发规范
+AGENTS.md                    # 通用 AI 开发规范（所有 agent 共用）
+CLAUDE.md                    # Claude Code 入口配置
 .claude/rules/*.md           # 硬性规则
 .claude/protocols/*.md       # 任务执行协议
 .claude/hooks/*.mjs          # 自动检查钩子
@@ -81,6 +95,8 @@ AGENTS.md                    # 通用 AI 开发规范
 docs/ARCHITECTURE.md         # 架构文档
 docs/SPEC.md                 # 产品说明书
 ```
+
+> 选择其他 AI 助手时，入口文件和配置目录会自动适配（如 Cursor → `.cursorrules` + `.cursor/rules/`）。
 
 **完整层（--full 追加）：**
 
@@ -277,7 +293,15 @@ gforge init --preset vite-vue --force
 
 ### 不使用 Claude Code 可以用吗？
 
-可以。G-Forge 生成的规范文件（`AGENTS.md`、规则、协议等）是通用的 Markdown 文件，任何 AI 编程工具都可以读取。`.claude/` 目录下的钩子和技能是 Claude Code 特定的增强功能。
+可以。G-Forge 原生支持 Claude Code、Cursor、Windsurf、GitHub Copilot、Trae 五种 AI 助手，以及兼容任意 agent 的通用模式。初始化时选择对应的 AI 助手即可：
+
+```bash
+gforge init --agent cursor    # Cursor 用户
+gforge init --agent copilot   # GitHub Copilot 用户
+gforge init --agent generic   # 其他 AI 工具（仅生成 AGENTS.md）
+```
+
+注意：钩子、协议、技能等高级功能目前仅 Claude Code 支持，其他 agent 仅生成规则文件。
 
 ### 如何卸载 G-Forge？
 

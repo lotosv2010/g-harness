@@ -2,6 +2,8 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises'
 import { join, relative, dirname } from 'node:path'
 import { fileExists, readDirSafe, isDirectory } from '../fs-utils.js'
 import { resolveVariables } from '../variables.js'
+import { AgentAdapter } from '../agents/agent-adapter.js'
+import type { AgentDefinition } from '../agents/agent-registry.js'
 import type { Preset } from '../preset-loader.js'
 import type { ScanResult } from '../scanner/project-scanner.js'
 
@@ -13,6 +15,7 @@ export interface GenerateOptions {
   overwrite: boolean
   dryRun: boolean
   full: boolean
+  agents: AgentDefinition[]
 }
 
 export interface GenerateResult {
@@ -129,50 +132,105 @@ export class FileGenerator {
   }
 
   private async collectFiles(options: GenerateOptions): Promise<FileEntry[]> {
-    const { gforgeRoot } = options
+    const { gforgeRoot, agents } = options
     const tplRoot = join(gforgeRoot, 'src', 'templates')
+    const adapter = new AgentAdapter()
+    const files: FileEntry[] = []
 
-    const allFiles = await this.collectRecursive(tplRoot, tplRoot)
+    // 1. AGENTS.md 始终生成（agent 无关）
+    const agentsTemplate = join(tplRoot, 'AGENTS.template.md')
+    try {
+      const content = await readFile(agentsTemplate, 'utf-8')
+      files.push({ outputPath: 'AGENTS.md', content })
+    } catch { /* 模板不存在则跳过 */ }
+
+    // 2. 收集 .ai/ 下的通用规则/协议/钩子等模板文件
+    const aiDir = join(tplRoot, '.ai')
+    const aiTemplateFiles = await this.collectRecursive(aiDir, aiDir)
+    // 给路径加上 .ai/ 前缀以便 adapter 映射
+    const aiFilesWithPrefix = aiTemplateFiles.map((f) => ({
+      outputPath: `.ai/${f.outputPath}`,
+      content: f.content,
+    }))
+
+    // 3. 收集 docs/、tools/、tests/ 等非 .ai 模板（agent 无关）
+    const nonAiFiles = await this.collectNonAiFiles(tplRoot)
+
+    // 4. 为每个选中的 agent 生成入口文件 + 配置目录文件
+    for (const agent of agents) {
+      // 入口模板
+      const entry = await adapter.loadEntryTemplate(gforgeRoot, agent)
+      if (entry) files.push(entry)
+
+      // .ai/ 模板 → agent 特定配置目录
+      const adapted = adapter.adaptFiles(aiFilesWithPrefix, agent)
+      files.push(...adapted)
+
+      // 预设特定规则 → agent 配置目录
+      if (options.preset && agent.configDir) {
+        const presetRulesDir = join(gforgeRoot, 'src', 'presets', options.preset.name, 'rules')
+        const presetFiles = await this.collectRecursive(presetRulesDir, presetRulesDir)
+        for (const f of presetFiles) {
+          files.push({ outputPath: `${agent.configDir}/rules/${f.outputPath}`, content: f.content })
+        }
+      }
+    }
+
+    // 5. 添加 agent 无关的文档/工具文件
+    files.push(...nonAiFiles)
 
     // 非 --full 模式时过滤为核心层文件
-    const files = options.full ? allFiles : allFiles.filter((f) => this.isCoreFile(f.outputPath))
-
-    // 追加预设特定规则
-    if (options.preset) {
-      const presetRulesDir = join(gforgeRoot, 'src', 'presets', options.preset.name, 'rules')
-      const presetFiles = await this.collectRecursive(presetRulesDir, presetRulesDir)
-      for (const f of presetFiles) {
-        files.push({ outputPath: `.claude/rules/${f.outputPath}`, content: f.content })
-      }
+    if (!options.full) {
+      return files.filter((f) => this.isCoreFile(f.outputPath, agents))
     }
 
     return files
   }
 
+  // 收集 docs/、tools/、tests/ 等非 .ai 的模板文件
+  private async collectNonAiFiles(tplRoot: string): Promise<FileEntry[]> {
+    const files: FileEntry[] = []
+    const subDirs = ['docs', 'tools', 'tests']
+    for (const sub of subDirs) {
+      const dir = join(tplRoot, sub)
+      const subFiles = await this.collectRecursive(dir, dir)
+      for (const f of subFiles) {
+        files.push({ outputPath: `${sub}/${f.outputPath}`, content: f.content })
+      }
+    }
+    return files
+  }
+
   // 核心层：Context + Constraint（第 1 天即生效的最小集合）
-  private isCoreFile(outputPath: string): boolean {
-    const corePrefixes = [
-      '.claude/rules/',
-      '.claude/protocols/',
-      '.claude/hooks/',
-    ]
+  private isCoreFile(outputPath: string, agents: AgentDefinition[]): boolean {
+    // agent 入口文件始终是核心文件
+    const entryFiles = agents.map((a) => a.entryFile).filter(Boolean)
     const coreExact = [
-      'CLAUDE.md',
       'AGENTS.md',
       'docs/ARCHITECTURE.md',
       'docs/SPEC.md',
-      '.claude/settings.json',
+      ...entryFiles,
     ]
-
     if (coreExact.includes(outputPath)) return true
-    return corePrefixes.some((prefix) => outputPath.startsWith(prefix))
+
+    // 各 agent 配置目录下的 rules/ protocols/ hooks/ settings 是核心文件
+    for (const agent of agents) {
+      if (!agent.configDir) continue
+      const coreSuffixes = ['/rules/', '/protocols/', '/hooks/']
+      for (const suffix of coreSuffixes) {
+        if (outputPath.startsWith(`${agent.configDir}${suffix}`)) return true
+      }
+      if (outputPath === `${agent.configDir}/settings.json`) return true
+    }
+
+    return false
   }
 
   private async collectRecursive(dir: string, root: string): Promise<FileEntry[]> {
     const entries = await readDirSafe(dir)
     const files: FileEntry[] = []
 
-    const skipDirs = ['git-hooks']
+    const skipDirs = ['git-hooks', 'entries']
 
     for (const entry of entries) {
       const fullPath = join(dir, entry)
@@ -187,9 +245,8 @@ export class FileGenerator {
 
       const content = await readFile(fullPath, 'utf-8')
       const relPath = relative(root, fullPath).replace(/\\/g, '/')
-      // .ai/ → .claude/（模板源码用通用名，输出到目标项目时映射回 Claude Code 目录）
       // .template.ext → .ext（去除模板后缀）
-      const outputPath = relPath.replace(/\.template\.(\w+)$/, '.$1').replace(/^\.ai\//, '.claude/')
+      const outputPath = relPath.replace(/\.template\.(\w+)$/, '.$1')
       files.push({ outputPath, content })
     }
 
@@ -197,7 +254,7 @@ export class FileGenerator {
   }
 
   private isTemplateFile(filename: string): boolean {
-    const exts = ['.md', '.mjs', '.sh', '.json']
+    const exts = ['.md', '.mjs', '.sh', '.json', '.txt']
     return exts.some((ext) => filename.endsWith(ext))
   }
 
