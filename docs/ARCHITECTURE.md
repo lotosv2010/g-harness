@@ -150,10 +150,10 @@ CLI `init` 命令读取此目录，渲染模板变量后输出。
 src/templates/
 ├── .ai/                   # AI 通用规范 → 输出到目标项目 .claude/
 │   ├── rules/             # 通用规则（安全、代码质量、架构）
-│   ├── protocols/         # 执行协议（功能开发、Bug 修复、重构、审查）
+│   ├── protocols/         # 执行协议（feature、bugfix、refactor、review、incident、migration、api-design）
 │   ├── guardrails/        # 护栏定义（边界检查、提交前检查）
 │   ├── prompts/           # Prompt 模板（Bug 报告、代码审查等）
-│   ├── skills/            # 可复用技能（analyze、scaffold、test-gen）
+│   ├── skills/            # 可复用技能（feat、test-gen、scaffold、analyze、release、security、debt、pr）
 │   └── hooks/             # 事件钩子
 ├── docs/                  # → 目标项目 docs/
 │   ├── decisions/         # ADR 模板

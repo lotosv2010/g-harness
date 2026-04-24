@@ -23,6 +23,10 @@
 
 ## 已完成（DONE）
 
+- [x] **TASK-068** — 3 个协议模板版本（src/templates/.ai/protocols/{incident,migration,api-design}.md） — 2026-04-24
+- [x] **TASK-067** — 3 个新协议 g-forge 版（.claude/protocols/{incident,migration,api-design}.md） — 2026-04-24
+- [x] **TASK-066** — 4 个 skill 模板版本（src/templates/.ai/skills/{release,security,debt,pr}/SKILL.md 通用化） — 2026-04-24
+- [x] **TASK-065** — 4 个新 skill g-forge 版（.claude/skills/{release,security,debt,pr}/SKILL.md） — 2026-04-24
 - [x] **TASK-064** — feat skill 模板补充（src/templates/.ai/skills/feat/SKILL.md 通用化版本） — 2026-04-24
 - [x] **TASK-063** — 文档更新（SPEC/README/GETTING_STARTED 同步 6 阶段交互流程） — 2026-04-24
 - [x] **TASK-062** — init.ts 编排重构 + --name/--conflict/--yes flag — 2026-04-24
