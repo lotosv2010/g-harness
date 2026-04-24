@@ -11,6 +11,7 @@ export interface GenerateOptions {
   scanResult: ScanResult
   overwrite: boolean
   dryRun: boolean
+  full: boolean
 }
 
 export interface GenerateResult {
@@ -130,8 +131,10 @@ export class FileGenerator {
     const { gforgeRoot } = options
     const tplRoot = join(gforgeRoot, 'src', 'templates')
 
-    // 递归遍历 templates/，目录结构即输出结构
-    const files = await this.collectRecursive(tplRoot, tplRoot)
+    const allFiles = await this.collectRecursive(tplRoot, tplRoot)
+
+    // 非 --full 模式时过滤为核心层文件
+    const files = options.full ? allFiles : allFiles.filter((f) => this.isCoreFile(f.outputPath))
 
     // 追加预设特定规则
     if (options.preset) {
@@ -145,28 +148,56 @@ export class FileGenerator {
     return files
   }
 
+  // 核心层：Context + Constraint（第 1 天即生效的最小集合）
+  private isCoreFile(outputPath: string): boolean {
+    const corePrefixes = [
+      '.claude/rules/',
+      '.claude/protocols/',
+      '.claude/hooks/',
+    ]
+    const coreExact = [
+      'CLAUDE.md',
+      'AGENTS.md',
+      'docs/ARCHITECTURE.md',
+      'docs/SPEC.md',
+      '.claude/settings.json',
+    ]
+
+    if (coreExact.includes(outputPath)) return true
+    return corePrefixes.some((prefix) => outputPath.startsWith(prefix))
+  }
+
   private async collectRecursive(dir: string, root: string): Promise<FileEntry[]> {
     const entries = await this.readDirSafe(dir)
     const files: FileEntry[] = []
+
+    const skipDirs = ['git-hooks']
 
     for (const entry of entries) {
       const fullPath = join(dir, entry)
       const isDir = await this.isDirectory(fullPath)
 
       if (isDir) {
+        if (skipDirs.includes(entry)) continue
         files.push(...await this.collectRecursive(fullPath, root))
         continue
       }
-      if (!entry.endsWith('.md')) continue
+      if (!this.isTemplateFile(entry)) continue
 
       const content = await readFile(fullPath, 'utf-8')
       const relPath = relative(root, fullPath).replace(/\\/g, '/')
       // .ai/ → .claude/（模板源码用通用名，输出到目标项目时映射回 Claude Code 目录）
-      const outputPath = relPath.replace('.template.md', '.md').replace(/^\.ai\//, '.claude/')
+      // .template.ext → .ext（去除模板后缀）
+      const outputPath = relPath.replace(/\.template\.(\w+)$/, '.$1').replace(/^\.ai\//, '.claude/')
       files.push({ outputPath, content })
     }
 
     return files
+  }
+
+  private isTemplateFile(filename: string): boolean {
+    const exts = ['.md', '.mjs', '.sh', '.json']
+    return exts.some((ext) => filename.endsWith(ext))
   }
 
   private async readDirSafe(dirPath: string): Promise<string[]> {

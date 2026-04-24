@@ -19,11 +19,13 @@ gforge init [options]
   --scan                扫描已有项目结构并生成匹配的配置
   --dry-run             仅预览将生成的文件，不实际写入
   --force               覆盖已有配置文件
+  --full                输出完整文档体系（默认仅输出核心层）
 
 示例：
   gforge init --preset react-vite
   gforge init --scan
   gforge init --dry-run
+  gforge init --full              # 输出全部文件（含护栏、技能、Prompt、扩展文档）
 ```
 
 **行为规格：**
@@ -38,17 +40,30 @@ gforge init [options]
   2. 加载预设（src/presets/<name>/preset.json）
   3. 加载可分发内容（src/templates/）
   4. Generator 渲染模板（{{variable}} → 预设变量值）
+  5. 根据 --full 标志过滤核心/完整文件集
+  6. 安装 git pre-commit hook（如 .git/ 存在）
 
-输出：
+输出（默认核心层）：
   - CLAUDE.md
   - AGENTS.md
   - .claude/rules/*.md
   - .claude/protocols/*.md
-  - .claude/guardrails/*.md（可选）
-  - docs/ 基础结构（可选）
+  - .claude/hooks/*.mjs（边界检查脚本）
+  - .claude/settings.json（hook 注册配置）
+  - docs/ARCHITECTURE.md
+  - docs/SPEC.md
+  - .git/hooks/pre-commit（校验闸门）
+
+输出（--full 追加）：
+  - .claude/guardrails/*.md
+  - .claude/prompts/*.md
+  - .claude/skills/**/*.md
+  - docs/（DESIGN、API、DATA_MODEL、decisions、tasks、team、runbooks）
+  - tools/、tests/ 基础结构
 
 副作用：
   - 创建文件（不修改已有文件，除非 --force）
+  - 安装 git pre-commit hook（不修改已有 hook，除非 --force）
   - 不安装依赖
   - 不修改 package.json
 
@@ -151,6 +166,7 @@ const result = await generator.generate({
   scanResult,
   overwrite: false,
   dryRun: false,
+  full: false,  // true = 输出完整文档体系
 })
 ```
 
