@@ -31,5 +31,15 @@
     "test": "pnpm test",
     "lint": "pnpm lint",
     "typecheck": "pnpm typecheck"
+  },
+  "fragments": {
+    "architectureLayers": "**分层：** Pages → Features → Components → Hooks → Shared/API\n\n- Pages 只负责布局与路由参数解析，业务逻辑放 Features\n- Features 内聚：组件 + Hook + 状态 + API 封装\n- Components 只放通用 UI（无业务语义）\n- 跨 Feature 的副作用放 `shared/` 或 `api/`",
+    "defaultModules": ["pages", "features", "components", "hooks", "shared", "api"],
+    "structureHint": "src/\n├── pages/                # 页面路由入口\n├── features/             # 领域功能（按业务切分）\n│   └── user/\n│       ├── components/\n│       ├── hooks/\n│       └── api.ts\n├── components/           # 通用 UI 组件\n├── hooks/                # 通用 Hook\n├── shared/               # 共享工具 / 常量 / 类型\n└── api/                  # HTTP 客户端与接口封装",
+    "extraNfr": [
+      "严格的代码分割：路由级使用 React.lazy + Suspense",
+      "避免 context 过度嵌套，优先使用 Zustand/Jotai 等原子化状态",
+      "所有副作用通过自定义 Hook 封装，不在组件体内散落 useEffect"
+    ]
   }
 }

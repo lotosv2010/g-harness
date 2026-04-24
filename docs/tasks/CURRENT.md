@@ -10,37 +10,37 @@
 
 ## 当前阶段
 
-**v1.3 — 智能补全 + 项目索引（规划中）**
+**v1.3 — 智能补全 + 项目索引（进行中）**
 
 补齐两个核心价值：
-1. **智能内容补全**：让 init 收集的描述 + 扫描到的技术栈真正驱动 SPEC/ARCHITECTURE 内容生成，避免"占位符骨架"
-2. **项目索引体系**：生成 PROJECT_MAP / FEATURES / ROUTES 三个索引文件 + 协议硬化 AI 必读约定，显著降低 AI 改 bug / 做需求的 token 消耗
+1. **智能内容补全** ✅ —— init 收集的描述 + 扫描的技术栈驱动 SPEC/ARCHITECTURE 内容生成
+2. **项目索引体系** ✅ —— PROJECT_MAP / FEATURES / ROUTES 三个索引 + 协议硬化 AI 必读约定
 
-来源：2026-04-24 项目审计（目标 1a/1b/2a/2b），详见 BOARD.md 的 TASK-069~081。
+本次完成 P0 闭环（TASK-069~074）+ P1 两项（TASK-077/078）。
 
 ## 活跃任务
 
-无（待用户确认优先级后启动 P0 任务组）。
+无（剩余 TASK-075/076/079/080/081 待下一轮启动）。
 
-## v1.3 待办概览
+## v1.3 进度
 
-### P0 — 核心闭环（1-2 周）
-| 任务 | 复杂度 | 说明 |
+### P0 — 核心闭环 ✅ 全部完成
+| 任务 | 复杂度 | 状态 |
 |------|--------|------|
-| TASK-069 | S | 修复 meta 数据流断链 |
-| TASK-070 | M | 扫描器增强：路由 + 模块 + 入口解析 |
-| TASK-071 | M | 索引模板 + `gforge index` 命令 |
-| TASK-072 | M | 描述分析器 MVP（规则版） |
-| TASK-073 | M | 预设片段库（SPEC/ARCHITECTURE 领域片段） |
-| TASK-074 | S | 协议硬化：AI 必读索引约定 |
+| TASK-069 | S | ✅ 修复 meta 数据流断链 |
+| TASK-070 | M | ✅ 扫描器增强：路由 + 模块 + 入口解析 |
+| TASK-071 | M | ✅ 索引模板 + `gforge index` 命令 |
+| TASK-072 | M | ✅ 描述分析器 MVP（规则版） |
+| TASK-073 | M | ✅ 预设片段库（nextjs/nestjs/vite-react） |
+| TASK-074 | S | ✅ 协议硬化：AI 必读索引约定 |
 
 ### P1 — 流程完整性
-| 任务 | 复杂度 | 说明 |
+| 任务 | 复杂度 | 状态 |
 |------|--------|------|
-| TASK-075 | M | init 老项目双模式（自动分析 / 手动输入） |
-| TASK-076 | S | `gforge index --watch` 增量更新 |
-| TASK-077 | M | 新增 3 个 Workflow 协议（requirements/testing/deployment） |
-| TASK-078 | M | 框架特定约束库 |
+| TASK-075 | M | ⏳ init 老项目双模式（自动分析 / 手动输入） |
+| TASK-076 | S | ⏳ `gforge index --watch` 增量更新 |
+| TASK-077 | M | ✅ 新增 3 个 Workflow 协议（requirements/testing/deployment） |
+| TASK-078 | M | ✅ 框架特定约束库（app-router-rules/module-rules/component-rules） |
 
 ### P2 — 体验优化
 | 任务 | 复杂度 | 说明 |

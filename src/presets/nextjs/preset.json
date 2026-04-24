@@ -31,5 +31,15 @@
     "test": "pnpm test",
     "lint": "pnpm lint",
     "typecheck": "pnpm typecheck"
+  },
+  "fragments": {
+    "architectureLayers": "**分层：** app/ 路由 → Server Component → Server Action / Route Handler → Service → Data\n\n- 默认 Server Component，仅在需要交互时添加 'use client'\n- API 通过 `app/api/**/route.ts` 暴露，避免与页面路由混用\n- 数据层统一通过 `src/lib/` 的 Service 与 Repository",
+    "defaultModules": ["app", "components", "lib", "features", "hooks"],
+    "structureHint": "src/\n├── app/                  # 路由与页面（App Router）\n│   ├── (public)/\n│   ├── (dashboard)/\n│   └── api/              # Route Handlers\n├── components/           # 通用 UI 组件\n├── features/             # 领域功能（含 Server/Client 组件）\n├── lib/                  # 服务层 / Repository / 工具\n└── hooks/                # 可复用 Client Hook",
+    "extraNfr": [
+      "Server Component 中禁止直接访问浏览器 API",
+      "Route Handler 统一使用 Web Request/Response 类型",
+      "静态资源启用 next/image 和 next/font 的默认优化"
+    ]
   }
 }

@@ -9,6 +9,8 @@ import { resolveProjectMode } from '../scanner/detect-project.js'
 
 // ── 公共类型 ──
 
+import { autoDescribe } from '../analyzer/index.js'
+
 export interface InteractiveResult {
   agents: AgentDefinition[]
   cancelled: boolean
@@ -18,6 +20,10 @@ export interface ProjectMeta {
   projectName: string
   projectDescription: string
   srcDir: string
+  /** 元信息来源：manual（用户输入）或 auto（从 package.json/README 自动推导） */
+  source: 'manual' | 'auto'
+  /** auto 模式下的证据来源 */
+  autoSources?: string[]
 }
 
 export type ConflictStrategy = 'skip' | 'overwrite' | 'prompt'
@@ -236,9 +242,46 @@ function detectPresetFromFramework(framework: string): string {
 export async function stage4CollectMeta(
   detection: ProjectDetection,
 ): Promise<ProjectMeta | null> {
-  const defaultName = await inferProjectName(detection)
-  const defaultDesc = await inferProjectDescription(detection)
+  const mode = resolveProjectMode(detection)
   const defaultSrc = detection.scanResult.structure.srcDir ?? 'src'
+  const rootDir = detection.scanResult.structure.rootDir
+
+  // 老项目（existing / reinit）可选择"自动分析" vs "手动输入"
+  if (mode !== 'new') {
+    const auto = await autoDescribe(rootDir)
+    if (auto.projectName || auto.description) {
+      const choice = await p.select({
+        message: '元信息收集方式',
+        options: [
+          {
+            value: 'auto',
+            label: '自动分析（从 package.json / README 提取）',
+            hint: auto.sources.join(' + '),
+          },
+          { value: 'manual', label: '手动输入（逐项确认）' },
+        ],
+      })
+      if (p.isCancel(choice)) return null
+
+      if (choice === 'auto') {
+        const name = auto.projectName || inferProjectNameFromDir(rootDir)
+        const desc = auto.description ?? ''
+        p.log.info(pc.cyan(`自动识别：${name}${desc ? ` — ${desc.slice(0, 60)}${desc.length > 60 ? '...' : ''}` : ''}`))
+        return {
+          projectName: name,
+          projectDescription: desc,
+          srcDir: defaultSrc,
+          source: 'auto',
+          autoSources: auto.sources,
+        }
+      }
+    }
+  }
+
+  // 手动输入路径（新项目或用户选择 manual）
+  const auto = mode !== 'new' ? await autoDescribe(rootDir) : null
+  const defaultName = auto?.projectName || inferProjectNameFromDir(rootDir)
+  const defaultDesc = auto?.description ?? ''
 
   const projectName = await p.text({
     message: '项目名称',
@@ -265,18 +308,13 @@ export async function stage4CollectMeta(
     projectName: projectName as string,
     projectDescription: (projectDescription as string) || '',
     srcDir: srcDir as string,
+    source: 'manual',
   }
 }
 
-async function inferProjectName(detection: ProjectDetection): Promise<string> {
-  // 从 scanResult 获取 rootDir，取目录名
-  const rootDir = detection.scanResult.structure.rootDir
+function inferProjectNameFromDir(rootDir: string): string {
   const dirName = rootDir.split(/[/\\]/).filter(Boolean).pop() ?? 'my-project'
   return dirName
-}
-
-async function inferProjectDescription(_detection: ProjectDetection): Promise<string> {
-  return ''
 }
 
 // ── Stage 5: 输出配置 ──

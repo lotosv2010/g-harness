@@ -30,5 +30,15 @@
     "test": "pnpm test",
     "lint": "pnpm lint",
     "typecheck": "pnpm typecheck"
+  },
+  "fragments": {
+    "architectureLayers": "**分层：** Controller → Service → Repository → Entity\n\n- Controller 仅做参数校验与响应序列化，不含业务逻辑\n- Service 处理业务用例，跨 Module 时通过显式依赖注入\n- Repository 通过 TypeORM / Prisma 访问数据库，禁止 Controller 直查\n- 公共能力放 `src/common/`（Pipe / Guard / Interceptor / Filter）",
+    "defaultModules": ["modules", "common", "config", "core"],
+    "structureHint": "src/\n├── main.ts               # 应用入口\n├── app.module.ts         # 根 Module\n├── modules/              # 业务 Module（每个领域一个）\n│   └── user/\n│       ├── user.module.ts\n│       ├── user.controller.ts\n│       ├── user.service.ts\n│       ├── user.repository.ts\n│       └── dto/\n├── common/               # Pipe / Guard / Interceptor / Filter\n├── config/               # 配置加载\n└── core/                 # 全局基础设施",
+    "extraNfr": [
+      "所有 DTO 使用 class-validator 强制校验",
+      "异常通过 HttpException 体系抛出，由全局 Filter 统一格式化",
+      "数据库操作通过事务装饰器或 QueryRunner 管理"
+    ]
   }
 }

@@ -29,6 +29,7 @@ interface InitOptions {
   force?: boolean
   full?: boolean
   yes?: boolean
+  llm?: boolean
 }
 
 export const initCommand = new Command('init')
@@ -41,6 +42,7 @@ export const initCommand = new Command('init')
   .option('--dry-run', '仅预览将生成的文件，不实际写入')
   .option('--force', '覆盖已有配置文件（等同 --conflict overwrite）')
   .option('--full', '输出完整文档体系（默认仅输出核心层）')
+  .option('--llm', '启用 LLM 内容增强（检测到 ANTHROPIC_API_KEY / OPENAI_API_KEY 时生效；失败自动降级）')
   .option('-y, --yes', '跳过所有交互，使用默认值')
   .action(async (options: InitOptions) => {
     const targetDir = process.cwd()
@@ -114,10 +116,20 @@ export const initCommand = new Command('init')
       meta = collected
     } else {
       const dirName = targetDir.split(/[/\\]/).filter(Boolean).pop() ?? 'my-project'
+      // 非交互模式：老项目自动尝试从 package.json/README 推导描述
+      let autoName: string | null = null
+      let autoDesc: string | null = null
+      if (mode !== 'new') {
+        const { autoDescribe } = await import('../analyzer/index.js')
+        const auto = await autoDescribe(targetDir)
+        autoName = auto.projectName
+        autoDesc = auto.description
+      }
       meta = {
-        projectName: options.name ?? dirName,
-        projectDescription: '',
+        projectName: options.name ?? autoName ?? dirName,
+        projectDescription: autoDesc ?? '',
         srcDir: scanResult.structure.srcDir ?? 'src',
+        source: autoDesc ? 'auto' : 'manual',
       }
     }
 
@@ -160,6 +172,7 @@ export const initCommand = new Command('init')
       dryRun: true,
       full,
       agents,
+      meta,
     })
 
     if (isInteractive) {
@@ -196,7 +209,18 @@ export const initCommand = new Command('init')
       dryRun: options.dryRun ?? false,
       full,
       agents,
+      meta,
       onConflict,
+      useLlm: options.llm ?? false,
+      onLlmResult: (info) => {
+        if (info.enhanced) {
+          p.log.success(pc.green(`LLM 增强已应用（provider: ${info.provider}）`))
+        } else if (info.reason === 'no-key') {
+          p.log.warn(pc.yellow('未检测到 ANTHROPIC_API_KEY / OPENAI_API_KEY，降级到规则版'))
+        } else {
+          p.log.warn(pc.yellow(`LLM 增强失败（${info.reason ?? 'unknown'}），降级到规则版`))
+        }
+      },
     })
 
     // 输出结果

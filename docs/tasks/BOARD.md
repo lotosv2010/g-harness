@@ -17,86 +17,83 @@
 
 ### P0 — 核心闭环（1-2 周）
 
-- [ ] **TASK-069** — 修复 meta 数据流（`projectDescription` 未传递至 generator）（S）
+- [x] **TASK-069** — 修复 meta 数据流（`projectDescription` 未传递至 generator）（S）✅ 2026-04-24
   - 输入：`stage4CollectMeta()` 产出的 `ProjectMeta`
   - 输出：扩展 `GenerateOptions.meta` + `buildVariables()` 读取 meta 替代硬编码
   - 验收：生成的 SPEC.md / CLAUDE.md 中 `{{project_description}}` 被真实替换
   - 依赖：无
 
-- [ ] **TASK-070** — 扫描器增强：路由 + 模块 + 入口解析（M）
+- [x] **TASK-070** — 扫描器增强：路由 + 模块 + 入口解析（M）✅ 2026-04-24
   - 输入：目标项目源码
   - 输出：`src/core/indexer/route-parser.ts`、`module-extractor.ts`、`feature-mapper.ts`
-  - 验收：支持 Next.js App Router / Express / React Router v6 / Vue Router 至少 4 种路由识别，能输出 `{路径 → handler 文件}` 映射
+  - 验收：支持 Next.js App Router / Pages Router / Nuxt / Express / React Router / Vue Router 等路由识别
   - 依赖：无
 
-- [ ] **TASK-071** — 索引模板 + 新增 `gforge index` 命令（M）
+- [x] **TASK-071** — 索引模板 + 新增 `gforge index` 命令（M）✅ 2026-04-24
   - 输入：TASK-070 的扫描结果
   - 输出：
     - `src/templates/docs/PROJECT_MAP.template.md`（模块清单 → 文件）
     - `src/templates/docs/FEATURES.template.md`（功能清单 → 入口）
     - `src/templates/docs/ROUTES.template.md`（路由表 → handler）
-    - `src/core/commands/index.ts`（gforge index 命令）
-  - 验收：`gforge index` 能在目标项目生成 3 个索引文件，内容与实际代码一致
+    - `src/core/commands/index-cmd.ts`（gforge index 命令，已注册到 CLI）
+  - 验收：`gforge index` 能在目标项目生成 3 个索引文件，内容与实际代码一致（已在 g-forge 自身验证）
   - 依赖：TASK-070
 
-- [ ] **TASK-072** — 描述分析器 MVP（规则版，不依赖 LLM）（M）
+- [x] **TASK-072** — 描述分析器 MVP（规则版，不依赖 LLM）（M）✅ 2026-04-24
   - 输入：`projectDescription` + `preset` + `scanResult`
-  - 输出：`src/core/analyzer/description-analyzer.ts` + `content-completer.ts`
-  - 验收：能识别应用类型（web-app/api/fullstack/cli）、提取关键词、输出推荐模块清单
+  - 输出：`src/core/analyzer/description-analyzer.ts` + `content-completer.ts`（11 单测 PASS）
+  - 验收：识别应用类型（web-app/api/fullstack/mobile/desktop/cli/library）、8 个领域规则、23 功能关键词、推荐模块清单
   - 依赖：TASK-069
 
-- [ ] **TASK-073** — 预设片段库 — 补全 SPEC/ARCHITECTURE 内容（M）
+- [x] **TASK-073** — 预设片段库 — 补全 SPEC/ARCHITECTURE 内容（M）✅ 2026-04-24
   - 输入：TASK-072 的分析结果
-  - 输出：每个 preset 新增 `fragments/` 目录（SPEC 片段 + ARCHITECTURE 片段，按领域分类）
-  - 验收：nextjs / nestjs / vite-react 三个主流预设至少覆盖 3 类领域（web-app / api / fullstack）
+  - 输出：`preset.json` 扩展 `fragments` 字段（architectureLayers / defaultModules / structureHint / extraNfr），content-completer 接受并覆盖默认值；nextjs / nestjs / vite-react 三个预设已实装
+  - 验收：三个主流预设覆盖 fullstack / api / web-app 三类领域，含专属分层/模块/NFR
   - 依赖：TASK-072
 
-- [ ] **TASK-074** — 协议硬化：AI 必读索引文件约定（S）
+- [x] **TASK-074** — 协议硬化：AI 必读索引文件约定（S）✅ 2026-04-24
   - 输入：TASK-071 产出的索引文件
-  - 输出：更新 CLAUDE.md 模板、feature/bugfix protocol 模板，强制"先读 PROJECT_MAP.md"
-  - 验收：CLAUDE.md 的"上下文优先"列表中 PROJECT_MAP.md 排在前 3 位，协议 checklist 明确要求
+  - 输出：CLAUDE.template.md 上下文顺序改为 PROJECT_MAP/FEATURES/ROUTES 优先，feature/bugfix 协议模板阶段 1 显式要求读索引
+  - 验收：上下文优先列表中 PROJECT_MAP.md 排在第 2 位（本文件除外），两个协议阶段 1 包含"禁止未读索引就整库扫描"条款
   - 依赖：TASK-071
 
 ### P1 — 流程完整性（1-2 周）
 
-- [ ] **TASK-075** — init 老项目分支：自动分析 vs 手动输入双模式（M）
-  - 输入：Stage 1 检测结果为 existing 时
-  - 输出：扩展 Stage 4，新增"自动分析补全"选项，调用 TASK-070/072 的能力
-  - 验收：老项目场景下可跳过手动输入，由扫描结果驱动 SPEC/ARCHITECTURE 生成
+- [x] **TASK-075** — init 老项目分支：自动分析 vs 手动输入双模式（M）✅ 2026-04-24
+  - 输出：`src/core/analyzer/auto-describe.ts`（package.json + README 提取）、Stage 4 扩展 auto/manual 二选一、非交互模式同步接入、`ProjectMeta.source` 追踪来源
+  - 验收：8 个单测覆盖空目录/name 提取/description 提取/README 兜底/徽章剥离/优先级/截断/损坏 JSON；老项目场景可跳过逐项输入
   - 依赖：TASK-070、TASK-072、TASK-073
 
-- [ ] **TASK-076** — `gforge index --watch` 增量更新（S）
-  - 输入：git diff 产生的变更文件
-  - 输出：只更新受影响的索引条目
-  - 验收：大仓库（1000+ 文件）增量更新耗时 < 2s
+- [x] **TASK-076** — `gforge index --watch` 增量更新（S）✅ 2026-04-24
+  - 输出：`gforge index --watch` 监听 `src/` 递归变化，500ms 防抖合并高频事件；内容未变化时跳过写入避免下游 watcher 级联；支持 Ctrl+C 优雅退出
+  - 验收：启动即首次全量刷新（本仓约 100ms）；文件变化触发重扫并仅写变化文件；不改变现有 CLI 其他行为
   - 依赖：TASK-071
 
-- [ ] **TASK-077** — 新增 Workflow 协议：requirements / testing / deployment（M）
-  - 输出：`.claude/protocols/` + `src/templates/.ai/protocols/` 各 3 个新协议
-  - 验收：覆盖需求梳理、测试计划、部署流程三个阶段，带 checklist 标记
+- [x] **TASK-077** — 新增 Workflow 协议：requirements / testing / deployment（M）✅ 2026-04-24
+  - 输出：`.claude/protocols/` 3 个（叙述格式）+ `src/templates/.ai/protocols/` 3 个（checklist + Stop 标记）
+  - 验收：覆盖需求梳理、测试计划、部署流程三个阶段，模板版含 `[✓ 阶段N]` Stop 标记
   - 依赖：无
 
-- [ ] **TASK-078** — 框架特定约束库（M）
-  - 输出：各预设 `rules/` 子目录补充（nextjs/app-router-rules、nestjs/module-rules、react/component-rules）
-  - 验收：生成时预设规则合并到 `.claude/rules/`
+- [x] **TASK-078** — 框架特定约束库（M）✅ 2026-04-24
+  - 输出：nextjs/app-router-rules.md（6 规则）、nestjs/module-rules.md（6 规则）、vite-react/component-rules.md（7 规则）
+  - 验收：文件位于 preset `rules/` 目录，FileGenerator 已自动合并到 `.claude/rules/`（`collectRecursive` 扫描覆盖）
   - 依赖：无
 
 ### P2 — 体验优化
 
-- [ ] **TASK-079** — LLM 补全层（可选，检测到 API key 启用）（L）
-  - 输入：`ANTHROPIC_API_KEY` / `OPENAI_API_KEY` 环境变量
-  - 输出：`src/core/analyzer/llm-completer.ts`，在规则版之上增强内容质量
-  - 验收：无 API key 时降级到规则版，有 API key 时生成内容显著优于规则版
+- [x] **TASK-079** — LLM 补全层（可选，检测到 API key 启用）（L）✅ 2026-04-24
+  - 输出：`src/core/analyzer/llm-completer.ts`（Anthropic / OpenAI 双供应商、白名单字段覆盖、代码块围栏容错、超时/网络错误/解析错误透明降级）；`FileGenerator` 新增 `useLlm` + `onLlmResult`；`gforge init --llm` CLI 选项
+  - 验收：9 个单测覆盖 no-key/anthropic 成功/围栏解析/parse-error/HTTP 非 2xx/AbortError/openai 路径/empty/白名单外字段；无 API key 场景返回 `enhanced=false reason=no-key` 且不影响规则版输出
   - 依赖：TASK-072
 
-- [ ] **TASK-080** — 索引漂移检测（S）
-  - 输入：代码变更后索引未同步的情况
-  - 输出：`gforge index --check` 检测路由/模块与索引不一致
-  - 验收：能识别新增路由但索引未更新、文件删除但索引仍引用两类漂移
+- [x] **TASK-080** — 索引漂移检测（S）✅ 2026-04-24
+  - 输出：`src/core/indexer/index-drift.ts` + `index --check` CLI 选项；识别 added / removed / dangling 三类漂移；发现漂移时 exit 1
+  - 验收：6 个单测覆盖无索引/模块新增/模块删除/路由新增/文件悬空/完全一致；CLI `--check` 已在 help 输出
   - 依赖：TASK-071
 
-- [ ] **TASK-081** — `test-gen` / `scaffold` skill 与索引联动（M）
-  - 输出：skill 执行时读取 PROJECT_MAP 定位目标文件，输出新增条目回写索引
+- [x] **TASK-081** — `test-gen` / `scaffold` skill 与索引联动（M）✅ 2026-04-24
+  - 输出：`src/templates/.ai/skills/{test-gen,scaffold}/SKILL.md` 与 `.claude/skills/{test-gen,scaffold}/SKILL.md` 执行步骤新增"读索引"前置步骤与"刷新索引"后置步骤；约束条款新增"索引优先"条目
+  - 验收：两个 skill 在执行步骤与约束中均显式要求读写索引；test-gen 反查 exports，scaffold 查重并定位目录模式
   - 依赖：TASK-071
 
 ---

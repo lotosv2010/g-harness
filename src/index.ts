@@ -22,3 +22,28 @@ export { AGENT_REGISTRY, getAgent, getAgentOrThrow, listAgentIds } from './core/
 export type { AgentDefinition } from './core/agents/agent-registry.js'
 export { AgentAdapter } from './core/agents/agent-adapter.js'
 export type { FileEntry } from './core/agents/agent-adapter.js'
+
+export { analyzeDescription, completeContent, autoDescribe, enhanceWithLlm } from './core/analyzer/index.js'
+export type {
+  DescriptionAnalysis,
+  AppType,
+  AppTypeHint,
+  ContentCompletion,
+  ContentCompletionInput,
+  AutoDescribeResult,
+  LlmCompleterOptions,
+  LlmEnhanceResult,
+  LlmProvider,
+} from './core/analyzer/index.js'
+
+export { buildProjectIndex, renderProjectMap, renderFeatures, renderRoutes, detectIndexDrift } from './core/indexer/index.js'
+export type {
+  ProjectIndex,
+  ModuleEntry,
+  ModuleKind,
+  RouteEntry,
+  RouteFramework,
+  FeatureEntry,
+  DriftReport,
+  DriftItem,
+} from './core/indexer/index.js'

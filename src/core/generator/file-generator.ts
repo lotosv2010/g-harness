@@ -3,9 +3,17 @@ import { join, relative, dirname } from 'node:path'
 import { fileExists, readDirSafe, isDirectory } from '../fs-utils.js'
 import { resolveVariables } from '../variables.js'
 import { AgentAdapter } from '../agents/agent-adapter.js'
+import { analyzeDescription, completeContent, enhanceWithLlm } from '../analyzer/index.js'
+import type { ContentCompletion } from '../analyzer/index.js'
 import type { AgentDefinition } from '../agents/agent-registry.js'
 import type { Preset } from '../preset-loader.js'
 import type { ScanResult } from '../scanner/project-scanner.js'
+
+export interface ProjectMetaInput {
+  projectName?: string
+  projectDescription?: string
+  srcDir?: string
+}
 
 export interface GenerateOptions {
   gforgeRoot: string
@@ -16,7 +24,12 @@ export interface GenerateOptions {
   dryRun: boolean
   full: boolean
   agents: AgentDefinition[]
+  meta?: ProjectMetaInput
   onConflict?: (filePath: string) => Promise<boolean>
+  /** 启用 LLM 内容增强（检测到 API key 时生效，失败自动降级到规则版） */
+  useLlm?: boolean
+  /** LLM 增强完成后的回调，用于 CLI 打印状态 */
+  onLlmResult?: (info: { provider: string | null; enhanced: boolean; reason?: string }) => void
 }
 
 export interface GenerateResult {
@@ -33,7 +46,7 @@ export class FileGenerator {
       overwritten: [],
     }
 
-    const variables = this.buildVariables(options)
+    const variables = await this.buildVariables(options)
     const filesToGenerate = await this.collectFiles(options)
 
     for (const file of filesToGenerate) {
@@ -70,15 +83,56 @@ export class FileGenerator {
     return result
   }
 
-  private buildVariables(options: GenerateOptions): Record<string, string> {
-    const { preset, scanResult } = options
+  private async buildVariables(options: GenerateOptions): Promise<Record<string, string>> {
+    const { preset, scanResult, meta } = options
+    const projectName = meta?.projectName?.trim() || this.inferProjectName(options.targetDir)
+    const projectDescription = meta?.projectDescription?.trim() || ''
+
+    const analysis = analyzeDescription(projectDescription, {
+      framework: scanResult.techStack.framework ?? null,
+      runtime: scanResult.techStack.runtime ?? null,
+    })
+    const ruleBased = completeContent({
+      projectName,
+      projectDescription,
+      analysis,
+      scanResult,
+      presetFragment: preset?.fragments,
+    })
+
+    // 可选 LLM 增强：无 key / 超时 / 解析失败都透明降级
+    let completion: ContentCompletion = ruleBased
+    if (options.useLlm) {
+      const llm = await enhanceWithLlm({
+        analysis,
+        ruleBased,
+        projectName,
+        projectDescription,
+        scanResult,
+      })
+      completion = llm.completion
+      options.onLlmResult?.({
+        provider: llm.provider,
+        enhanced: llm.enhanced,
+        reason: llm.reason,
+      })
+    }
+
     const base: Record<string, string> = {
-      project_description: '项目描述（请更新）',
+      project_name: projectName,
+      project_description: projectDescription || `${projectName} 项目`,
+      project_positioning: completion.projectPositioning,
+      core_value_table: completion.coreValueTable,
+      product_boundaries: completion.productBoundaries,
+      initial_features: completion.initialFeatures,
+      nfr_hints: completion.nfrHints,
+      module_breakdown: completion.moduleBreakdown,
+      project_structure_hint: completion.projectStructureHint,
       tech_stack: this.formatTechStack(scanResult),
-      architecture_overview: '详见项目架构文档。',
+      architecture_overview: completion.architectureOverview,
       code_style_rules: this.formatCodeStyle(preset),
       commands: this.formatCommands(preset),
-      module_map: '（请根据项目实际结构更新）',
+      module_map: completion.moduleBreakdown,
       reference_files: '',
       language_and_style: this.formatLanguageStyle(scanResult),
       naming_conventions: '- 文件名：kebab-case（`user-service.ts`）\n- 类名：PascalCase（`UserService`）\n- 函数/变量：camelCase（`getUserById`）\n- 常量：UPPER_SNAKE_CASE（`MAX_RETRY_COUNT`）\n- 接口：PascalCase，不加 I 前缀（`UserProfile`）',
@@ -95,6 +149,11 @@ export class FileGenerator {
     }
 
     return base
+  }
+
+  private inferProjectName(targetDir: string): string {
+    const parts = targetDir.split(/[/\\]/).filter(Boolean)
+    return parts[parts.length - 1] ?? 'my-project'
   }
 
   private formatTechStack(scanResult: ScanResult): string {

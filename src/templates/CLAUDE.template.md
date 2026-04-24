@@ -21,12 +21,16 @@
 
 ### 上下文优先
 
-每次执行任务前，按顺序读取：
+每次执行任务前，按顺序读取（**优先读取索引，避免整库扫描**）：
 1. 本文件（`CLAUDE.md`）
-2. `AGENTS.md`（通用规范）
-3. 目标目录的 `CLAUDE.md`（如存在）
-4. 相关 ADR（`docs/decisions/`）
-5. 当前活跃任务
+2. `docs/PROJECT_MAP.md`（模块清单 → 文件，由 `gforge index` 生成）
+3. `docs/FEATURES.md`（功能清单 → 入口文件）
+4. `docs/ROUTES.md`（路由表 → handler 文件）
+5. `AGENTS.md`（通用规范）
+6. 相关 ADR（`docs/decisions/`）
+7. 当前活跃任务（`docs/tasks/CURRENT.md`）
+
+> **索引缺失或过期？** 运行 `gforge index` 重新生成。PROJECT_MAP/FEATURES/ROUTES 是 AI 定位代码的"地图"——优先读它们，而不是 `ls src/` 或 `grep` 整库。
 
 ### 执行协议
 
