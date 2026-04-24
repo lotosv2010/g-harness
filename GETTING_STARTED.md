@@ -79,6 +79,10 @@ gforge init --agent claude --preset vite-react --yes
 # 多个 AI 助手
 gforge init --agent claude,cursor --preset nextjs
 
+# 启用 LLM 内容增强（检测到 API key 才生效，失败透明降级）
+export ANTHROPIC_API_KEY=sk-ant-...
+gforge init --llm
+
 # 已有项目：指定冲突策略
 gforge init --conflict prompt     # 逐文件确认
 gforge init --conflict overwrite  # 覆盖所有（等同 --force）
@@ -86,6 +90,19 @@ gforge init --conflict overwrite  # 覆盖所有（等同 --force）
 # 指定项目名
 gforge init --name my-app --preset vanilla
 ```
+
+### LLM 内容增强（v1.3）
+
+G-Forge 默认使用**规则版**内容补全（关键词匹配 + 预设片段库），无外部依赖。若检测到 `ANTHROPIC_API_KEY` 或 `OPENAI_API_KEY` 且启用 `--llm`（或在交互模式的 Stage 5 勾选），则用 LLM 改写三段叙述性内容：
+
+| 字段 | 含义 | 白名单 |
+|------|------|--------|
+| `projectPositioning` | 项目定位一句话 | ✅ 可 LLM 覆盖 |
+| `productBoundaries` | 产品边界（是什么 / 不是什么） | ✅ 可 LLM 覆盖 |
+| `moduleBreakdown` | 模块清单叙述 | ✅ 可 LLM 覆盖 |
+| 其他字段（表格 / NFR / 目录） | — | ❌ 保持规则版 |
+
+任何失败（超时 / 网络错误 / JSON 解析错误 / 返回空）都会**透明降级**到规则版，不会中断 init 流程。
 
 ### 2.3 已有项目 — 自动扫描
 
@@ -200,7 +217,31 @@ gforge context sync
 gforge context check
 ```
 
-### 4.3 版本迁移
+### 4.3 项目索引（v1.3）
+
+让 AI 改动前先读索引，而不是广度扫描整个仓库 —— 这是降低 token 消耗、减少幻觉的关键。
+
+```bash
+# 首次生成三个索引文件
+gforge index
+# → docs/PROJECT_MAP.md   （模块清单 → 文件路径）
+# → docs/FEATURES.md      （功能清单 → 入口文件）
+# → docs/ROUTES.md        （路由表 → handler）
+
+# 监听模式：src/ 变化时 500ms 防抖增量刷新
+gforge index --watch
+
+# 漂移检测：对比索引 vs 实际代码，CI 友好
+gforge index --check
+# → 识别 added / removed / dangling 三类漂移
+# → 发现漂移时 exit 1
+```
+
+**协议硬化：** CLAUDE.md 与 feature / bugfix 协议阶段 1 已明确要求 AI 必须优先阅读 `PROJECT_MAP.md` / `FEATURES.md` / `ROUTES.md`，禁止未读索引就整库扫描。
+
+**路由识别支持：** Next.js App Router / Pages Router、Nuxt、Express、React Router、Vue Router。
+
+### 4.4 版本迁移
 
 G-Forge 升级后，迁移项目配置：
 

@@ -32,6 +32,8 @@ export interface OutputConfig {
   full: boolean
   conflict: ConflictStrategy
   installHook: boolean
+  /** 是否启用 LLM 内容增强（需要 ANTHROPIC_API_KEY 或 OPENAI_API_KEY） */
+  useLlm: boolean
 }
 
 // ── Stage 1: 项目检测 + 分支路由 ──
@@ -351,10 +353,28 @@ export async function stage5OutputConfig(
   })
   if (p.isCancel(installHook)) return null
 
+  // 仅在检测到 API key 时询问是否启用 LLM 增强，避免对无 key 用户造成困扰
+  const hasApiKey = Boolean(process.env.ANTHROPIC_API_KEY || process.env.OPENAI_API_KEY)
+  let useLlm = false
+  if (hasApiKey) {
+    const provider = process.env.ANTHROPIC_API_KEY ? 'Anthropic' : 'OpenAI'
+    const llmChoice = await p.confirm({
+      message: `检测到 ${provider} API Key，启用 LLM 内容增强？（改写 SPEC 的 positioning / boundaries / modules 三段叙述）`,
+      initialValue: true,
+    })
+    if (p.isCancel(llmChoice)) return null
+    useLlm = llmChoice as boolean
+  } else {
+    p.log.info(
+      pc.dim('未检测到 ANTHROPIC_API_KEY / OPENAI_API_KEY，将使用规则版内容补全（可用 `export ANTHROPIC_API_KEY=...` 后重新 init 启用 LLM 增强）'),
+    )
+  }
+
   return {
     full: layer === 'full',
     conflict,
     installHook: installHook as boolean,
+    useLlm,
   }
 }
 
@@ -379,6 +399,7 @@ export interface PreviewSummary {
   full: boolean
   conflict: ConflictStrategy
   installHook: boolean
+  useLlm?: boolean
   meta: ProjectMeta
   filesToCreate: string[]
 }
@@ -392,6 +413,7 @@ export async function stage6Confirm(summary: PreviewSummary): Promise<boolean> {
   console.log(`  ${pc.dim('技术预设：')}${pc.cyan(summary.presetName)}`)
   console.log(`  ${pc.dim('输出层级：')}${pc.cyan(summary.full ? '完整层' : '核心层')}`)
   console.log(`  ${pc.dim('冲突策略：')}${pc.cyan(formatConflict(summary.conflict))}`)
+  console.log(`  ${pc.dim('LLM 增强：')}${pc.cyan(summary.useLlm ? '启用' : '未启用（规则版）')}`)
   console.log(`  ${pc.dim('项目名称：')}${pc.cyan(summary.meta.projectName)}`)
   console.log()
 

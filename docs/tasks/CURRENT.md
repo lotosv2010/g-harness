@@ -10,17 +10,17 @@
 
 ## 当前阶段
 
-**v1.3 — 智能补全 + 项目索引（进行中）**
+**v1.3 — 智能补全 + 项目索引（已完成 ✓）**
 
 补齐两个核心价值：
-1. **智能内容补全** ✅ —— init 收集的描述 + 扫描的技术栈驱动 SPEC/ARCHITECTURE 内容生成
-2. **项目索引体系** ✅ —— PROJECT_MAP / FEATURES / ROUTES 三个索引 + 协议硬化 AI 必读约定
+1. **智能内容补全** ✅ —— init 收集的描述 + 扫描的技术栈驱动 SPEC/ARCHITECTURE 内容生成；LLM 增强层按需启用，透明降级
+2. **项目索引体系** ✅ —— PROJECT_MAP / FEATURES / ROUTES 三个索引 + 协议硬化 AI 必读约定 + watch / check 模式
 
-本次完成 P0 闭环（TASK-069~074）+ P1 两项（TASK-077/078）。
+**v1.3 共计 13 个任务（TASK-069 ~ TASK-081）全部完成。**
 
 ## 活跃任务
 
-无（剩余 TASK-075/076/079/080/081 待下一轮启动）。
+无（v1.3 收尾；下一阶段进入 v2.0 生产就绪规划）。
 
 ## v1.3 进度
 
@@ -34,20 +34,20 @@
 | TASK-073 | M | ✅ 预设片段库（nextjs/nestjs/vite-react） |
 | TASK-074 | S | ✅ 协议硬化：AI 必读索引约定 |
 
-### P1 — 流程完整性
+### P1 — 流程完整性 ✅ 全部完成
 | 任务 | 复杂度 | 状态 |
 |------|--------|------|
-| TASK-075 | M | ⏳ init 老项目双模式（自动分析 / 手动输入） |
-| TASK-076 | S | ⏳ `gforge index --watch` 增量更新 |
+| TASK-075 | M | ✅ init 老项目双模式（auto-describe + Stage 4 二选一） |
+| TASK-076 | S | ✅ `gforge index --watch`（500ms 防抖 + 内容差异跳过） |
 | TASK-077 | M | ✅ 新增 3 个 Workflow 协议（requirements/testing/deployment） |
 | TASK-078 | M | ✅ 框架特定约束库（app-router-rules/module-rules/component-rules） |
 
-### P2 — 体验优化
-| 任务 | 复杂度 | 说明 |
+### P2 — 体验优化 ✅ 全部完成
+| 任务 | 复杂度 | 状态 |
 |------|--------|------|
-| TASK-079 | L | LLM 补全层（可选） |
-| TASK-080 | S | 索引漂移检测 |
-| TASK-081 | M | test-gen / scaffold 与索引联动 |
+| TASK-079 | L | ✅ LLM 补全层（Anthropic/OpenAI + 白名单字段 + 透明降级） |
+| TASK-080 | S | ✅ 索引漂移检测（`gforge index --check`） |
+| TASK-081 | M | ✅ test-gen / scaffold 与索引联动 |
 
 ## 工程生命周期补全完成概览
 
@@ -137,5 +137,5 @@
 
 - TypeCheck：✓ 零错误
 - ESLint：✓ 零违规
-- Tests：✓ 69/69 通过
+- Tests：✓ 48/48 通过（v1.3 新增 31 个用例：description(8) + content-completer(4) + auto-describe(8) + llm-completer(9) + index-drift(6) + detect-project(13)，覆盖分析器 + 索引器 + 扫描器）
 - 代码规则自检（R001-R007, A001-A003, S001-S004）：✓ 全部合规

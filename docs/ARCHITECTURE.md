@@ -141,7 +141,43 @@ src/presets/<name>/
 └── skills/                # 栈特定技能
 ```
 
-### 3.6 src/templates/ — 可分发内容
+### 3.6 src/core/analyzer — 内容分析与补全（v1.3+）
+
+职责：从项目描述和技术栈推导 SPEC/ARCHITECTURE 的结构化内容，为生成器提供模板变量值。
+
+```
+analyzer/
+├── index.ts                  # 公共 API
+├── description-analyzer.ts   # 描述分析：领域 / 应用类型 / 特性 / 建议模块
+├── content-completer.ts      # 规则版内容补全（projectPositioning 等 8 字段）
+├── auto-describe.ts          # 老项目从 package.json + README 自动推导 name/description
+└── llm-completer.ts          # 可选 LLM 增强层（Anthropic / OpenAI，透明降级）
+```
+
+输入：`projectDescription` + `ScanResult` + `presetFragment`
+输出：`ContentCompletion`（projectPositioning / coreValueTable / productBoundaries / initialFeatures / nfrHints / architectureOverview / moduleBreakdown / projectStructureHint）
+
+### 3.7 src/core/indexer — 项目索引器（v1.3+）
+
+职责：扫描源码生成 AI 优先阅读的三个索引文件，避免广度扫描 token 浪费。
+
+```
+indexer/
+├── index.ts                  # 公共 API（buildProjectIndex）
+├── types.ts                  # ProjectIndex / ModuleEntry / RouteEntry / FeatureEntry
+├── route-parser.ts           # 路由解析（next-app/next-pages/nuxt/react-router/vue-router/express）
+├── module-extractor.ts       # 模块提取（src/ 扫描 + index.ts exports 解析）
+├── feature-mapper.ts         # 模块+路由 → 功能映射
+├── index-writer.ts           # 渲染 PROJECT_MAP / FEATURES / ROUTES Markdown
+└── index-drift.ts            # 漂移检测（added / removed / dangling）
+```
+
+输入：`rootDir` + `ScanResult`
+输出：`docs/PROJECT_MAP.md`、`docs/FEATURES.md`、`docs/ROUTES.md`
+
+命令：`gforge index` / `gforge index --watch` / `gforge index --check`
+
+### 3.8 src/templates/ — 可分发内容
 
 所有输出给目标项目的内容，目录结构 1:1 镜像目标项目。
 CLI `init` 命令读取此目录，渲染模板变量后输出。
@@ -220,5 +256,8 @@ CLI 是纯本地工具，不需要服务端。
 | ADR-003 | 自研变量替换替代模板引擎 | `{{var}}` 足够简单，9 行实现，零依赖 |
 | ADR-005 | 统一技能格式规范 | 标准化 skill 定义，支持跨预设复用 |
 | ADR-006 | 模板变量 Schema | 统一 `{{variable}}` 命名和类型约束，确保预设间一致性 |
+| ADR-007 | init 6 阶段 Wizard + 老项目双模式 | 明确 new/existing/reinit 分支；老项目 auto-describe 降低输入成本 |
+| ADR-008 | 项目索引作为 AI 上下文优先入口 | PROJECT_MAP/FEATURES/ROUTES 三文件让 AI 改动前先读索引，避免广度扫描 |
+| ADR-009 | LLM 补全层的白名单字段 + 透明降级 | 仅增强叙述字段，无 API key / 超时 / 解析失败一律回落规则版 |
 
 详细 ADR 记录见 `docs/decisions/` 目录。

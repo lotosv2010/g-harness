@@ -86,9 +86,17 @@ npx gforge init --agent claude --preset vite-react --yes
 # 多个 AI 助手同时配置
 npx gforge init --agent claude,cursor --preset nextjs
 
+# 启用 LLM 内容增强（检测到 ANTHROPIC_API_KEY / OPENAI_API_KEY 时改写 positioning / boundaries / modules 三段叙述，失败透明降级）
+npx gforge init --llm
+
 # 已有项目：指定冲突策略
 npx gforge init --conflict prompt    # 逐文件确认
 npx gforge init --force              # 覆盖所有
+
+# 生成项目索引（AI 必读三件套：模块 / 功能 / 路由）
+npx gforge index             # 首次生成 docs/PROJECT_MAP.md、FEATURES.md、ROUTES.md
+npx gforge index --watch     # 监听 src/ 变化，500ms 防抖增量更新
+npx gforge index --check     # 漂移检测，发现 added / removed / dangling 时 exit 1
 
 # 校验规范
 npx gforge validate
@@ -96,6 +104,8 @@ npx gforge validate
 # 同步上下文
 npx gforge context sync
 ```
+
+> **项目索引（v1.3）**：`gforge index` 生成的三个索引文件（`PROJECT_MAP.md` / `FEATURES.md` / `ROUTES.md`）被协议硬化为 AI 改动前的必读入口。AI 先读索引再定位代码，避免整库广度扫描，显著降低 token 消耗。
 
 > 详细用法请参阅 [快速入门指南](GETTING_STARTED.md)。
 

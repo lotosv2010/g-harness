@@ -137,6 +137,7 @@ export const initCommand = new Command('init')
     let full = options.full ?? false
     let conflictStrategy: ConflictStrategy = options.force ? 'overwrite' : 'skip'
     let installHook = true
+    let useLlm = options.llm ?? false
 
     if (options.conflict) {
       const valid: ConflictStrategy[] = ['skip', 'overwrite', 'prompt']
@@ -156,6 +157,7 @@ export const initCommand = new Command('init')
       full = outputConfig.full
       conflictStrategy = outputConfig.conflict
       installHook = outputConfig.installHook
+      useLlm = outputConfig.useLlm
     }
 
     // ── Stage 6: 确认预览 & 执行 ──
@@ -183,6 +185,7 @@ export const initCommand = new Command('init')
         full,
         conflict: conflictStrategy,
         installHook,
+        useLlm,
         meta,
         filesToCreate,
       })
@@ -211,7 +214,7 @@ export const initCommand = new Command('init')
       agents,
       meta,
       onConflict,
-      useLlm: options.llm ?? false,
+      useLlm,
       onLlmResult: (info) => {
         if (info.enhanced) {
           p.log.success(pc.green(`LLM 增强已应用（provider: ${info.provider}）`))

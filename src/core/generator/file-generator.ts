@@ -142,6 +142,11 @@ export class FileGenerator {
       branch_strategy: 'main ← 稳定版本\ndevelop ← 开发主线\nfeat/* ← 功能分支\nfix/* ← 修复分支',
       additional_roles: '',
       module_ownership_table: '| （待填写） | （待填写） | （待填写） |',
+      // 目录约定的兜底默认值；preset.variables 会在下方覆盖这些
+      shared_dir: 'src/shared',
+      feature_dir: 'src/features',
+      routes_dir: 'src/routes',
+      services_dir: 'src/services',
     }
 
     if (preset?.variables) {

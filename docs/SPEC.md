@@ -174,6 +174,53 @@ G-Forge 是一套**面向 AI 编程助手优化的通用工程化规范框架 + 
 - [x] `--dry-run` 预览迁移方案
 - [x] 无法自动迁移的项标记为 `manualRequired`
 
+#### FR-06：项目索引（gforge index）
+
+**优先级：** P0（v1.3）
+
+**描述：** 扫描目标项目源码，生成 AI 优先阅读的三个索引文件，降低 AI 改动前的广度扫描 token 开销。
+
+**产出：**
+- `docs/PROJECT_MAP.md` — 模块清单 → 文件路径
+- `docs/FEATURES.md` — 功能清单 → 入口文件
+- `docs/ROUTES.md` — 路由表 → handler（支持 Next.js App/Pages Router、Nuxt、Express、React Router、Vue Router）
+
+**选项：**
+- `--watch` — 监听 `src/` 递归变化，500ms 防抖；内容未变化时跳过写入避免级联
+- `--check` — 漂移检测：对比索引 vs 实际代码，发现 `added` / `removed` / `dangling` 项时 exit 1
+
+**验收标准：**
+- [x] 首次 `gforge index` 能为 g-forge 自身生成三份与实际代码一致的索引
+- [x] `--watch` 启动即全量刷新，文件变化触发增量重建，Ctrl+C 优雅退出
+- [x] `--check` 识别三类漂移并返回非零退出码
+- [x] 协议硬化：feature / bugfix 协议阶段 1 显式要求读索引，禁止未读索引就整库扫描
+
+#### FR-07：智能内容补全（init 时）
+
+**优先级：** P0（v1.3）
+
+**描述：** 从项目描述 + 技术栈推导 SPEC / ARCHITECTURE 的结构化内容，让 init 产出的规范贴合真实项目而非通用样板。
+
+**双模式：**
+- **规则版**（默认）：关键词匹配 + 预设片段库，无外部依赖
+  - 识别 7 种应用类型、8 个领域规则、23 功能关键词
+  - 预设 `fragments` 字段提供 architectureLayers / defaultModules / structureHint / extraNfr
+- **LLM 增强版**（可选，`--llm`）：检测到 `ANTHROPIC_API_KEY` 或 `OPENAI_API_KEY` 时启用
+  - 仅覆盖白名单字段（projectPositioning / productBoundaries / moduleBreakdown）
+  - 超时 / 网络错误 / 解析错误一律透明降级到规则版
+  - 交互模式下 Stage 5 检测到 API key 才询问是否启用
+
+**老项目自动分析（ADR-007 双模式）：**
+- 从 `package.json.name/description` + `README.md` 首段提取 name/description
+- 徽章剥离 + 280 字符截断 + 损坏 JSON 兜底
+- Stage 4 提供"自动分析 vs 手动输入"二选一
+
+**验收标准：**
+- [x] 规则版补全 8 个模板变量（projectPositioning / coreValueTable / productBoundaries / initialFeatures / nfrHints / architectureOverview / moduleBreakdown / projectStructureHint）
+- [x] LLM 增强层测试覆盖 no-key / provider 成功 / 超时 / 解析错误 / 非 2xx / 白名单过滤
+- [x] `ProjectMeta.source` 追踪 manual / auto；auto 模式下保留 `autoSources` 证据
+- [x] Stage 5 交互在有 API key 时询问启用 LLM，无 key 时打印降级提示
+
 #### FR-05：预设系统
 
 **优先级：** P0
@@ -262,6 +309,7 @@ src/presets/<name>/
 | v1.0 | 16 个预设全部落地 + 多 AI 助手适配层 | 已完成 |
 | v1.1 | Init 交互流程重设计（6 阶段 Wizard，ADR-007） | 已完成 |
 | v1.2 | 工程生命周期补全（4 skill + 3 protocol） | 已完成 |
+| v1.3 | 智能补全 + 项目索引（gforge index / LLM 增强层 / 老项目 auto-describe） | 已完成 |
 | v2.0 | 生产就绪，完整文档、示例项目、自定义规则 API | 计划中 |
 
 ### 2.4 成功指标
