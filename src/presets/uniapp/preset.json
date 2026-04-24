@@ -1,0 +1,35 @@
+{
+  "name": "uniapp",
+  "description": "uni-app + Vue 3 跨端应用预设",
+  "techStack": {
+    "language": "TypeScript",
+    "runtime": "各平台运行时（微信/支付宝/H5/App）",
+    "framework": "uni-app + Vue 3",
+    "buildTool": "HBuilderX / Vite",
+    "testRunner": "按项目配置",
+    "packageManager": "pnpm"
+  },
+  "variables": {
+    "shared_dir": "src/utils",
+    "feature_dir": "src/pages",
+    "api_dir": "src/api",
+    "shared_package": "src/utils",
+    "core_package": "src/core",
+    "app_package": "src"
+  },
+  "codeStyle": [
+    "使用 Composition API + <script setup>",
+    "页面放 pages/ 目录，组件放 components/ 目录",
+    "条件编译使用 #ifdef / #ifndef 指令",
+    "样式使用 rpx 单位确保跨端一致",
+    "组合式函数使用 use 前缀"
+  ],
+  "commands": {
+    "install": "pnpm install",
+    "dev:h5": "pnpm dev:h5",
+    "dev:mp-weixin": "pnpm dev:mp-weixin",
+    "build:h5": "pnpm build:h5",
+    "build:mp-weixin": "pnpm build:mp-weixin",
+    "lint": "pnpm lint"
+  }
+}

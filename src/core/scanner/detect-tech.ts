@@ -21,6 +21,10 @@ export function detectFramework(pkg: PackageJson | null): string | null {
   const frameworks: Array<[string, string]> = [
     ['next', 'Next.js'],
     ['nuxt', 'Nuxt'],
+    ['@tauri-apps/api', 'Tauri'],
+    ['electron', 'Electron'],
+    ['@nestjs/core', 'NestJS'],
+    ['react-native', 'React Native'],
     ['react', 'React'],
     ['vue', 'Vue'],
     ['@angular/core', 'Angular'],

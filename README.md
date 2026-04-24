@@ -106,9 +106,19 @@ npx gforge context sync
 | 预设 | 命令 | 状态 |
 |------|------|------|
 | Next.js | `--preset nextjs` | 已完成 |
+| Nuxt 3 | `--preset nuxt` | 已完成 |
 | NestJS | `--preset nestjs` | 已完成 |
 | Vue 3 + Vite | `--preset vite-vue` | 已完成 |
 | React + Vite | `--preset vite-react` | 已完成 |
+| Electron | `--preset electron` | 已完成 |
+| Tauri 2 | `--preset tauri` | 已完成 |
+| React Native | `--preset react-native` | 已完成 |
+| 微信小程序 | `--preset miniprogram` | 已完成 |
+| FastAPI | `--preset fastapi` | 已完成 |
+| Express/Hono/Fastify | `--preset express` | 已完成 |
+| Monorepo | `--preset monorepo` | 已完成 |
+| uni-app | `--preset uniapp` | 已完成 |
+| Flutter | `--preset flutter` | 已完成 |
 | 纯 HTML + JS | `--preset vanilla` | 已完成 |
 | 通用（技术栈无关） | `--preset base` | 已完成 |
 

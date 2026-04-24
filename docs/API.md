@@ -15,7 +15,7 @@
 gforge init [options]
 
 选项：
-  --preset <name>       使用预设（nextjs | nestjs | vite-vue | vite-react | vanilla | base）
+  --preset <name>       使用预设（nextjs | nuxt | nestjs | vite-vue | vite-react | electron | tauri | react-native | miniprogram | vanilla | base）
   --scan                扫描已有项目结构并生成匹配的配置
   --dry-run             仅预览将生成的文件，不实际写入
   --force               覆盖已有配置文件

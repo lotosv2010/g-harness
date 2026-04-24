@@ -16,7 +16,7 @@ interface InitOptions {
 
 export const initCommand = new Command('init')
   .description('初始化 G-Forge 规范到项目中')
-  .option('--preset <name>', '使用预设（nextjs | nestjs | vite-vue | vite-react | vanilla | base）')
+  .option('--preset <name>', '使用预设（nextjs | nuxt | nestjs | vite-vue | vite-react | electron | tauri | react-native | miniprogram | vanilla | base）')
   .option('--scan', '扫描已有项目结构并推荐预设')
   .option('--dry-run', '仅预览将生成的文件，不实际写入')
   .option('--force', '覆盖已有配置文件')
@@ -107,12 +107,15 @@ function detectPreset(framework: string | null): string {
     'next.js': 'nextjs',
     react: 'vite-react',
     vue: 'vite-vue',
-    nuxt: 'vite-vue',
+    nuxt: 'nuxt',
+    electron: 'electron',
+    tauri: 'tauri',
+    'react native': 'react-native',
     nestjs: 'nestjs',
     nest: 'nestjs',
-    express: 'nestjs',
-    fastify: 'nestjs',
-    hono: 'nestjs',
+    express: 'express',
+    fastify: 'express',
+    hono: 'express',
   }
   return map[framework.toLowerCase()] ?? 'vanilla'
 }

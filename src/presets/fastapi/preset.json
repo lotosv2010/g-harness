@@ -1,0 +1,35 @@
+{
+  "name": "fastapi",
+  "description": "Python FastAPI 后端服务预设",
+  "techStack": {
+    "language": "Python 3.12+",
+    "runtime": "CPython / uvicorn",
+    "framework": "FastAPI",
+    "buildTool": "uv / pip",
+    "testRunner": "pytest",
+    "packageManager": "uv"
+  },
+  "variables": {
+    "shared_dir": "app/common",
+    "feature_dir": "app/modules",
+    "api_dir": "app/api",
+    "shared_package": "app/common",
+    "core_package": "app/core",
+    "app_package": "app"
+  },
+  "codeStyle": [
+    "使用 Pydantic v2 定义请求/响应模型",
+    "路由按领域拆分到 app/api/routes/ 目录",
+    "业务逻辑放 app/modules/ 的 service 层",
+    "使用 async def 定义异步端点",
+    "类型注解覆盖所有函数签名"
+  ],
+  "commands": {
+    "install": "uv sync",
+    "dev": "uvicorn app.main:app --reload",
+    "build": "按部署方式配置",
+    "test": "pytest",
+    "lint": "ruff check .",
+    "typecheck": "mypy app/"
+  }
+}

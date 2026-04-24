@@ -1,0 +1,34 @@
+{
+  "name": "miniprogram",
+  "description": "微信小程序预设",
+  "techStack": {
+    "language": "TypeScript / JavaScript",
+    "runtime": "微信小程序运行时",
+    "framework": "微信小程序原生 / Taro / uni-app",
+    "buildTool": "微信开发者工具 / Taro CLI",
+    "testRunner": "miniprogram-simulate / Jest",
+    "packageManager": "pnpm"
+  },
+  "variables": {
+    "shared_dir": "src/utils",
+    "feature_dir": "src/pages",
+    "api_dir": "src/api",
+    "shared_package": "src/utils",
+    "core_package": "src/core",
+    "app_package": "src"
+  },
+  "codeStyle": [
+    "页面放 pages/ 目录，组件放 components/ 目录",
+    "使用 Component 构造器定义组件，Page 构造器定义页面",
+    "接口请求封装在 api/ 目录，统一使用 wx.request 封装",
+    "工具函数放 utils/ 目录",
+    "样式文件使用 rpx 单位"
+  ],
+  "commands": {
+    "install": "pnpm install",
+    "dev": "pnpm dev",
+    "build": "pnpm build",
+    "test": "pnpm test",
+    "lint": "pnpm lint"
+  }
+}

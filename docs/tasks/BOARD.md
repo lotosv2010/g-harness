@@ -11,20 +11,7 @@
 
 ## 待办（TODO）
 
-### v1.0 — 预设扩展
-
-| 任务 | 优先级 | 预设名 | 技术栈 | 说明 |
-|------|--------|--------|--------|------|
-| TASK-037 | P0 | `nuxt` | Nuxt 3 + Vue 3 | 与 Next.js 对称，约定式路由/server 规则和 vite-vue 差异显著 |
-| TASK-038 | P0 | `electron` | Electron + React/Vue | 桌面端，主进程/渲染进程边界规则独特 |
-| TASK-039 | P1 | `tauri` | Tauri 2 + Rust + 前端 | 新一代桌面端，Rust 后端 + Web 前端跨语言约束 |
-| TASK-040 | P1 | `react-native` | React Native + Expo | 移动端头部方案，平台特定规则多 |
-| TASK-041 | P1 | `miniprogram` | 微信小程序 | 国内小程序开发量大，独特文件结构和 API 约束 |
-| TASK-042 | P2 | `fastapi` | Python + FastAPI | Python 后端头部方案，扩展非 JS 生态 |
-| TASK-043 | P2 | `express` | Express / Hono / Fastify | 轻量 Node.js API，不需要 NestJS 全套装饰器时使用 |
-| TASK-044 | P2 | `monorepo` | Turborepo / Nx + pnpm workspace | Monorepo 工程治理，跨包边界和发布规则 |
-| TASK-045 | P3 | `uniapp` | uni-app + Vue 3 | 跨端小程序方案 |
-| TASK-046 | P3 | `flutter` | Dart + Flutter | 跨端移动开发 |
+（暂无）
 
 ---
 
@@ -36,6 +23,16 @@
 
 ## 已完成（DONE）
 
+- [x] **TASK-046** — 创建 flutter 预设（Feature-First/状态管理/数据层/测试规则） — 2026-04-24
+- [x] **TASK-045** — 创建 uniapp 预设（跨端兼容/条件编译/性能规则） — 2026-04-24
+- [x] **TASK-044** — 创建 monorepo 预设（包边界/依赖管理/构建缓存/发布规则） — 2026-04-24
+- [x] **TASK-043** — 创建 express 预设（三层架构/错误处理/校验/安全规则） — 2026-04-24
+- [x] **TASK-042** — 创建 fastapi 预设（Python 分层/Pydantic/DI/异步规则） — 2026-04-24
+- [x] **TASK-041** — 创建 miniprogram 预设（小程序目录/组件/性能/审核规则） — 2026-04-24
+- [x] **TASK-040** — 创建 react-native 预设（Expo/原生交互/性能/发布规则） — 2026-04-24
+- [x] **TASK-039** — 创建 tauri 预设（Rust 命令/事件/安全/构建规则） — 2026-04-24
+- [x] **TASK-038** — 创建 electron 预设（主进程/渲染进程/preload 规则） — 2026-04-24
+- [x] **TASK-037** — 创建 nuxt 预设（约定式路由/composable/SSR 规则） — 2026-04-24
 - [x] **TASK-036** — 预设补充 skills 目录（4 个预设均添加 skills/.gitkeep） — 2026-04-24
 - [x] **TASK-035** — Convention 层运行时校验（S001 文件命名 + S002 桶文件 export * 检查） — 2026-04-24
 - [x] **TASK-034** — hook Regex 安全加固（escapeRegExp + try-catch 防护） — 2026-04-24

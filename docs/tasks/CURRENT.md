@@ -22,16 +22,16 @@ P0（自洽性）、P1（代码质量）、P2（完善度）全部完成。
 
 | 优先级 | 任务 | 预设 | 目标版本 |
 |--------|------|------|----------|
-| P0 | TASK-037 | nuxt（Nuxt 3 + Vue 3） | v1.0 |
-| P0 | TASK-038 | electron（Electron + React/Vue） | v1.0 |
-| P1 | TASK-039 | tauri（Tauri 2 + Rust + 前端） | v1.x |
-| P1 | TASK-040 | react-native（React Native + Expo） | v1.x |
-| P1 | TASK-041 | miniprogram（微信小程序） | v1.x |
-| P2 | TASK-042 | fastapi（Python + FastAPI） | v1.x |
-| P2 | TASK-043 | express（Express / Hono / Fastify） | v1.x |
-| P2 | TASK-044 | monorepo（Turborepo / Nx） | v1.x |
-| P3 | TASK-045 | uniapp（uni-app + Vue 3） | v2.x |
-| P3 | TASK-046 | flutter（Dart + Flutter） | v2.x |
+| ~~P0~~ | ~~TASK-037~~ | ~~nuxt（Nuxt 3 + Vue 3）~~ | ~~v1.0~~ ✓ |
+| ~~P0~~ | ~~TASK-038~~ | ~~electron（Electron + React/Vue）~~ | ~~v1.0~~ ✓ |
+| ~~P1~~ | ~~TASK-039~~ | ~~tauri（Tauri 2 + Rust + 前端）~~ | ~~v1.x~~ ✓ |
+| ~~P1~~ | ~~TASK-040~~ | ~~react-native（React Native + Expo）~~ | ~~v1.x~~ ✓ |
+| ~~P1~~ | ~~TASK-041~~ | ~~miniprogram（微信小程序）~~ | ~~v1.x~~ ✓ |
+| ~~P2~~ | ~~TASK-042~~ | ~~fastapi（Python + FastAPI）~~ | ~~v1.x~~ ✓ |
+| ~~P2~~ | ~~TASK-043~~ | ~~express（Express / Hono / Fastify）~~ | ~~v1.x~~ ✓ |
+| ~~P2~~ | ~~TASK-044~~ | ~~monorepo（Turborepo / Nx）~~ | ~~v1.x~~ ✓ |
+| ~~P3~~ | ~~TASK-045~~ | ~~uniapp（uni-app + Vue 3）~~ | ~~v2.x~~ ✓ |
+| ~~P3~~ | ~~TASK-046~~ | ~~flutter（Dart + Flutter）~~ | ~~v2.x~~ ✓ |
 
 ## v0.3 完成概览
 

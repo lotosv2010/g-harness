@@ -1,0 +1,35 @@
+{
+  "name": "tauri",
+  "description": "Tauri 2 桌面应用预设（Rust 后端 + Web 前端）",
+  "techStack": {
+    "language": "TypeScript + Rust",
+    "runtime": "系统原生 WebView + Rust",
+    "framework": "Tauri 2",
+    "buildTool": "Vite + Cargo",
+    "testRunner": "Vitest（前端）/ cargo test（Rust）",
+    "packageManager": "pnpm"
+  },
+  "variables": {
+    "shared_dir": "src/shared",
+    "feature_dir": "src/features",
+    "api_dir": "src-tauri/src/commands",
+    "shared_package": "src/shared",
+    "core_package": "src-tauri/src",
+    "app_package": "src"
+  },
+  "codeStyle": [
+    "前端代码放 src/，Rust 代码放 src-tauri/",
+    "Tauri 命令通过 #[tauri::command] 定义，前端通过 @tauri-apps/api 调用",
+    "共享类型在前端 src/shared/ 中定义",
+    "使用命名导出，非默认导出",
+    "Rust 代码遵循 clippy 规范"
+  ],
+  "commands": {
+    "install": "pnpm install",
+    "dev": "pnpm tauri dev",
+    "build": "pnpm tauri build",
+    "test": "pnpm test",
+    "lint": "pnpm lint",
+    "typecheck": "pnpm typecheck"
+  }
+}

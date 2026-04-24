@@ -165,9 +165,19 @@ src/presets/<name>/
 | 预设名 | 技术栈 | 优先级 | 状态 |
 |--------|--------|--------|------|
 | nextjs | Next.js 15 + App Router | P0 | 已完成 |
+| nuxt | Nuxt 3 + Vue 3 全栈 | P0 | 已完成 |
 | nestjs | NestJS 10+ 后端服务 | P0 | 已完成 |
 | vite-vue | Vue 3 + Vite 6 | P0 | 已完成 |
 | vite-react | React 19 + Vite 6 | P0 | 已完成 |
+| electron | Electron 桌面应用 | P0 | 已完成 |
+| tauri | Tauri 2 桌面应用 | P1 | 已完成 |
+| react-native | React Native + Expo | P1 | 已完成 |
+| miniprogram | 微信小程序 | P1 | 已完成 |
+| fastapi | Python FastAPI 后端 | P2 | 已完成 |
+| express | Express / Hono / Fastify | P2 | 已完成 |
+| monorepo | Turborepo / Nx Monorepo | P2 | 已完成 |
+| uniapp | uni-app + Vue 3 跨端 | P3 | 已完成 |
+| flutter | Dart + Flutter 跨端 | P3 | 已完成 |
 | vanilla | 纯 HTML + JavaScript | P1 | 已完成 |
 | base | 通用基础（技术栈无关） | P1 | 已完成 |
 

@@ -1,0 +1,36 @@
+{
+  "name": "electron",
+  "description": "Electron 桌面应用预设（主进程 + 渲染进程）",
+  "techStack": {
+    "language": "TypeScript",
+    "runtime": "Node.js 20+ / Chromium",
+    "framework": "Electron 33+",
+    "buildTool": "electron-builder / electron-vite",
+    "testRunner": "Vitest",
+    "packageManager": "pnpm"
+  },
+  "variables": {
+    "shared_dir": "src/shared",
+    "feature_dir": "src/renderer/features",
+    "api_dir": "src/main/ipc",
+    "shared_package": "src/shared",
+    "core_package": "src/main",
+    "app_package": "src/renderer"
+  },
+  "codeStyle": [
+    "主进程代码放 src/main/，渲染进程代码放 src/renderer/",
+    "共享类型和工具放 src/shared/，双端可引用",
+    "IPC 通信使用类型安全的 channel 定义",
+    "preload 脚本放 src/preload/，严格限制暴露的 API",
+    "使用命名导出，非默认导出"
+  ],
+  "commands": {
+    "install": "pnpm install",
+    "dev": "pnpm dev",
+    "build": "pnpm build",
+    "test": "pnpm test",
+    "lint": "pnpm lint",
+    "typecheck": "pnpm typecheck",
+    "package": "pnpm package"
+  }
+}

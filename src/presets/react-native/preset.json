@@ -1,0 +1,35 @@
+{
+  "name": "react-native",
+  "description": "React Native + Expo 移动应用预设",
+  "techStack": {
+    "language": "TypeScript",
+    "runtime": "Hermes / JSC",
+    "framework": "React Native + Expo",
+    "buildTool": "Expo CLI / EAS Build",
+    "testRunner": "Jest + React Native Testing Library",
+    "packageManager": "pnpm"
+  },
+  "variables": {
+    "shared_dir": "src/shared",
+    "feature_dir": "src/features",
+    "api_dir": "src/api",
+    "shared_package": "src/shared",
+    "core_package": "src/core",
+    "app_package": "src"
+  },
+  "codeStyle": [
+    "使用函数式组件，禁止 class 组件",
+    "样式使用 StyleSheet.create，禁止内联样式对象",
+    "导航使用 Expo Router 或 React Navigation",
+    "组件 Props 使用 interface 定义",
+    "使用命名导出，非默认导出（Screen 组件除外）"
+  ],
+  "commands": {
+    "install": "pnpm install",
+    "dev": "pnpm start",
+    "build": "eas build",
+    "test": "pnpm test",
+    "lint": "pnpm lint",
+    "typecheck": "pnpm typecheck"
+  }
+}
