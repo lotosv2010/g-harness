@@ -24,6 +24,11 @@ export const contextCommand = new Command('context')
           console.log(pc.green(`  + ${change}`))
         }
         console.log()
+
+        // sync 失败（如 CLAUDE.md 不存在）时退出码为 1
+        if (result.changes.some((c) => c.includes('不存在'))) {
+          process.exitCode = 1
+        }
       }),
   )
   .addCommand(

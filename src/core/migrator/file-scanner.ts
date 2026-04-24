@@ -1,5 +1,6 @@
-import { readFile, readdir, stat, access } from 'node:fs/promises'
+import { readFile } from 'node:fs/promises'
 import { join, relative } from 'node:path'
+import { fileExists, readDirSafe, statSafe, isDirectory } from '../fs-utils.js'
 
 /** G-Forge 管理文件的标记模式 */
 const GFORGE_MARKERS = [
@@ -98,7 +99,7 @@ async function readManagedFile(
   targetDir: string,
 ): Promise<ManagedFile | null> {
   try {
-    await access(fullPath)
+    if (!(await fileExists(fullPath))) return null
     const content = await readFile(fullPath, 'utf-8')
     const relativePath = relative(targetDir, fullPath).replace(/\\/g, '/')
     return {
@@ -111,23 +112,3 @@ async function readManagedFile(
   }
 }
 
-async function readDirSafe(dirPath: string): Promise<string[]> {
-  try {
-    return await readdir(dirPath)
-  } catch {
-    return []
-  }
-}
-
-async function statSafe(filePath: string): Promise<ReturnType<typeof stat> extends Promise<infer T> ? T | null : never> {
-  try {
-    return await stat(filePath)
-  } catch {
-    return null
-  }
-}
-
-async function isDirectory(filePath: string): Promise<boolean> {
-  const s = await statSafe(filePath)
-  return s ? s.isDirectory() : false
-}

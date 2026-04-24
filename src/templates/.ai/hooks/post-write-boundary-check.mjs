@@ -5,6 +5,11 @@
 import { readFileSync, existsSync } from 'node:fs'
 import { resolve, relative, join } from 'node:path'
 
+// 转义 RegExp 特殊字符，防止配置值注入
+function escapeRegExp(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
 const input = JSON.parse(readFileSync('/dev/stdin', 'utf-8'))
 const { tool_input: toolInput, cwd } = input
 const filePath = toolInput?.file_path ?? ''
@@ -66,7 +71,7 @@ function checkSharedIsolation(rule, relPath, content, violations) {
   const inShared = (rule.sharedDirs ?? []).some((d) => relPath.startsWith(d))
   if (!inShared) return
 
-  const forbidden = (rule.forbiddenImports ?? []).join('|')
+  const forbidden = (rule.forbiddenImports ?? []).map(escapeRegExp).join('|')
   const pattern = new RegExp(`(?:import|require)\\s*\\(?['"](?:\\.\\.\\/)+(${forbidden})/`, 'g')
   if (pattern.test(content)) {
     violations.push({ id: rule.id, message: `${rule.name}：${relPath} 不应导入业务模块` })
@@ -75,13 +80,13 @@ function checkSharedIsolation(rule, relPath, content, violations) {
 
 function checkFeatureIsolation(rule, relPath, content, violations) {
   const featureDirs = rule.featureDirs ?? ['src/features/', 'src/modules/']
-  const dirPattern = featureDirs.map((d) => d.replace(/\/$/, '')).join('|')
+  const dirPattern = featureDirs.map((d) => escapeRegExp(d.replace(/\/$/, ''))).join('|')
   const match = relPath.match(new RegExp(`^(?:${dirPattern})/([^/]+)/`))
   if (!match) return
 
   const currentFeature = match[1]
   const crossPattern = new RegExp(
-    `(?:import|require)\\s*\\(?['"](?:\\.\\.\\/)+(features|modules)/(?!${currentFeature}/)`,
+    `(?:import|require)\\s*\\(?['"](?:\\.\\.\\/)+(features|modules)/(?!${escapeRegExp(currentFeature)}/)`,
     'g'
   )
   if (crossPattern.test(content)) {
@@ -94,7 +99,12 @@ function checkHttpRestriction(rule, relPath, content, violations) {
   if (apiDirs.some((d) => relPath.startsWith(d))) return
   if (relPath.includes('.test.') || relPath.includes('.spec.')) return
 
-  const patterns = (rule.httpPatterns ?? []).map((p) => new RegExp(`\\b${p}`, 'g'))
+  // httpPatterns 本身就是 regex 片段（如 "fetch\\s*\\("），不做 escapeRegExp
+  // 但用 try-catch 防止无效正则导致钩子崩溃
+  const patterns = []
+  for (const p of rule.httpPatterns ?? []) {
+    try { patterns.push(new RegExp(`\\b${p}`, 'g')) } catch { /* 跳过无效正则 */ }
+  }
   for (const pattern of patterns) {
     if (pattern.test(content)) {
       violations.push({ id: rule.id, message: `${rule.name}：${relPath} 不在 API 层，不应直接调用 HTTP` })

@@ -1,5 +1,7 @@
 import { readFile } from 'node:fs/promises'
+import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { getGForgeRoot } from '../paths.js'
 
 /** 默认版本号（未检测到时使用） */
 const UNKNOWN_VERSION = '0.0.0'
@@ -33,9 +35,19 @@ export async function detectVersion(targetDir: string): Promise<string> {
 /**
  * 获取 G-Forge CLI 自身的当前版本
  */
+let cachedVersion: string | null = null
+
 export function getCurrentVersion(): string {
-  // 与 package.json 中的版本保持一致
-  return '0.1.0'
+  if (cachedVersion) return cachedVersion
+  try {
+    const pkgPath = join(getGForgeRoot(), 'package.json')
+    const content = readFileSync(pkgPath, 'utf-8')
+    const pkg = JSON.parse(content) as { version?: string }
+    cachedVersion = pkg.version ?? '0.0.0'
+  } catch {
+    cachedVersion = '0.0.0'
+  }
+  return cachedVersion
 }
 
 /**

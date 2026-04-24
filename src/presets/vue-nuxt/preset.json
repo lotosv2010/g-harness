@@ -13,8 +13,6 @@
     "shared_dir": "composables",
     "feature_dir": "pages",
     "api_dir": "server/api",
-    "core_dir": "server/utils",
-    "app_dir": "app",
     "shared_package": "composables",
     "core_package": "server",
     "app_package": "app"

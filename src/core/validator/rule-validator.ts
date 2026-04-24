@@ -8,6 +8,8 @@ import {
   checkDefaultExports,
   checkEmptyCatch,
   checkDirectHttpCalls,
+  checkFileNaming,
+  checkBarrelExports,
 } from './checks.js'
 
 export interface ValidationResult {
@@ -42,7 +44,7 @@ export interface ValidateOptions {
   files?: string[]
 }
 
-type CheckFn = (file: string, lines: string[], violations: Violation[]) => void
+type CheckFn = (file: string, lines: string[]) => Violation[]
 
 export class RuleValidator {
   private readonly checks: Array<{ ruleId: string; fn: CheckFn }> = [
@@ -53,6 +55,8 @@ export class RuleValidator {
     { ruleId: 'R002', fn: checkDefaultExports },
     { ruleId: 'R003', fn: checkEmptyCatch },
     { ruleId: 'A003', fn: checkDirectHttpCalls },
+    { ruleId: 'S001', fn: checkFileNaming },
+    { ruleId: 'S002', fn: checkBarrelExports },
   ]
 
   async validate(targetDir: string, options?: ValidateOptions): Promise<ValidationResult> {
@@ -66,7 +70,7 @@ export class RuleValidator {
 
       for (const check of this.checks) {
         if (!options?.ruleId || options.ruleId === check.ruleId) {
-          check.fn(filePath, lines, violations)
+          violations.push(...check.fn(filePath, lines))
         }
       }
     }

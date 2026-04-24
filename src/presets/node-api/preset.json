@@ -13,8 +13,6 @@
     "shared_dir": "src/shared",
     "feature_dir": "src/modules",
     "api_dir": "src/routes",
-    "core_dir": "src/core",
-    "app_dir": "src",
     "shared_package": "src/shared",
     "core_package": "src/core",
     "app_package": "src"

@@ -1,5 +1,6 @@
-import { readFile, writeFile, readdir, access, stat } from 'node:fs/promises'
+import { readFile, writeFile, stat } from 'node:fs/promises'
 import { join } from 'node:path'
+import { fileExists, readDirSafe } from '../fs-utils.js'
 import { ProjectScanner } from '../scanner/project-scanner.js'
 import type { ScanResult } from '../scanner/project-scanner.js'
 
@@ -26,7 +27,7 @@ export class ContextAnalyzer {
     const issues: ContextIssue[] = []
     const claudeMdPath = join(targetDir, 'CLAUDE.md')
 
-    if (!(await this.fileExists(claudeMdPath))) {
+    if (!(await fileExists(claudeMdPath))) {
       issues.push({
         field: 'CLAUDE.md',
         expected: '文件存在',
@@ -52,7 +53,7 @@ export class ContextAnalyzer {
     const claudeMdPath = join(targetDir, 'CLAUDE.md')
     const changes: string[] = []
 
-    if (!(await this.fileExists(claudeMdPath))) {
+    if (!(await fileExists(claudeMdPath))) {
       return { updated: false, changes: ['CLAUDE.md 不存在，请先运行 gforge init'] }
     }
 
@@ -138,7 +139,7 @@ export class ContextAnalyzer {
       if (filePath.startsWith('http')) continue
 
       const fullPath = join(targetDir, filePath)
-      if (!(await this.fileExists(fullPath))) {
+      if (!(await fileExists(fullPath))) {
         issues.push({
           field: '引用文件',
           expected: `${filePath} 存在`,
@@ -184,9 +185,9 @@ export class ContextAnalyzer {
   ): Promise<{ content: string; changed: boolean }> {
     // 扫描 src/ 顶层目录生成模块地图
     const srcDir = join(targetDir, 'src')
-    if (!(await this.fileExists(srcDir))) return { content, changed: false }
+    if (!(await fileExists(srcDir))) return { content, changed: false }
 
-    const entries = await this.readDirSafe(srcDir)
+    const entries = await readDirSafe(srcDir)
     const dirs: string[] = []
     for (const entry of entries) {
       try {
@@ -212,20 +213,4 @@ export class ContextAnalyzer {
     return { content: updated, changed: true }
   }
 
-  private async readDirSafe(dirPath: string): Promise<string[]> {
-    try {
-      return await readdir(dirPath)
-    } catch {
-      return []
-    }
-  }
-
-  private async fileExists(filePath: string): Promise<boolean> {
-    try {
-      await access(filePath)
-      return true
-    } catch {
-      return false
-    }
-  }
 }

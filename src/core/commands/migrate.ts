@@ -47,6 +47,11 @@ export const migrateCommand = new Command('migrate')
 
     // 输出结果
     printResult(result, options.dryRun ?? false)
+
+    // 有需手动审查的文件时退出码为 1
+    if (result.manualRequired.length > 0) {
+      process.exitCode = 1
+    }
   })
 
 /** 打印迁移结果报告 */

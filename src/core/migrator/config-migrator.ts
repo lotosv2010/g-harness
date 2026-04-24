@@ -1,5 +1,5 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises'
-import { join, dirname, relative } from 'node:path'
+import { join, dirname } from 'node:path'
 import { resolveVariables } from '../variables.js'
 import { scanManagedFiles, hasGForgeMarker } from './file-scanner.js'
 import { diffAndMerge, needsManualReview } from './diff-engine.js'
@@ -62,11 +62,41 @@ function resolveTemplatePath(gforgeRoot: string, outputPath: string): string {
   return join(tplRoot, outputPath)
 }
 
-/** 从目标项目的已有文件中提取变量值 */
-function extractVariablesFromContent(content: string): Record<string, string> {
-  // 简化实现：无法从已解析内容逆向提取变量
-  // 返回空映射，保留用户已填充的内容
-  return {}
+/**
+ * 从模板和用户文件中逆向提取变量值
+ *
+ * 原理：找到模板中 {{variable}} 所在行，用占位符两侧的文本作为锚点，
+ * 从用户文件的对应行中提取出被替换的实际值。
+ */
+function extractVariablesFromTemplate(
+  templateContent: string,
+  userContent: string,
+): Record<string, string> {
+  const variables: Record<string, string> = {}
+  const varPattern = /\{\{(\w+)\}\}/g
+  const templateLines = templateContent.split('\n')
+  const userLines = userContent.split('\n')
+
+  for (let i = 0; i < templateLines.length && i < userLines.length; i++) {
+    const tplLine = templateLines[i]
+    let match: RegExpExecArray | null
+    varPattern.lastIndex = 0
+    while ((match = varPattern.exec(tplLine)) !== null) {
+      const varName = match[1]
+      const prefix = tplLine.slice(0, match.index)
+      const suffix = tplLine.slice(match.index + match[0].length)
+      const userLine = userLines[i]
+
+      if (userLine.startsWith(prefix) && userLine.endsWith(suffix)) {
+        const endIdx = suffix.length > 0 ? userLine.length - suffix.length : undefined
+        const value = userLine.slice(prefix.length, endIdx)
+        if (value && value !== `{{${varName}}}`) {
+          variables[varName] = value
+        }
+      }
+    }
+  }
+  return variables
 }
 
 /**
@@ -132,8 +162,8 @@ export class ConfigMigrator {
       return
     }
 
-    // 解析模板变量（保留未解析的占位符）
-    const variables = extractVariablesFromContent(currentContent)
+    // 从用户文件逆向提取变量值，用于解析新模板
+    const variables = extractVariablesFromTemplate(templateContent, currentContent)
     const resolvedTemplate = resolveVariables(templateContent, variables)
 
     // 差异比较与合并

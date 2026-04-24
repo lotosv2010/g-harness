@@ -1,28 +1,30 @@
-import type { Violation, Warning } from './rule-validator.js'
+import type { Violation } from './rule-validator.js'
 
-export function checkFileLength(file: string, lines: string[], violations: Violation[]): void {
-  if (file.includes('.test.') || file.includes('.spec.')) return
+export function checkFileLength(file: string, lines: string[]): Violation[] {
+  if (file.includes('.test.') || file.includes('.spec.')) return []
 
   if (lines.length > 300) {
-    violations.push({
+    return [{
       ruleId: 'R005',
       severity: 'error',
       file,
       line: null,
       message: `文件 ${lines.length} 行，超过 300 行上限`,
-    })
+    }]
   } else if (lines.length > 200) {
-    violations.push({
+    return [{
       ruleId: 'R005',
       severity: 'warning',
       file,
       line: null,
       message: `文件 ${lines.length} 行，超过 200 行建议阈值，考虑拆分`,
-    })
+    }]
   }
+  return []
 }
 
-export function checkFunctionComplexity(file: string, lines: string[], violations: Violation[]): void {
+export function checkFunctionComplexity(file: string, lines: string[]): Violation[] {
+  const violations: Violation[] = []
   let funcStart: number | null = null
   let funcName = ''
   let braceDepth = 0
@@ -63,9 +65,11 @@ export function checkFunctionComplexity(file: string, lines: string[], violation
       }
     }
   }
+  return violations
 }
 
-export function checkHardcodedSecrets(file: string, lines: string[], violations: Violation[]): void {
+export function checkHardcodedSecrets(file: string, lines: string[]): Violation[] {
+  const violations: Violation[] = []
   const patterns = [
     { regex: /['"]sk-[a-zA-Z0-9]{20,}['"]/, desc: 'API 密钥' },
     { regex: /['"]ghp_[a-zA-Z0-9]{36}['"]/, desc: 'GitHub Token' },
@@ -89,11 +93,13 @@ export function checkHardcodedSecrets(file: string, lines: string[], violations:
       }
     }
   }
+  return violations
 }
 
-export function checkStrictTypes(file: string, lines: string[], violations: Violation[]): void {
-  if (!file.endsWith('.ts') && !file.endsWith('.tsx')) return
+export function checkStrictTypes(file: string, lines: string[]): Violation[] {
+  if (!file.endsWith('.ts') && !file.endsWith('.tsx')) return []
 
+  const violations: Violation[] = []
   const tsIgnorePattern = new RegExp('@ts-' + 'ignore')
 
   for (let i = 0; i < lines.length; i++) {
@@ -120,11 +126,13 @@ export function checkStrictTypes(file: string, lines: string[], violations: Viol
       })
     }
   }
+  return violations
 }
 
-export function checkDefaultExports(file: string, lines: string[], violations: Violation[]): void {
-  if (!file.endsWith('.ts') && !file.endsWith('.tsx')) return
+export function checkDefaultExports(file: string, lines: string[]): Violation[] {
+  if (!file.endsWith('.ts') && !file.endsWith('.tsx')) return []
 
+  const violations: Violation[] = []
   for (let i = 0; i < lines.length; i++) {
     if (/^export\s+default\b/.test(lines[i].trim())) {
       violations.push({
@@ -136,9 +144,11 @@ export function checkDefaultExports(file: string, lines: string[], violations: V
       })
     }
   }
+  return violations
 }
 
-export function checkEmptyCatch(file: string, lines: string[], violations: Violation[]): void {
+export function checkEmptyCatch(file: string, lines: string[]): Violation[] {
+  const violations: Violation[] = []
   for (let i = 0; i < lines.length - 1; i++) {
     if (/catch\s*\(/.test(lines[i]) || /catch\s*{/.test(lines[i])) {
       const nextNonEmpty = lines.slice(i + 1).findIndex((l) => l.trim().length > 0)
@@ -156,16 +166,55 @@ export function checkEmptyCatch(file: string, lines: string[], violations: Viola
       }
     }
   }
+  return violations
 }
 
-export function checkDirectHttpCalls(
-  file: string,
-  lines: string[],
-  violations: Violation[],
-): void {
-  const isApiLayer = file.includes('/api/') || file.includes('/services/') || file.includes('/routes/')
-  if (isApiLayer) return
+export function checkFileNaming(file: string, _lines: string[]): Violation[] {
+  const fileName = file.split('/').pop() ?? ''
+  const baseName = fileName.replace(/\.(test|spec)\.(ts|tsx|js|jsx|mjs)$/, '').replace(/\.(ts|tsx|js|jsx|mjs)$/, '')
 
+  // 跳过配置文件和常量命名文件（全大写）
+  if (/^[A-Z][A-Z_.-]*$/.test(baseName)) return []
+  if (baseName.startsWith('.')) return []
+
+  // kebab-case 或全小写（允许点号分隔如 file.utils）
+  const isKebab = /^[a-z][a-z0-9]*(?:[-.]?[a-z0-9]+)*$/.test(baseName)
+  if (!isKebab) {
+    return [{
+      ruleId: 'S001',
+      severity: 'warning',
+      file,
+      line: null,
+      message: `文件名 "${fileName}" 不符合 kebab-case 命名约定`,
+    }]
+  }
+  return []
+}
+
+export function checkBarrelExports(file: string, lines: string[]): Violation[] {
+  const fileName = file.split('/').pop() ?? ''
+  if (fileName !== 'index.ts' && fileName !== 'index.js') return []
+
+  const violations: Violation[] = []
+  for (let i = 0; i < lines.length; i++) {
+    if (/^export\s+\*\s+from\b/.test(lines[i].trim())) {
+      violations.push({
+        ruleId: 'S002',
+        severity: 'warning',
+        file,
+        line: i + 1,
+        message: '桶文件使用了 export *，应使用显式命名重导出',
+      })
+    }
+  }
+  return violations
+}
+
+export function checkDirectHttpCalls(file: string, lines: string[]): Violation[] {
+  const isApiLayer = file.includes('/api/') || file.includes('/services/') || file.includes('/routes/')
+  if (isApiLayer) return []
+
+  const violations: Violation[] = []
   const patterns = [
     { regex: new RegExp('\\b' + 'fetch' + '\\s*\\('), desc: 'fet' + 'ch()' },
     { regex: new RegExp('\\b' + 'axi' + 'os' + '\\b'), desc: 'axi' + 'os' },
@@ -189,4 +238,5 @@ export function checkDirectHttpCalls(
       }
     }
   }
+  return violations
 }

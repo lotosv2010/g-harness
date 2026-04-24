@@ -5,9 +5,11 @@
 
 ---
 
-## 待办（TODO）
+> **评估结论**：架构方向正确，方法论落地骨架到位，但"自己吃自己狗粮"还没做到位——这是发布前最需要补的短板。
 
-### P2 — 一般
+---
+
+## 待办（TODO）
 
 （暂无）
 
@@ -21,6 +23,21 @@
 
 ## 已完成（DONE）
 
+- [x] **TASK-036** — 预设补充 skills 目录（4 个预设均添加 skills/.gitkeep） — 2026-04-24
+- [x] **TASK-035** — Convention 层运行时校验（S001 文件命名 + S002 桶文件 export * 检查） — 2026-04-24
+- [x] **TASK-034** — hook Regex 安全加固（escapeRegExp + try-catch 防护） — 2026-04-24
+- [x] **TASK-032** — 清理预设冗余变量（移除 4 个预设中无模板引用的 app_dir/core_dir） — 2026-04-24
+- [x] **TASK-033** — validator checks 改为纯函数（返回 Violation[] 替代 mutation） — 2026-04-24
+- [x] **TASK-031** — 模板变量 Schema 文档（ADR-006：23 个变量来源和格式说明） — 2026-04-24
+- [x] **TASK-030** — 统一错误处理（checks 纯函数化消除 mutation 模式） — 2026-04-24
+- [x] **TASK-029** — 统一 CLI 退出码（migrate + context sync 补齐退出码） — 2026-04-24
+- [x] **TASK-028** — 修复 migrate 变量提取（逆向模板锚点匹配，替代空桩函数） — 2026-04-24
+- [x] **TASK-027** — version-detector 动态读取 package.json（替代硬编码 0.1.0） — 2026-04-24
+- [x] **TASK-026** — 删除死代码 template.ts — 2026-04-24
+- [x] **TASK-025** — 提取 fs-utils.ts（fileExists/readDirSafe/isDirectory/statSafe） — 2026-04-24
+- [x] **TASK-024** — 同步 SPEC.md 状态标记（全部验收标准 + 版本路线图更新） — 2026-04-24
+- [x] **TASK-023** — 补齐核心模块测试（10 个测试文件，69 个测试用例全部通过） — 2026-04-24
+- [x] **TASK-022** — 补齐 ESLint + Prettier 配置（eslint.config.js + .prettierrc） — 2026-04-24
 - [x] **TASK-021** — skills 通用化（通用 frontmatter + extensions 扩展层） — 2026-04-24
 - [x] **TASK-012** — 编写用户文档（GETTING_STARTED.md） — 2026-04-24
 - [x] **TASK-011** — 创建 base 预设 — 2026-04-24
@@ -36,12 +53,12 @@
 - [x] **TASK-015** — validate 接入 pre-commit hook — 2026-04-23
 - [x] **TASK-014** — 可执行 hook（PostToolUse boundary-check + settings.json） — 2026-04-23
 - [x] **TASK-013** — 分级输出（init 默认核心层，--full 完整输出） — 2026-04-23
-- [x] **TASK-005** — src/ 结构重组：core/ + presets/ + templates/，templates 1:1 镜像目标项目 — 2026-04-23
-- [x] **TASK-004** — 实现 FileGenerator，支持递归遍历 templates/ 和预设叠加 — 2026-04-23
-- [x] **TASK-003** — 实现 ProjectScanner + 技术栈检测（含测试） — 2026-04-23
-- [x] **TASK-002** — 实现 CLI 基础框架（init、validate、context stub、migrate stub） — 2026-04-23
-- [x] **TASK-001** — P0 结构重构（单包结构，全部文档更新） — 2026-04-23
-- [x] **TASK-000** — 项目初始架构设计与文档体系 — 2026-04-23
+- [x] **TASK-005** — src/ 结构重组 — 2026-04-23
+- [x] **TASK-004** — 实现 FileGenerator — 2026-04-23
+- [x] **TASK-003** — 实现 ProjectScanner — 2026-04-23
+- [x] **TASK-002** — 实现 CLI 基础框架 — 2026-04-23
+- [x] **TASK-001** — P0 结构重构 — 2026-04-23
+- [x] **TASK-000** — 项目初始架构设计 — 2026-04-23
 
 ---
 

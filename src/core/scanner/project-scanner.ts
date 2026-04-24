@@ -1,5 +1,6 @@
-import { readFile, access, readdir } from 'node:fs/promises'
+import { readFile, readdir } from 'node:fs/promises'
 import { join } from 'node:path'
+import { fileExists } from '../fs-utils.js'
 import {
   detectLanguage,
   detectFramework,
@@ -70,7 +71,7 @@ export class ProjectScanner {
     ]
 
     for (const [file, manager] of checks) {
-      if (await this.fileExists(join(rootDir, file))) return manager
+      if (await fileExists(join(rootDir, file))) return manager
     }
     return null
   }
@@ -86,8 +87,8 @@ export class ProjectScanner {
   private async checkMonorepo(rootDir: string): Promise<boolean> {
     const pkg = await this.readPackageJson(rootDir)
     if (pkg?.workspaces) return true
-    if (await this.fileExists(join(rootDir, 'pnpm-workspace.yaml'))) return true
-    if (await this.fileExists(join(rootDir, 'lerna.json'))) return true
+    if (await fileExists(join(rootDir, 'pnpm-workspace.yaml'))) return true
+    if (await fileExists(join(rootDir, 'lerna.json'))) return true
     return false
   }
 
@@ -97,7 +98,7 @@ export class ProjectScanner {
 
     for (const dir of candidates) {
       const fullPath = join(rootDir, dir)
-      if (await this.fileExists(fullPath)) {
+      if (await fileExists(fullPath)) {
         try {
           const entries = await readdir(fullPath, { withFileTypes: true })
           for (const entry of entries) {
@@ -116,17 +117,17 @@ export class ProjectScanner {
   private async findSrcDir(rootDir: string): Promise<string | null> {
     const candidates = ['src', 'lib', 'app']
     for (const dir of candidates) {
-      if (await this.fileExists(join(rootDir, dir))) return dir
+      if (await fileExists(join(rootDir, dir))) return dir
     }
     return null
   }
 
   private async detectExistingConfig(rootDir: string): Promise<ExistingConfig> {
     const [hasClaudeMd, hasAgentsMd, hasEslint, hasTsConfig] = await Promise.all([
-      this.fileExists(join(rootDir, 'CLAUDE.md')),
-      this.fileExists(join(rootDir, 'AGENTS.md')),
+      fileExists(join(rootDir, 'CLAUDE.md')),
+      fileExists(join(rootDir, 'AGENTS.md')),
       this.hasEslintConfig(rootDir),
-      this.fileExists(join(rootDir, 'tsconfig.json')),
+      fileExists(join(rootDir, 'tsconfig.json')),
     ])
 
     return { hasClaudeMd, hasAgentsMd, hasEslint, hasTsConfig }
@@ -141,7 +142,7 @@ export class ProjectScanner {
       '.eslintrc.yaml',
     ]
     for (const file of candidates) {
-      if (await this.fileExists(join(rootDir, file))) return true
+      if (await fileExists(join(rootDir, file))) return true
     }
     return false
   }
@@ -155,12 +156,4 @@ export class ProjectScanner {
     }
   }
 
-  private async fileExists(filePath: string): Promise<boolean> {
-    try {
-      await access(filePath)
-      return true
-    } catch {
-      return false
-    }
-  }
 }

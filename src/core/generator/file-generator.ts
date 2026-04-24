@@ -1,5 +1,6 @@
-import { readFile, writeFile, mkdir, access, readdir, stat } from 'node:fs/promises'
+import { readFile, writeFile, mkdir } from 'node:fs/promises'
 import { join, relative, dirname } from 'node:path'
+import { fileExists, readDirSafe, isDirectory } from '../fs-utils.js'
 import { resolveVariables } from '../variables.js'
 import type { Preset } from '../preset-loader.js'
 import type { ScanResult } from '../scanner/project-scanner.js'
@@ -33,7 +34,7 @@ export class FileGenerator {
 
     for (const file of filesToGenerate) {
       const targetPath = join(options.targetDir, file.outputPath)
-      const exists = await this.fileExists(targetPath)
+      const exists = await fileExists(targetPath)
 
       if (exists && !options.overwrite) {
         result.skipped.push(file.outputPath)
@@ -168,14 +169,14 @@ export class FileGenerator {
   }
 
   private async collectRecursive(dir: string, root: string): Promise<FileEntry[]> {
-    const entries = await this.readDirSafe(dir)
+    const entries = await readDirSafe(dir)
     const files: FileEntry[] = []
 
     const skipDirs = ['git-hooks']
 
     for (const entry of entries) {
       const fullPath = join(dir, entry)
-      const isDir = await this.isDirectory(fullPath)
+      const isDir = await isDirectory(fullPath)
 
       if (isDir) {
         if (skipDirs.includes(entry)) continue
@@ -200,30 +201,6 @@ export class FileGenerator {
     return exts.some((ext) => filename.endsWith(ext))
   }
 
-  private async readDirSafe(dirPath: string): Promise<string[]> {
-    try {
-      return await readdir(dirPath)
-    } catch {
-      return []
-    }
-  }
-
-  private async isDirectory(path: string): Promise<boolean> {
-    try {
-      return (await stat(path)).isDirectory()
-    } catch {
-      return false
-    }
-  }
-
-  private async fileExists(filePath: string): Promise<boolean> {
-    try {
-      await access(filePath)
-      return true
-    } catch {
-      return false
-    }
-  }
 }
 
 interface FileEntry {
