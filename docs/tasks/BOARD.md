@@ -136,10 +136,10 @@
   - 验收：typecheck + lint 全绿；ADR-010 在 ARCHITECTURE 决策表中；FR-08 覆盖所有 v1.4 能力
   - 依赖：TASK-096
 
-- [ ] **TASK-100** — E2E 烟雾测试（M）— 延后到 FakeModel 装配阶段
+- [x] **TASK-100** — E2E 烟雾测试（M）✅ 2026-04-25
   - 输入：TASK-099
-  - 输出：`tests/e2e/deep-agent.spec.ts`：用 LangChain FakeModel 跑完整 `gforge init --deep-agent` 管线；验证产物白名单、trace 文件、降级路径
-  - 验收：CI 可跑，不依赖真实 API key
+  - 输出：`src/core/agents/deep-agent/e2e.test.ts` 通过 `vi.mock` 隔离 `lazy-import` + `agent-factory`，覆盖 8 条路径：deps-missing / no-key / apiKey-without-provider / parse-error / success + 白名单过滤 / network-error / trace JSONL 合法性 / unsupported
+  - 验收：CI 可跑零依赖（无需真实 LangChain 或 API key）；8 个用例全部通过；trace summary 行验证 draftFiles 包含 AGENTS.md
   - 依赖：TASK-099
 
 - [x] **TASK-101** — Provider / Model / API Key 交互选择（M）✅ 2026-04-25

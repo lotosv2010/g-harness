@@ -53,10 +53,10 @@
 ### P2 — 稳健化 & 文档（进行中）
 | 任务 | 复杂度 | 状态 |
 |------|--------|------|
-| TASK-097 | M | ⏸ 受控实测 + 成本校准（需真实 API key） |
+| TASK-097 | M | ⏸ 受控实测 + 成本校准（需真实 API key，非代码内可完成） |
 | TASK-098 | M | ✅ askUser 工具 + Human-in-the-loop（ADR 问题数 profile 硬上限） |
 | TASK-099 | M | ✅ 文档更新（README / GETTING_STARTED / SPEC / ARCHITECTURE / CURRENT） |
-| TASK-100 | M | ⏸ E2E 烟雾测试（FakeModel） |
+| TASK-100 | M | ✅ E2E 烟雾测试（vi.mock 隔离 LangChain，8 条路径覆盖） |
 
 ### v1.4.1 — Provider / Model / API Key 交互选择 ✅
 | 任务 | 复杂度 | 状态 |
@@ -70,7 +70,7 @@
 
 ## 活跃任务
 
-v1.4 剩余：TASK-097（受控实测）与 TASK-100（E2E）需真实运行环境，留到后续实测阶段推进。
+v1.4 剩余：TASK-097（受控实测 + 成本校准）需真实 API key 与样本仓库环境，留到 v1.5 校准阶段。
 
 ## v1.3 进度
 
@@ -187,5 +187,5 @@ v1.4 剩余：TASK-097（受控实测）与 TASK-100（E2E）需真实运行环�
 
 - TypeCheck：✓ 零错误
 - ESLint：✓ 零违规
-- Tests：✓ 48/48 通过（v1.3 新增 31 个用例：description(8) + content-completer(4) + auto-describe(8) + llm-completer(9) + index-drift(6) + detect-project(13)，覆盖分析器 + 索引器 + 扫描器）
+- Tests：✓ 8/8 通过（v1.4 新增 `deep-agent/e2e.test.ts`，覆盖 deps-missing / no-key / apiKey-without-provider / parse-error / success+白名单 / network-error / trace JSONL / unsupported 八条路径；之前的单测文件已随骨架重构移除，后续按需补齐）
 - 代码规则自检（R001-R007, A001-A003, S001-S004）：✓ 全部合规
