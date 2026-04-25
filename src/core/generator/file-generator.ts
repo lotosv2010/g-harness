@@ -8,6 +8,10 @@ import type { ContentCompletion } from '../analyzer/index.js'
 import type { AgentDefinition } from '../agents/agent-registry.js'
 import type { Preset } from '../preset-loader.js'
 import type { ScanResult } from '../scanner/project-scanner.js'
+import { runDeepAgent } from '../agents/deep-agent/index.js'
+import type { AgentProvider, Depth, DeepAgentResult, DraftFile, FallbackReason } from '../agents/deep-agent/types.js'
+
+export type GenerateMode = 'template' | 'llm-enhance' | 'deep-agent'
 
 export interface ProjectMetaInput {
   projectName?: string
@@ -30,6 +34,25 @@ export interface GenerateOptions {
   useLlm?: boolean
   /** LLM 增强完成后的回调，用于 CLI 打印状态 */
   onLlmResult?: (info: { provider: string | null; enhanced: boolean; reason?: string }) => void
+  /** 生成模式（v1.4）：template（默认）/ llm-enhance（兼容 useLlm）/ deep-agent */
+  mode?: GenerateMode
+  /** deep-agent 模式下的分析深度 */
+  depth?: Depth
+  /** 显式指定 LLM 供应商（ADR-011），仅 llm-enhance / deep-agent 生效 */
+  provider?: AgentProvider
+  /** 显式指定模型 ID（ADR-011） */
+  model?: string
+  /** 显式指定 API Key（ADR-011，来自交互输入），否则读 env */
+  apiKey?: string
+  /** deep-agent 结果回调（展示成本/降级原因） */
+  onDeepAgentResult?: (info: {
+    status: 'success' | 'fallback'
+    reason?: FallbackReason
+    message?: string
+    draftCount: number
+    costUsd: number | null
+    tracePath?: string
+  }) => void
 }
 
 export interface GenerateResult {
@@ -45,6 +68,11 @@ export class FileGenerator {
       skipped: [],
       overwritten: [],
     }
+
+    // Deep Agent 模式：优先用 Agent 产出的白名单草稿覆盖同路径模板
+    const agentDrafts = await this.runDeepAgentIfRequested(options)
+    const draftMap = new Map<string, string>()
+    for (const d of agentDrafts) draftMap.set(d.outputPath, d.content)
 
     const variables = await this.buildVariables(options)
     const filesToGenerate = await this.collectFiles(options)
@@ -66,7 +94,10 @@ export class FileGenerator {
         }
       }
 
-      const content = resolveVariables(file.content, variables)
+      // 若该文件有 Agent 草稿，直接使用（不做变量替换，Agent 已产出最终内容）
+      const content = draftMap.has(file.outputPath)
+        ? (draftMap.get(file.outputPath) as string)
+        : resolveVariables(file.content, variables)
 
       if (!options.dryRun) {
         await mkdir(dirname(targetPath), { recursive: true })
@@ -81,6 +112,62 @@ export class FileGenerator {
     }
 
     return result
+  }
+
+  /**
+   * 在 mode === 'deep-agent' 时跑一次 runDeepAgent，返回白名单草稿列表。
+   * 任何失败（缺依赖/无 key/超限/解析错误）都透明降级为空数组，
+   * 后续流程自动回落到模板+变量替换路径。
+   */
+  private async runDeepAgentIfRequested(options: GenerateOptions): Promise<DraftFile[]> {
+    if (options.mode !== 'deep-agent') return []
+
+    const projectName = options.meta?.projectName?.trim() || this.inferProjectName(options.targetDir)
+    const projectDescription = options.meta?.projectDescription?.trim() || ''
+    const depth: Depth = options.depth ?? 'medium'
+
+    let result: DeepAgentResult
+    try {
+      result = await runDeepAgent({
+        targetDir: options.targetDir,
+        scanResult: options.scanResult,
+        preset: options.preset,
+        projectName,
+        projectDescription,
+        depth,
+        provider: options.provider,
+        model: options.model,
+        apiKey: options.apiKey,
+      })
+    } catch (err) {
+      options.onDeepAgentResult?.({
+        status: 'fallback',
+        reason: 'network-error',
+        message: err instanceof Error ? err.message : String(err),
+        draftCount: 0,
+        costUsd: null,
+      })
+      return []
+    }
+
+    if (result.status === 'success') {
+      options.onDeepAgentResult?.({
+        status: 'success',
+        draftCount: result.drafts.length,
+        costUsd: result.cost.estimatedUsd,
+        tracePath: result.tracePath,
+      })
+      return result.drafts
+    }
+
+    options.onDeepAgentResult?.({
+      status: 'fallback',
+      reason: result.reason,
+      message: result.message,
+      draftCount: result.partialDrafts.length,
+      costUsd: result.cost?.estimatedUsd ?? null,
+    })
+    return result.partialDrafts
   }
 
   private async buildVariables(options: GenerateOptions): Promise<Record<string, string>> {
@@ -109,6 +196,9 @@ export class FileGenerator {
         projectName,
         projectDescription,
         scanResult,
+        provider: options.provider,
+        model: options.model,
+        apiKey: options.apiKey,
       })
       completion = llm.completion
       options.onLlmResult?.({

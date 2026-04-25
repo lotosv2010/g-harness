@@ -89,6 +89,13 @@ npx gforge init --agent claude,cursor --preset nextjs
 # 启用 LLM 内容增强（检测到 ANTHROPIC_API_KEY / OPENAI_API_KEY 时改写 positioning / boundaries / modules 三段叙述，失败透明降级）
 npx gforge init --llm
 
+# 启用 Deep Agent 自主生成（v1.4，需先 pnpm add -D deepagents @langchain/core @langchain/langgraph @langchain/anthropic @langchain/openai zod）
+npx gforge init --deep-agent --depth medium   # shallow / medium / deep
+
+# 显式指定 Provider / Model / API Key（ADR-011，--api-key 会进 shell history，生产环境请用 env）
+npx gforge init --deep-agent --depth deep --model claude-sonnet-4-5 --yes
+npx gforge init --llm --provider openai --model gpt-4o --api-key sk-... --yes
+
 # 已有项目：指定冲突策略
 npx gforge init --conflict prompt    # 逐文件确认
 npx gforge init --force              # 覆盖所有
@@ -106,6 +113,8 @@ npx gforge context sync
 ```
 
 > **项目索引（v1.3）**：`gforge index` 生成的三个索引文件（`PROJECT_MAP.md` / `FEATURES.md` / `ROUTES.md`）被协议硬化为 AI 改动前的必读入口。AI 先读索引再定位代码，避免整库广度扫描，显著降低 token 消耗。
+
+> **Deep Agent 模式（v1.4）**：`--deep-agent` 启用 LangGraph.js + `deepagents` 驱动的自主规范生成。Agent 读取项目（索引优先 → package → README → 按深度 list_dir / read_file / grep）再产出贴合项目实际的完整规范（SPEC、ARCHITECTURE、ADR-001、rules、protocols、入口文件）。三档 depth：`shallow`（≤15k token / ~20s）/ `medium`（≤50k / ~40s，推荐）/ `deep`（≤150k / ~90s）。三级降级链 `deep-agent → llm-enhance → template`，任一失败自动下沉，主流程永不崩溃。成本与 trace 写入 `docs/.gforge/agent-trace-{ts}.jsonl`。
 
 > 详细用法请参阅 [快速入门指南](GETTING_STARTED.md)。
 

@@ -10,17 +10,67 @@
 
 ## 当前阶段
 
-**v1.3 — 智能补全 + 项目索引（已完成 ✓）**
+**v1.4 — Deep Agent 驱动规范生成（实施中）**
 
-补齐两个核心价值：
-1. **智能内容补全** ✅ —— init 收集的描述 + 扫描的技术栈驱动 SPEC/ARCHITECTURE 内容生成；LLM 增强层按需启用，透明降级
-2. **项目索引体系** ✅ —— PROJECT_MAP / FEATURES / ROUTES 三个索引 + 协议硬化 AI 必读约定 + watch / check 模式
+引入 LangGraph.js + `deepagents`，让 CLI 自主分析老/新项目并生成贴合实际的完整规范套件。
 
-**v1.3 共计 13 个任务（TASK-069 ~ TASK-081）全部完成。**
+- ADR：`docs/decisions/ADR-010-deepagent-generation.md` ✅
+- 任务：TASK-082 ~ TASK-100（共 19 个）
+- 三级降级链：deep-agent → llm-enhance（v1.3） → template（v1.0）
+- 三档深度：shallow / medium / deep，用户自选
+
+**v1.3（智能补全 + 项目索引）已完成**：TASK-069 ~ TASK-081 全部 ✓。
+
+## v1.4 进度
+
+### P0 — 基础设施 ✅ 全部完成
+| 任务 | 复杂度 | 状态 |
+|------|--------|------|
+| TASK-082 | S | ✅ 新增 optionalDependencies + lazy-import 管线 |
+| TASK-083 | S | ✅ 类型层 + DEPTH_PROFILES 三档常量 |
+| TASK-084 | S | ✅ 工具安全层（assertPathSafe + 黑名单） |
+| TASK-085 | M | ✅ 7 个只读工具（zod schema + format 函数） |
+| TASK-086 | M | ✅ 6 份预设 knowledge base（≥200 行） |
+| TASK-087 | M | ✅ Agent Factory + 三级降级编排 |
+| TASK-088 | S | ✅ CostTracker / StepLimiter / TimeoutGuard |
+
+### P1 — Agent 主流程 ✅ 全部完成
+| 任务 | 复杂度 | 状态 |
+|------|--------|------|
+| TASK-089 | M | ✅ 系统 Prompt + 4 子 Agent Prompt |
+| TASK-090 | L | ✅ runDeepAgent 主入口（预检/构建/运行/提取/trace/降级） |
+| TASK-091 | S | ✅ Trace JSONL 写入器（步事件 + 末尾 summary） |
+| TASK-092 | M | ✅ Pre-flight 预估（estimateRun + formatEstimate） |
+
+### P1 — 集成到 init 命令 ✅ 全部完成
+| 任务 | 复杂度 | 状态 |
+|------|--------|------|
+| TASK-093 | M | ✅ FileGenerator 新增 mode + depth + onDeepAgentResult |
+| TASK-094 | M | ✅ Stage 5 模式三选一 + 深度子菜单 + 预估展示 |
+| TASK-095 | S | ✅ CLI flag `--deep-agent` + `--depth` + 非交互降级 |
+| TASK-096 | S | ✅ Stage 6 预览展示模式 / 预估 / 降级策略 |
+
+### P2 — 稳健化 & 文档（进行中）
+| 任务 | 复杂度 | 状态 |
+|------|--------|------|
+| TASK-097 | M | ⏸ 受控实测 + 成本校准（需真实 API key） |
+| TASK-098 | M | ✅ askUser 工具 + Human-in-the-loop（ADR 问题数 profile 硬上限） |
+| TASK-099 | M | ✅ 文档更新（README / GETTING_STARTED / SPEC / ARCHITECTURE / CURRENT） |
+| TASK-100 | M | ⏸ E2E 烟雾测试（FakeModel） |
+
+### v1.4.1 — Provider / Model / API Key 交互选择 ✅
+| 任务 | 复杂度 | 状态 |
+|------|--------|------|
+| TASK-101 | M | ✅ ADR-011：列表选 provider/model + env 支持 + `--model`/`--provider`/`--api-key` CLI（2026-04-25） |
+
+- ADR：`docs/decisions/ADR-011-model-key-interactive-selection.md` ✅
+- 交互：Stage 5 在选定 llm-enhance / deep-agent 后依次选 Provider → Model → API Key（env 已设则跳过）
+- CLI：`--model <id>` 校验 + provider 反查；`--provider` 显式指定；`--api-key <key>` 显式传入（运行时打印 shell history 警告，鼓励改用 env）；`--model` 与 `--provider` 冲突报错
+- 影响：`llm-completer.ts` 去除硬编码模型；`runDeepAgent` 新增 `model`/`apiKey` 透传
 
 ## 活跃任务
 
-无（v1.3 收尾；下一阶段进入 v2.0 生产就绪规划）。
+v1.4 剩余：TASK-097（受控实测）与 TASK-100（E2E）需真实运行环境，留到后续实测阶段推进。
 
 ## v1.3 进度
 

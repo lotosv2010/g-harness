@@ -202,6 +202,38 @@ src/templates/
 └── CLAUDE.template.md     # → 目标项目 CLAUDE.md
 ```
 
+### 3.9 src/core/agents/deep-agent — Deep Agent 子系统（v1.4+）
+
+基于 LangGraph.js + `deepagents` 的自主规范生成子系统，对应 ADR-010。
+
+```
+src/core/agents/deep-agent/
+├── index.ts                # runDeepAgent 主入口（预检 → 构建 → 运行 → 提取 → trace → 降级）
+├── agent-factory.ts        # 组装 runnable：按 depth 决定工具集 + ChatModel + subagents
+├── fallback.ts             # 三级降级链（deep-agent → llm-enhance → template）
+├── preflight.ts            # 费用/耗时预估（estimateRun + formatEstimate）
+├── config.ts               # DEPTH_PROFILES + MODEL_PRICING + DEFAULT_MODELS + PRICING_AS_OF
+├── types.ts                # DeepAgentOptions / DeepAgentResult / DraftFile / CostReport / EstimateReport
+├── lazy-import.ts          # optional 依赖动态加载（缺失即返回 { ok:false, missing }）
+├── guards/
+│   ├── cost-tracker.ts     # 聚合 usage_metadata + 价目换算
+│   ├── step-limiter.ts     # 循环步数硬上限
+│   └── timeout.ts          # AbortController 封装，总超时 + parent signal
+├── prompts/
+│   ├── system-prompt.ts    # 主 Agent 系统提示 + 白名单清单
+│   └── subagent-prompts.ts # 4 位专职作家：spec / architecture / rules / entry
+├── tools/                  # 7 个只读工具 + ask-user（可选）+ security.ts 路径卫士
+├── trace/
+│   └── trace-writer.ts     # JSONL 步事件 + 末尾 summary
+└── knowledge/              # 6 份预设知识库（nextjs/nestjs/vite-react/nuxt/electron/fastapi）
+```
+
+**关键约束：**
+- 全量 optional：`deepagents` / `@langchain/*` / `zod` 缺失均不反杀主流程
+- 路径安全：所有工具输入路径必须通过 `assertPathSafe`，黑名单 `.env*` / 私钥 / `.git` / `node_modules` / `dist` / `coverage`
+- 输出白名单 10 份；越界输出被 `extractDrafts` 过滤
+- 三级降级由 `fallback.ts` 编排，主流程永远能完成 `gforge init`
+
 ## 4. 数据流
 
 ```
@@ -259,5 +291,7 @@ CLI 是纯本地工具，不需要服务端。
 | ADR-007 | init 6 阶段 Wizard + 老项目双模式 | 明确 new/existing/reinit 分支；老项目 auto-describe 降低输入成本 |
 | ADR-008 | 项目索引作为 AI 上下文优先入口 | PROJECT_MAP/FEATURES/ROUTES 三文件让 AI 改动前先读索引，避免广度扫描 |
 | ADR-009 | LLM 补全层的白名单字段 + 透明降级 | 仅增强叙述字段，无 API key / 超时 / 解析失败一律回落规则版 |
+| ADR-010 | Deep Agent 驱动规范生成（LangGraph.js + deepagents） | 三档 depth 工具集 + 路径/文件白名单 + 三级降级链 + JSONL trace |
+| ADR-011 | Provider / Model / API Key 交互选择 | 列表选 model + env 继续支持 + `--model` / `--provider` / `--api-key` CLI flag（`--api-key` 附 shell history 警告） |
 
 详细 ADR 记录见 `docs/decisions/` 目录。

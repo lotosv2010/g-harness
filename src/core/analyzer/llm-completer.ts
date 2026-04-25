@@ -21,10 +21,20 @@ export interface LlmCompleterOptions {
   timeoutMs?: number
   /** 强制指定供应商，否则按环境变量自动选择 */
   provider?: 'anthropic' | 'openai'
+  /** 显式指定模型 ID（ADR-011），否则按 DEFAULT_MODEL_BY_PROVIDER 回落 */
+  model?: string
+  /** 显式指定 API Key（ADR-011，来自交互输入），否则按 env 回落 */
+  apiKey?: string
   /** 覆盖环境变量（测试用） */
   env?: Partial<Record<'ANTHROPIC_API_KEY' | 'OPENAI_API_KEY', string>>
   /** 注入 fetch 便于测试 */
   fetchImpl?: typeof fetch
+}
+
+/** llm-enhance 路径的默认模型（选便宜档，够用于叙述性改写） */
+const DEFAULT_MODEL_BY_PROVIDER: Record<LlmProvider, string> = {
+  anthropic: 'claude-haiku-4-5',
+  openai: 'gpt-4o-mini',
 }
 
 export type LlmProvider = 'anthropic' | 'openai'
@@ -56,10 +66,14 @@ export async function enhanceWithLlm(opts: LlmCompleterOptions): Promise<LlmEnha
     return { completion: opts.ruleBased, provider: null, enhanced: false, reason: 'no-key' }
   }
 
-  const key = provider === 'anthropic' ? env.ANTHROPIC_API_KEY : env.OPENAI_API_KEY
+  // apiKey 优先级（ADR-011）：显式 > env
+  const key = opts.apiKey ?? (provider === 'anthropic' ? env.ANTHROPIC_API_KEY : env.OPENAI_API_KEY)
   if (!key) {
     return { completion: opts.ruleBased, provider: null, enhanced: false, reason: 'no-key' }
   }
+
+  // 模型优先级（ADR-011）：显式 > DEFAULT_MODEL_BY_PROVIDER
+  const model = opts.model ?? DEFAULT_MODEL_BY_PROVIDER[provider]
 
   const timeoutMs = opts.timeoutMs ?? 15000
   const controller = new AbortController()
@@ -67,7 +81,7 @@ export async function enhanceWithLlm(opts: LlmCompleterOptions): Promise<LlmEnha
 
   try {
     const prompt = buildPrompt(opts)
-    const raw = await callProvider(provider, key, prompt, controller.signal, opts.fetchImpl ?? fetch)
+    const raw = await callProvider(provider, key, model, prompt, controller.signal, opts.fetchImpl ?? fetch)
     const parsed = parseOverrides(raw)
     if (!parsed) {
       return { completion: opts.ruleBased, provider, enhanced: false, reason: 'parse-error' }
@@ -152,6 +166,7 @@ ${ruleBased.moduleBreakdown}
 async function callProvider(
   provider: LlmProvider,
   key: string,
+  model: string,
   prompt: string,
   signal: AbortSignal,
   fetchImpl: typeof fetch,
@@ -166,7 +181,7 @@ async function callProvider(
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
+        model,
         max_tokens: 2048,
         messages: [{ role: 'user', content: prompt }],
       }),
@@ -186,7 +201,7 @@ async function callProvider(
       authorization: `Bearer ${key}`,
     },
     body: JSON.stringify({
-      model: 'gpt-4o-mini',
+      model,
       max_tokens: 2048,
       messages: [{ role: 'user', content: prompt }],
     }),

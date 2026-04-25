@@ -104,6 +104,69 @@ G-Forge 默认使用**规则版**内容补全（关键词匹配 + 预设片段�
 
 任何失败（超时 / 网络错误 / JSON 解析错误 / 返回空）都会**透明降级**到规则版，不会中断 init 流程。
 
+### 2.5 Deep Agent 模式（v1.4）
+
+`--deep-agent` 启用基于 **LangGraph.js + `deepagents`** 的自主规范生成。Agent 读取项目（索引优先 → package → README → 按深度 list_dir / read_file / grep），再由 4 位专职子作家（`spec-writer` / `architecture-writer` / `rules-writer` / `entry-writer`）产出完整规范。
+
+**安装 optional 依赖：**
+
+```bash
+pnpm add -D deepagents @langchain/core @langchain/langgraph @langchain/anthropic @langchain/openai zod
+export ANTHROPIC_API_KEY=sk-ant-...   # 或 OPENAI_API_KEY
+```
+
+**三档分析深度：**
+
+| Depth | 工具集 | 目标 token | 耗时 | 适用场景 |
+|-------|-------|----------|------|---------|
+| `shallow` | index + package + README | ≤15k | ~20s | 新项目 / 有完整索引的老项目 |
+| `medium`（默认） | shallow + list_dir + read_file | ≤50k | ~40s | 一般老项目，需抽样理解 |
+| `deep` | medium + grep + 全量反演 | ≤150k | ~90s | 架构反演、大型遗留项目 |
+
+**CLI 示例：**
+
+```bash
+gforge init --deep-agent --depth medium --yes
+gforge init --deep-agent --depth deep         # 交互模式下选择 deep 会显示实时预估
+
+# 显式指定模型（ADR-011）
+gforge init --deep-agent --depth deep --model claude-sonnet-4-5 --yes
+gforge init --llm --model gpt-4o-mini --yes   # 窄增强路径也支持 --model
+```
+
+**模型 / Key 交互选择（ADR-011）：**
+
+- 交互模式：选定 `llm-enhance` / `deep-agent` 后依次选 **Provider（Anthropic / OpenAI）→ Model（按 depth 标注推荐）→ API Key**。env 已设则跳过 key 输入；未设则 `p.password()` 交互输入（仅本次会话使用，不写盘）。
+- 非交互模式：`--model <id>` 覆盖默认映射；`--provider` 可显式指定；`--api-key <key>` 显式传入（⚠️ 会进入 shell history，运行时 CLI 会打印黄色警告；生产环境优先用 `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` 环境变量）。
+
+```bash
+# 推荐：env 传递 key
+export ANTHROPIC_API_KEY=sk-ant-...
+gforge init --deep-agent --depth deep --model claude-sonnet-4-5 --yes
+
+# 临时覆盖（会触发 shell history 警告）
+gforge init --llm --provider openai --model gpt-4o --api-key sk-... --yes
+```
+
+| Provider | 模型选项 | 推荐档位 |
+|---|---|---|
+| Anthropic | `claude-haiku-4-5`（$1/$5） | shallow / medium |
+| Anthropic | `claude-sonnet-4-5`（$3/$15） | deep |
+| OpenAI | `gpt-4o-mini`（$0.15/$0.6） | shallow / medium |
+| OpenAI | `gpt-4o`（$2.5/$10） | deep |
+
+**产出文件白名单**（Agent 只能写这 10 份，越界输出被丢弃）：
+
+- `AGENTS.md` / `CLAUDE.md`
+- `docs/SPEC.md` / `docs/ARCHITECTURE.md` / `docs/decisions/ADR-001-architecture-baseline.md`
+- `.claude/rules/{architecture,code-quality,safety}.md`
+- `.claude/protocols/feature.md`
+- `.claude/guardrails/boundary-rules.json`
+
+**三级降级链**：`deep-agent → llm-enhance → template`。任一级失败（依赖缺失 / 无 API key / 超时 / token 超限 / 解析失败 / 网络错误）自动下沉，主流程永不崩溃。
+
+**可观测性**：每次运行写入 `docs/.gforge/agent-trace-{ts}.jsonl`，末尾 summary 行记录步数 / token / 费用 / 降级原因；Stage 6 预览展示预计成本与耗时。
+
 ### 2.3 已有项目 — 自动扫描
 
 ```bash

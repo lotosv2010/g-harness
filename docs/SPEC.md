@@ -221,6 +221,39 @@ G-Forge 是一套**面向 AI 编程助手优化的通用工程化规范框架 + 
 - [x] `ProjectMeta.source` 追踪 manual / auto；auto 模式下保留 `autoSources` 证据
 - [x] Stage 5 交互在有 API key 时询问启用 LLM，无 key 时打印降级提示
 
+#### FR-08：Deep Agent 自主生成（init --deep-agent）
+
+**优先级：** P1（v1.4）
+
+**描述：** 引入 LangGraph.js + `deepagents`，让 CLI 具备自主规划 + 工具调用 + 多轮分析能力，生成贴合项目实际的完整规范套件（SPEC / ARCHITECTURE / ADR-001 / rules / protocols / 入口文件）。替代模板变量替换的"一刀切"产物，尤其面向老项目架构反演场景。
+
+**三档分析深度：**
+- `shallow`：读 index / package / README；≤15k token / ~20s；10 步；适合有完整索引的项目
+- `medium`（默认）：加 list_dir / read_file；≤50k token / ~40s；25 步；一般老项目
+- `deep`：加 grep + 全量反演；≤150k token / ~90s；60 步；架构反演
+
+**工具白名单（ADR-010）：** readIndex、readPackageJson、readReadme、listDir、readFile、grep、readPresetKnowledge、ask_user（可选）。无 writeFile / exec / 任意网络请求；所有路径通过 `assertPathSafe` 校验；禁读 `.env*` / 私钥 / `node_modules` / `.git`。
+
+**输出文件白名单（10 份）：** `AGENTS.md` / `CLAUDE.md` / `docs/SPEC.md` / `docs/ARCHITECTURE.md` / `docs/decisions/ADR-001-architecture-baseline.md` / `.claude/rules/{architecture,code-quality,safety}.md` / `.claude/protocols/feature.md` / `.claude/guardrails/boundary-rules.json`。越界输出自动丢弃。
+
+**三级降级链：** `deep-agent → llm-enhance → template`。任一失败原因（`deps-missing` / `no-key` / `timeout` / `step-limit` / `token-limit` / `parse-error` / `network-error` / `unsupported`）都触发自动下沉，主流程永不崩溃。
+
+**Human-in-the-loop：** askUser 工具可选启用，shallow 禁用 / medium 最多 2 次 / deep 最多 3 次；非交互模式静默禁用。
+
+**可观测性：**
+- 运行时写 `docs/.gforge/agent-trace-{ts}.jsonl`，每行一条 step；末尾 summary 记录步数 / 费用 / 降级原因
+- Stage 6 预览展示预估 token / 费用 / 耗时（`preflight.ts::estimateRun`）+ 降级策略说明
+- `onDeepAgentResult` 回调实时反馈成功草稿数、成本、trace 路径或降级原因
+
+**验收标准：**
+- [x] 三档 depth 工具集、步数、token、超时上限独立可配（`DEPTH_PROFILES`）
+- [x] 所有 optional 依赖通过 `loadDeepAgentDeps` 懒加载，缺失不影响主流程
+- [x] 10 份白名单文件路径校验；越界输出被 `extractDrafts` 过滤
+- [x] `runDeepAgent` 失败路径全部返回 `{ status: 'fallback', reason, message, partialDrafts, cost }`
+- [x] CLI `--deep-agent` / `--depth shallow|medium|deep` 非交互可用，无效 depth 友好报错
+- [x] 交互 Stage 5 在无 API key / 无依赖时自动隐藏 deep-agent 选项
+- [x] 交互模式支持选 Provider / Model / API Key（ADR-011）；CLI `--model` / `--provider` / `--api-key` 非交互覆盖，`--api-key` 触发 shell history 警告
+
 #### FR-05：预设系统
 
 **优先级：** P0
@@ -310,6 +343,8 @@ src/presets/<name>/
 | v1.1 | Init 交互流程重设计（6 阶段 Wizard，ADR-007） | 已完成 |
 | v1.2 | 工程生命周期补全（4 skill + 3 protocol） | 已完成 |
 | v1.3 | 智能补全 + 项目索引（gforge index / LLM 增强层 / 老项目 auto-describe） | 已完成 |
+| v1.4 | Deep Agent 驱动规范生成（LangGraph.js + deepagents，三档 depth，三级降级链，ADR-010） | 已完成 |
+| v1.4.1 | Provider / Model / API Key 交互选择（ADR-011） | 已完成 |
 | v2.0 | 生产就绪，完整文档、示例项目、自定义规则 API | 计划中 |
 
 ### 2.4 成功指标

@@ -18,6 +18,11 @@ import {
 } from './init-interactive.js'
 import type { AgentDefinition } from '../agents/agent-registry.js'
 import type { ConflictStrategy, ProjectMeta } from './init-interactive.js'
+import type { AgentProvider, Depth } from '../agents/deep-agent/types.js'
+import type { GenerateMode } from '../generator/file-generator.js'
+import { estimateRun, formatEstimate } from '../agents/deep-agent/preflight.js'
+import { loadDeepAgentDeps } from '../agents/deep-agent/lazy-import.js'
+import { inferProviderFromModel, listModelIds } from '../agents/deep-agent/config.js'
 
 interface InitOptions {
   preset?: string
@@ -30,6 +35,11 @@ interface InitOptions {
   full?: boolean
   yes?: boolean
   llm?: boolean
+  deepAgent?: boolean
+  depth?: string
+  model?: string
+  provider?: string
+  apiKey?: string
 }
 
 export const initCommand = new Command('init')
@@ -43,6 +53,11 @@ export const initCommand = new Command('init')
   .option('--force', '覆盖已有配置文件（等同 --conflict overwrite）')
   .option('--full', '输出完整文档体系（默认仅输出核心层）')
   .option('--llm', '启用 LLM 内容增强（检测到 ANTHROPIC_API_KEY / OPENAI_API_KEY 时生效；失败自动降级）')
+  .option('--deep-agent', '启用 Deep Agent 自主生成（v1.4，需安装 deepagents + @langchain/*；失败自动降级）')
+  .option('--depth <level>', 'Deep Agent 分析深度：shallow | medium | deep（默认 medium）')
+  .option('--model <id>', 'LLM 模型 ID（如 claude-sonnet-4-5 / gpt-4o-mini），不指定则按 depth 回落（ADR-011）')
+  .option('--provider <name>', 'LLM 供应商：anthropic | openai；不指定则按 --model 或 env 推断（ADR-011）')
+  .option('--api-key <key>', 'LLM API Key（⚠️ 会进入 shell history，优先使用 ANTHROPIC_API_KEY / OPENAI_API_KEY 环境变量）')
   .option('-y, --yes', '跳过所有交互，使用默认值')
   .action(async (options: InitOptions) => {
     const targetDir = process.cwd()
@@ -139,6 +154,24 @@ export const initCommand = new Command('init')
     let installHook = true
     let useLlm = options.llm ?? false
 
+    // v1.4 生成模式解析（CLI flag）
+    let generateMode: GenerateMode = options.deepAgent
+      ? 'deep-agent'
+      : options.llm
+        ? 'llm-enhance'
+        : 'template'
+    let depth: Depth | undefined = parseDepthFlag(options.depth)
+    if (generateMode === 'deep-agent' && !depth) depth = 'medium'
+
+    // ADR-011：model / provider CLI 解析（--model 先校验；provider 由 --provider 或 model 推断）
+    const cliModel = parseModelFlag(options.model, options.provider)
+    let selectedProvider: AgentProvider | undefined = cliModel?.provider ?? parseProviderFlag(options.provider)
+    let selectedModel: string | undefined = cliModel?.model
+    let selectedApiKey: string | undefined = options.apiKey
+    if (selectedApiKey) {
+      p.log.warn(pc.yellow('⚠️  通过 --api-key 传入密钥会进入 shell history，生产环境建议改用 ANTHROPIC_API_KEY / OPENAI_API_KEY 环境变量'))
+    }
+
     if (options.conflict) {
       const valid: ConflictStrategy[] = ['skip', 'overwrite', 'prompt']
       if (!valid.includes(options.conflict as ConflictStrategy)) {
@@ -149,7 +182,7 @@ export const initCommand = new Command('init')
     }
 
     if (isInteractive) {
-      const outputConfig = await stage5OutputConfig(mode)
+      const outputConfig = await stage5OutputConfig(mode, { targetDir })
       if (!outputConfig) {
         p.outro('已取消')
         return
@@ -158,13 +191,34 @@ export const initCommand = new Command('init')
       conflictStrategy = outputConfig.conflict
       installHook = outputConfig.installHook
       useLlm = outputConfig.useLlm
+      generateMode = outputConfig.mode
+      depth = outputConfig.depth
+      // CLI flag 优先；否则采用交互值（ADR-011）
+      selectedProvider = selectedProvider ?? outputConfig.provider
+      selectedModel = selectedModel ?? outputConfig.model
+      selectedApiKey = selectedApiKey ?? outputConfig.apiKey
+    } else if (generateMode === 'deep-agent') {
+      // 非交互模式：验证 deep-agent 依赖与 API key；缺失则友好降级
+      const deps = await loadDeepAgentDeps()
+      const hasKey = Boolean(process.env.ANTHROPIC_API_KEY || process.env.OPENAI_API_KEY)
+      if (!deps.ok) {
+        p.log.warn(pc.yellow(`Deep Agent 依赖缺失：${deps.missing.join(', ')}，降级到 ${hasKey ? 'llm-enhance' : 'template'}`))
+        generateMode = hasKey ? 'llm-enhance' : 'template'
+        useLlm = generateMode === 'llm-enhance'
+        depth = undefined
+      } else if (!hasKey) {
+        p.log.warn(pc.yellow('未检测到 ANTHROPIC_API_KEY / OPENAI_API_KEY，降级到 template'))
+        generateMode = 'template'
+        useLlm = false
+        depth = undefined
+      }
     }
 
     // ── Stage 6: 确认预览 & 执行 ──
     const effectivePreset = (await loadPreset(gforgeRoot, presetName)) ?? null
     const generator = new FileGenerator()
 
-    // dry-run 收集文件列表用于预览
+    // dry-run 收集文件列表用于预览（deep-agent 模式下预览阶段不跑 agent，只列模板文件）
     const previewResult = await generator.generate({
       gforgeRoot,
       preset: effectivePreset,
@@ -177,6 +231,18 @@ export const initCommand = new Command('init')
       meta,
     })
 
+    // Stage 6 预估（仅 deep-agent 模式需要）
+    let estimateLine: string | undefined
+    if (generateMode === 'deep-agent' && depth) {
+      try {
+        const estimate = await estimateRun({ targetDir, depth })
+        const provider = selectedProvider ?? (process.env.ANTHROPIC_API_KEY ? 'anthropic' : 'openai')
+        estimateLine = formatEstimate(estimate, provider)
+      } catch {
+        // preflight 失败不阻塞
+      }
+    }
+
     if (isInteractive) {
       const filesToCreate = [...previewResult.created, ...previewResult.overwritten]
       const confirmed = await stage6Confirm({
@@ -186,6 +252,9 @@ export const initCommand = new Command('init')
         conflict: conflictStrategy,
         installHook,
         useLlm,
+        mode: generateMode,
+        depth,
+        estimateLine,
         meta,
         filesToCreate,
       })
@@ -215,6 +284,11 @@ export const initCommand = new Command('init')
       meta,
       onConflict,
       useLlm,
+      mode: generateMode,
+      depth,
+      provider: selectedProvider,
+      model: selectedModel,
+      apiKey: selectedApiKey,
       onLlmResult: (info) => {
         if (info.enhanced) {
           p.log.success(pc.green(`LLM 增强已应用（provider: ${info.provider}）`))
@@ -222,6 +296,19 @@ export const initCommand = new Command('init')
           p.log.warn(pc.yellow('未检测到 ANTHROPIC_API_KEY / OPENAI_API_KEY，降级到规则版'))
         } else {
           p.log.warn(pc.yellow(`LLM 增强失败（${info.reason ?? 'unknown'}），降级到规则版`))
+        }
+      },
+      onDeepAgentResult: (info) => {
+        if (info.status === 'success') {
+          const cost = info.costUsd !== null ? ` / $${info.costUsd.toFixed(4)}` : ''
+          p.log.success(pc.green(`Deep Agent 产出 ${info.draftCount} 份白名单草稿${cost}`))
+          if (info.tracePath) {
+            console.log(pc.dim(`  trace: ${info.tracePath}`))
+          }
+        } else {
+          p.log.warn(
+            pc.yellow(`Deep Agent 降级（${info.reason ?? 'unknown'}）：${info.message ?? ''}；已回落到模板路径`),
+          )
         }
       },
     })
@@ -285,6 +372,54 @@ function resolveAgents(agentArg: string): AgentDefinition[] {
     agents.push(agent)
   }
   return agents
+}
+
+function parseDepthFlag(flag: string | undefined): Depth | undefined {
+  if (!flag) return undefined
+  const valid: Depth[] = ['shallow', 'medium', 'deep']
+  if (valid.includes(flag as Depth)) return flag as Depth
+  console.log(pc.red(`错误: 无效的 --depth 值 "${flag}"，可选: ${valid.join(', ')}`))
+  process.exit(1)
+}
+
+/** 解析 --provider flag（ADR-011） */
+function parseProviderFlag(flag: string | undefined): AgentProvider | undefined {
+  if (!flag) return undefined
+  const valid: AgentProvider[] = ['anthropic', 'openai']
+  if (valid.includes(flag as AgentProvider)) return flag as AgentProvider
+  console.log(pc.red(`错误: 无效的 --provider 值 "${flag}"，可选: ${valid.join(', ')}`))
+  process.exit(1)
+}
+
+/**
+ * 解析 --model flag（ADR-011）。
+ * - 校验模型 ID 必须在 MODEL_PRICING 表内
+ * - 同时给了 --provider 时二者必须一致
+ * - 只给 --model 时从 ID 反查 provider
+ */
+function parseModelFlag(
+  modelFlag: string | undefined,
+  providerFlag: string | undefined,
+): { provider: AgentProvider; model: string } | null {
+  if (!modelFlag) return null
+  const legal = listModelIds()
+  if (!legal.includes(modelFlag)) {
+    console.log(pc.red(`错误: 无效的 --model 值 "${modelFlag}"`))
+    console.log(pc.dim(`合法取值: ${legal.join(', ')}`))
+    process.exit(1)
+  }
+  const inferred = inferProviderFromModel(modelFlag)
+  if (!inferred) {
+    // listModelIds 已覆盖所有已知模型，不应到达
+    console.log(pc.red(`错误: 模型 "${modelFlag}" 无法推断 provider`))
+    process.exit(1)
+  }
+  const explicitProvider = parseProviderFlag(providerFlag)
+  if (explicitProvider && explicitProvider !== inferred) {
+    console.log(pc.red(`错误: --model "${modelFlag}" 属于 ${inferred}，与 --provider "${explicitProvider}" 冲突`))
+    process.exit(1)
+  }
+  return { provider: inferred, model: modelFlag }
 }
 
 function detectPreset(framework: string | null): string {

@@ -11,9 +11,151 @@
 
 ## 待办（TODO）
 
-> **v1.3 规划 — 智能补全 + 项目索引**
-> 目标：让 init 生成贴合真实项目的规范 + 输出 AI 可优先读取的项目索引（节省 token）。
-> 来源：2026-04-24 项目审计（对照目标 1a/1b/2a/2b）。
+> **v1.4 规划 — Deep Agent 驱动规范生成（ADR-010）**
+> 目标：引入 LangGraph + `deepagents`，让 CLI 能自主分析老/新项目并生成贴合实际的完整规范套件。
+> 来源：2026-04-25 用户需求（"接入 langchain 的 deep agent 自动分析项目生成各种 MD 约束文件"）。
+
+### P0 — 基础设施 + 可运行骨架（2 周）
+
+- [x] **TASK-082** — 新增依赖 + 可选加载管线（S） — 2026-04-24 完成
+  - 输入：无
+  - 输出：`package.json` 新增 `optionalDependencies`：`deepagents` / `@langchain/langgraph` / `@langchain/core` / `@langchain/anthropic` / `@langchain/openai` / `zod`；新增 `src/core/agents/deep-agent/lazy-import.ts`（统一动态 import + 缺失时返回 null）
+  - 验收：不启用 deep-agent 时 `pnpm install --prod` 不拉取这些包；`lazy-import` 单测覆盖"依赖缺失"与"依赖存在"两种路径
+  - 依赖：无
+
+- [x] **TASK-083** — Deep Agent 类型层 + 配置（S） — 2026-04-24 完成
+  - 输入：ADR-010
+  - 输出：`src/core/agents/deep-agent/types.ts`（`Depth` / `DeepAgentOptions` / `DeepAgentResult` / `DraftFile` / `CostReport`）；`config.ts`（三档 depth 的步数/token/超时上限常量表）
+  - 验收：类型完整导出；常量表覆盖 shallow/medium/deep 三档
+  - 依赖：TASK-082
+
+- [x] **TASK-084** — 工具安全层（S） — 2026-04-24 完成
+  - 输入：ADR-010 工具白名单
+  - 输出：`deep-agent/tools/security.ts`：`assertPathSafe(path, targetDir)` + 黑名单（`.env*` / `*.pem` / `id_rsa*` / `.git` / `node_modules` / `dist` / `coverage`）
+  - 验收：6+ 个单测覆盖目标外路径、黑名单扩展、符号链接逃逸、相对路径穿越
+  - 依赖：TASK-083
+
+- [x] **TASK-085** — 只读工具集（M） — 2026-04-24 完成
+  - 输入：TASK-084
+  - 输出：`deep-agent/tools/` 下 7 个工具：`read-index` / `read-package-json` / `read-readme`（250 行上限）/ `list-dir` / `read-file`（500 行上限）/ `grep`（200 条上限）/ `read-preset-knowledge`；每个工具用 `zod` 定义 schema
+  - 验收：每个工具有独立单测（输入校验 + 结果格式 + 错误路径）；所有 tool 注册在 `tools/index.ts`
+  - 依赖：TASK-084
+
+- [x] **TASK-086** — 预设 knowledge base（M） — 2026-04-25 完成
+  - 输入：ADR-010
+  - 输出：`deep-agent/knowledge/` 下 6 个 markdown：`nextjs.md` / `nestjs.md` / `vite-react.md` / `nuxt.md` / `electron.md` / `fastapi.md`；每份包含分层、模块边界、常见陷阱、推荐 rules/protocols
+  - 验收：6 个文件 ≥ 200 行有效内容；`read-preset-knowledge` 能正确检索
+  - 依赖：TASK-085
+
+- [x] **TASK-087** — Agent Factory + 降级链（M） — 2026-04-25 完成
+  - 输入：TASK-082~086
+  - 输出：`deep-agent/agent-factory.ts`（`createDeepAgent` 封装：depth → tools → model/provider → 步数限制）；`deep-agent/fallback.ts`（deep → llm-enhance → template 三级降级）
+  - 验收：工厂可基于 depth 产出不同工具集；fallback 单测覆盖三档降级触发
+  - 依赖：TASK-085、TASK-086
+
+- [x] **TASK-088** — 成本追踪 + 步数/超时护栏（S） — 2026-04-25 完成
+  - 输入：TASK-087
+  - 输出：`deep-agent/guards/cost-tracker.ts`（聚合 `usage_metadata` + 模型价目表）；`step-limiter.ts`（循环步数上限）；`timeout.ts`（AbortController 包装）
+  - 验收：cost-tracker 单测（anthropic + openai 两组价目）；超限触发降级而非抛错
+  - 依赖：TASK-087
+
+### P1 — Agent 主流程（2 周）
+
+- [x] **TASK-089** — 系统 Prompt + 子 Agent Prompt（M） — 2026-04-25 完成
+  - 输入：ADR-010
+  - 输出：`deep-agent/prompts/system-prompt.ts`（主 Agent，含 `OUTPUT_WHITELIST_DEFAULT` + `buildSystemPrompt`）；`subagent-prompts.ts`（4 个子 agent：spec-writer / architecture-writer / rules-writer / entry-writer，含深度感知行为）
+  - 验收：prompt 显式要求产出白名单文件清单；系统提示包含"优先读索引"约定（呼应 ADR-008）；typecheck + lint PASS
+  - 依赖：TASK-087
+
+- [x] **TASK-090** — runDeepAgent 主入口（L） — 2026-04-25 完成
+  - 输入：TASK-088、TASK-089
+  - 输出：`deep-agent/index.ts` 导出 `runDeepAgent(options): Promise<DeepAgentResult>`；编排预检（依赖/provider/key）→ 构建（agent-factory + subagents）→ 运行（stream 优先、invoke 兜底）→ 提取白名单草稿 → trace 写入 → 降级返回
+  - 验收：typecheck + lint PASS；失败路径全部走降级（deps-missing / no-key / timeout / step-limit / token-limit / parse-error / network-error）；单次成功返回 `{ status, drafts, cost, tracePath }`
+  - 依赖：TASK-088、TASK-089
+
+- [x] **TASK-091** — Trace 写入器（S） — 2026-04-25 完成
+  - 输入：TASK-090
+  - 输出：`deep-agent/trace/trace-writer.ts`：按时间戳写 `docs/.gforge/agent-trace-{ts}.jsonl`，每行一条 step（thought/tool_call/tool_result/message/error）+ 末尾 summary 行；`makeStepEvent` 辅助
+  - 验收：JSONL 格式合法；首次写入自动 `mkdir -p`；写入失败静默（不得反杀主流程）；runDeepAgent 每步实时 append，末尾写 summary
+  - 依赖：TASK-090
+
+- [x] **TASK-092** — Pre-flight 预估报告（M） — 2026-04-25 完成
+  - 输入：TASK-088
+  - 输出：`deep-agent/preflight.ts`：`estimateRun` 基于三档 baseline 系数 + 项目源文件采样估算 `EstimateReport`；`formatEstimate` 输出人类可读字符串（包含价目日期）；采样跳过 node_modules/.git/dist 等
+  - 验收：shallow 零采样、medium ≤ 8、deep ≤ 20；费用计算复用 `calcCost`；上界不超过本档 maxTokens 与 totalTimeoutMs；typecheck + lint PASS
+  - 依赖：TASK-088
+
+### P1 — 集成到 init 命令（1 周）
+
+- [x] **TASK-093** — FileGenerator 生成模式分支（M） — 2026-04-25 完成
+  - 输入：TASK-090
+  - 输出：`GenerateOptions` 新增 `mode: GenerateMode` + `depth?: Depth` + `onDeepAgentResult` 回调；`runDeepAgentIfRequested` 在 deep-agent 模式下调用 `runDeepAgent`，白名单草稿覆盖同路径模板（跳过 `resolveVariables`），失败透明降级到模板路径
+  - 验收：typecheck + lint PASS；Agent 成功时草稿直出、失败（deps-missing/no-key/timeout/等）走模板路径；partialDrafts 非空时仍能部分覆盖
+  - 依赖：TASK-090
+
+- [x] **TASK-094** — Stage 5 新增生成模式选择 + 深度子菜单（M） — 2026-04-25 完成
+  - 输入：TASK-092、TASK-093
+  - 输出：`init-interactive.ts` Stage 5 新增生成模式三选一（template / llm-enhance / deep-agent）+ 深度子菜单（shallow / medium / deep）；选 deep-agent 时调用 `estimateRun` 即时展示预估；无 API key / 缺 Deep Agent 依赖时自动隐藏对应选项
+  - 验收：typecheck + lint PASS；`OutputConfig` 新增 `mode` + `depth` 字段；`isDeepAgentAvailable` 基于 `loadDeepAgentDeps()` 动态探测依赖
+  - 依赖：TASK-093
+
+- [x] **TASK-095** — CLI flag `--deep-agent` + `--depth`（S） — 2026-04-25 完成
+  - 输入：TASK-094
+  - 输出：`init.ts` 新增 `--deep-agent` / `--depth shallow|medium|deep`；`parseDepthFlag` 对无效值友好报错（exit 1）；非交互模式下 deep-agent 自动探测依赖 + API key，缺失时友好降级到 llm-enhance 或 template
+  - 验收：typecheck + lint PASS；CLI 描述文字齐全；非交互模式三档降级路径覆盖
+  - 依赖：TASK-094
+
+- [x] **TASK-096** — Stage 6 预览增强（S） — 2026-04-25 完成
+  - 输入：TASK-092、TASK-095
+  - 输出：`PreviewSummary` 新增 `mode` / `depth` / `estimateLine`；`stage6Confirm` 在 deep-agent 模式下额外展示预估行 + 降级策略说明；`init.ts` 在预览阶段调用 `estimateRun` + `formatEstimate` 生成预估；`onDeepAgentResult` 回调打印成功的草稿数/费用/trace 路径或降级原因
+  - 验收：typecheck + lint PASS；预览明确显示生成模式与预估
+  - 依赖：TASK-095
+
+### P2 — 稳健化 & 文档
+
+- [ ] **TASK-097** — 受控实测 + 成本校准（M）— 延后到真实 API key 环境
+  - 输入：TASK-090
+  - 输出：对 g-forge 自身 + 3 个 fixture 项目（nextjs/nestjs/vite-react 最小仓）跑 deep-agent；记录实际 token/费用/耗时；校准 `preflight.ts` 的预估系数
+  - 验收：实测报告落到 `docs/runbooks/deep-agent-benchmark.md`；预估误差 ≤ 30%
+  - 依赖：TASK-096
+
+- [x] **TASK-098** — 可选 askUser 工具 + Human-in-the-loop（M） — 2026-04-25 完成
+  - 输入：TASK-090
+  - 输出：`tools/ask-user.ts::createAskUser` 工厂（状态闭包，累计提问数）；shallow 禁用 / medium≤2 / deep≤3（复用 `DEPTH_PROFILES.askUserLimit`）；非交互 TTY / 用户取消 / 空答 / 超限均返回带前缀的拒绝字符串；agent-factory 仅在 `enableAskUser && askUserLimit > 0` 时注册 `ask_user` 工具
+  - 验收：typecheck + lint PASS；问题数超限自动拒绝；非交互模式下该工具静默禁用（返回拒绝字符串）；@clack/prompts 与主流程共享 stdin
+  - 依赖：TASK-090
+
+- [x] **TASK-099** — 文档更新（M） — 2026-04-25 完成
+  - 输入：TASK-096
+  - 输出：
+    - `README.md` 快速开始新增 `--deep-agent --depth` 示例 + Deep Agent 模式大段说明（三档 depth / 白名单 / 降级链 / trace）
+    - `GETTING_STARTED.md` 新增 **2.5 Deep Agent 模式** 小节（依赖安装 / 深度表 / CLI 示例 / 10 份输出白名单 / 三级降级 / 可观测性）
+    - `docs/SPEC.md` 新增 **FR-08 Deep Agent 自主生成**（优先级 P1、三档深度、工具白名单、输出白名单、降级链、可观测性、验收标准全钩）+ 版本路线图新增 v1.4 行
+    - `docs/ARCHITECTURE.md` 新增 **3.9 agents/deep-agent 子系统**（目录树 + 关键约束）+ 决策表新增 ADR-010 行
+    - `docs/tasks/CURRENT.md` 当前阶段改为"实施中" + 新增 v1.4 完整进度表（P0/P1/P2）
+  - 验收：typecheck + lint 全绿；ADR-010 在 ARCHITECTURE 决策表中；FR-08 覆盖所有 v1.4 能力
+  - 依赖：TASK-096
+
+- [ ] **TASK-100** — E2E 烟雾测试（M）— 延后到 FakeModel 装配阶段
+  - 输入：TASK-099
+  - 输出：`tests/e2e/deep-agent.spec.ts`：用 LangChain FakeModel 跑完整 `gforge init --deep-agent` 管线；验证产物白名单、trace 文件、降级路径
+  - 验收：CI 可跑，不依赖真实 API key
+  - 依赖：TASK-099
+
+- [x] **TASK-101** — Provider / Model / API Key 交互选择（M）✅ 2026-04-25
+  - 输入：用户反馈"使用大模型增强是怎么没有让我选择大模型和输入对应的 key"
+  - 输出：
+    - `docs/decisions/ADR-011-model-key-interactive-selection.md` — 决策记录
+    - `src/core/agents/deep-agent/config.ts` 新增 `ANTHROPIC_MODEL_CHOICES` / `OPENAI_MODEL_CHOICES` / `getModelChoices` / `listModelIds` / `inferProviderFromModel`
+    - `src/core/agents/deep-agent/types.ts` `DeepAgentOptions` 新增 `model?` + `apiKey?`
+    - `src/core/agents/deep-agent/index.ts` `resolveProvider` 重构为 `resolveCredentials`（优先级：options > env）
+    - `src/core/analyzer/llm-completer.ts` 参数化 `model` / `apiKey`，移除硬编码
+    - `src/core/commands/init-interactive.ts` Stage 5 新增 `pickProviderModelKey`（provider select → model select → `p.password` key）
+    - `src/core/commands/init.ts` 新增 `--model` / `--provider` flag，`parseModelFlag` 校验 + provider 反查；透传至 `FileGenerator`
+    - `src/core/generator/file-generator.ts` `GenerateOptions` 新增 `provider` / `model` / `apiKey` 并传给 `runDeepAgent` + `enhanceWithLlm`
+    - 文档更新（`GETTING_STARTED.md` / `SPEC.md` / `ARCHITECTURE.md` / `CURRENT.md`）
+  - 验收：typecheck + lint 全绿；交互模式可选 provider + model + 输入 key；`--model` 非法值友好报错；`--model` 与 `--provider` 冲突时 exit 1；`--api-key` 允许传入但运行时打印 shell history 警告（2026-04-25 按用户确认修订）
+  - 依赖：TASK-099
 
 ### P0 — 核心闭环（1-2 周）
 
