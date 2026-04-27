@@ -206,9 +206,10 @@ async function askPreset(
 ): Promise<{ name: string; preset: Preset } | null> {
   const presets = await listPresets(ctx.harnessRoot)
   if (presets.length === 0) return null
+  const defaultPreset = presets.find((p) => p.name === 'nextjs') ? 'nextjs' : presets[0]?.name ?? 'base'
   const picked = await p.select({
     message: '技术栈预设',
-    initialValue: 'base',
+    initialValue: defaultPreset,
     options: presets.map((p) => ({ value: p.name, label: p.label })),
   })
   if (isCancelled(picked)) return null

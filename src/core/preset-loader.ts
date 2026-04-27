@@ -58,7 +58,30 @@ export async function loadPreset(harnessRoot: string, presetName: string): Promi
   }
 }
 
-/** 列出所有可用预设（用于交互式选择） */
+/**
+ * 预设展示顺序（CLI 选单）——按使用频率与类别聚合：
+ * 通用 → Web 前端 → 跨端 → 服务端 → 工程组织 → 桌面/移动原生
+ */
+const PRESET_ORDER: readonly string[] = [
+  'base',
+  'vanilla',
+  'vite-react',
+  'vite-vue',
+  'nextjs',
+  'nuxt',
+  'uniapp',
+  'miniprogram',
+  'nestjs',
+  'express',
+  'fastapi',
+  'monorepo',
+  'electron',
+  'tauri',
+  'react-native',
+  'flutter',
+]
+
+/** 列出所有可用预设（用于交互式选择），按 PRESET_ORDER 排序 */
 export async function listPresets(harnessRoot: string): Promise<Preset[]> {
   const presetsDir = join(harnessRoot, 'src', 'presets')
   try {
@@ -69,7 +92,15 @@ export async function listPresets(harnessRoot: string): Promise<Preset[]> {
       const preset = await loadPreset(harnessRoot, entry.name)
       if (preset) results.push(preset)
     }
-    return results.sort((a, b) => a.name.localeCompare(b.name))
+    return results.sort((a, b) => {
+      const ai = PRESET_ORDER.indexOf(a.name)
+      const bi = PRESET_ORDER.indexOf(b.name)
+      // 未收录条目排到末尾，同类按字母
+      const ax = ai === -1 ? Number.MAX_SAFE_INTEGER : ai
+      const bx = bi === -1 ? Number.MAX_SAFE_INTEGER : bi
+      if (ax !== bx) return ax - bx
+      return a.name.localeCompare(b.name)
+    })
   } catch {
     return []
   }
