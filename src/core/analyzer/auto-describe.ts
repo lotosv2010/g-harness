@@ -1,98 +1,69 @@
-// 自动描述推导器 — 从 package.json + README 提取项目描述，供老项目 init 场景使用
-// 纯规则、无 LLM
+// 从 package.json / README.md 自动推断 ProjectMeta 默认值
 
 import { readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { fileExists } from '../fs-utils.js'
+import { basename, join } from 'node:path'
+import type { ProjectMeta } from '../commands/init-types.js'
+import type { ScanResult } from '../scanner/project-scanner.js'
 
-export interface AutoDescribeResult {
-  projectName: string | null
-  description: string | null
-  sources: string[]
+export interface AutoDescribeInput {
+  targetDir: string
+  scanResult: ScanResult
 }
 
-export async function autoDescribe(rootDir: string): Promise<AutoDescribeResult> {
-  const sources: string[] = []
-  let projectName: string | null = null
-  let description: string | null = null
+/**
+ * 产出 ProjectMeta 的默认值。
+ * 用于交互向导初值，也用于非交互（--yes）时的回退。
+ */
+export async function autoDescribe(input: AutoDescribeInput): Promise<ProjectMeta> {
+  const { targetDir, scanResult } = input
+  const pkg = await readPackageJson(targetDir)
+  const readmeFirstLine = await readReadmeFirstLine(targetDir)
 
-  // 1. 优先从 package.json 读取
-  const pkgPath = join(rootDir, 'package.json')
-  if (await fileExists(pkgPath)) {
-    try {
-      const pkg = JSON.parse(await readFile(pkgPath, 'utf-8')) as Record<string, unknown>
-      if (typeof pkg.name === 'string' && pkg.name.trim()) {
-        projectName = pkg.name.trim()
-        sources.push('package.json:name')
-      }
-      if (typeof pkg.description === 'string' && pkg.description.trim()) {
-        description = pkg.description.trim()
-        sources.push('package.json:description')
-      }
-    } catch {
-      // 忽略解析失败
-    }
-  }
+  const projectName = pkg?.name?.trim() || basename(targetDir) || 'my-project'
+  const projectDescription = pkg?.description?.trim() || readmeFirstLine || ''
+  const srcDir = scanResult.structure.srcDir ?? 'src'
+  const techStackText = toTechStackText(scanResult)
 
-  // 2. README 第一段作为补充（仅当 description 为空时）
-  if (!description) {
-    const readmeCandidates = ['README.md', 'README.MD', 'Readme.md', 'readme.md']
-    for (const candidate of readmeCandidates) {
-      const readmePath = join(rootDir, candidate)
-      if (await fileExists(readmePath)) {
-        const extracted = await extractReadmeIntro(readmePath)
-        if (extracted) {
-          description = extracted
-          sources.push(`${candidate}:intro`)
-        }
-        break
-      }
-    }
-  }
-
-  return { projectName, description, sources }
+  return { projectName, projectDescription, srcDir, techStackText }
 }
 
-async function extractReadmeIntro(path: string): Promise<string | null> {
+async function readPackageJson(
+  targetDir: string,
+): Promise<{ name?: string; description?: string } | null> {
   try {
-    const content = await readFile(path, 'utf-8')
-    const lines = content.split(/\r?\n/)
-    const paragraphs: string[] = []
-    let current: string[] = []
-
-    for (const rawLine of lines) {
-      const line = rawLine.trim()
-      if (line.startsWith('#') || line.startsWith('==') || line.startsWith('--')) {
-        // 标题/分隔线，结束当前段落
-        if (current.length > 0) {
-          paragraphs.push(current.join(' '))
-          current = []
-        }
-        continue
-      }
-      if (line.startsWith('![') || line.startsWith('[![') || line.startsWith('>')) {
-        // 徽章 / 引用块，跳过
-        continue
-      }
-      if (line === '') {
-        if (current.length > 0) {
-          paragraphs.push(current.join(' '))
-          current = []
-          if (paragraphs.length > 0) break
-        }
-        continue
-      }
-      current.push(line)
-    }
-    if (current.length > 0) paragraphs.push(current.join(' '))
-
-    const first = paragraphs[0]?.trim()
-    if (!first) return null
-
-    // 截断到合理长度
-    const clean = first.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/`/g, '')
-    return clean.length > 280 ? `${clean.slice(0, 277)}...` : clean
+    const raw = await readFile(join(targetDir, 'package.json'), 'utf-8')
+    const parsed = JSON.parse(raw) as { name?: string; description?: string }
+    return parsed
   } catch {
     return null
   }
+}
+
+async function readReadmeFirstLine(targetDir: string): Promise<string | null> {
+  const candidates = ['README.md', 'README.rst', 'README.txt']
+  for (const name of candidates) {
+    try {
+      const raw = await readFile(join(targetDir, name), 'utf-8')
+      const first = raw
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .find((line) => line.length > 0 && !line.startsWith('#'))
+      if (first) return first
+    } catch {
+      // 继续下一个
+    }
+  }
+  return null
+}
+
+function toTechStackText(scan: ScanResult): string {
+  const { techStack } = scan
+  const parts = [
+    techStack.language,
+    techStack.framework,
+    techStack.buildTool,
+    techStack.testRunner,
+    techStack.packageManager,
+  ].filter((v): v is string => Boolean(v))
+  return parts.join(', ')
 }

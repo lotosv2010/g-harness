@@ -1,35 +1,40 @@
 {
+  "$schema": "2",
   "name": "react-native",
-  "description": "React Native + Expo 移动应用预设",
+  "label": "React Native (Expo)",
+  "description": "React Native + Expo SDK 50+ 跨端移动应用",
   "techStack": {
     "language": "TypeScript",
-    "runtime": "Hermes / JSC",
     "framework": "React Native + Expo",
-    "buildTool": "Expo CLI / EAS Build",
-    "testRunner": "Jest + React Native Testing Library",
+    "testRunner": "Jest",
     "packageManager": "pnpm"
+  },
+  "detect": {
+    "dependencies": ["react-native", "expo"],
+    "files": ["app.json", "app.config.ts"]
   },
   "variables": {
     "shared_dir": "src/shared",
-    "feature_dir": "src/features",
-    "api_dir": "src/api",
-    "shared_package": "src/shared",
-    "core_package": "src/core",
-    "app_package": "src"
+    "routes_dir": "src/app"
   },
-  "codeStyle": [
-    "使用函数式组件，禁止 class 组件",
-    "样式使用 StyleSheet.create，禁止内联样式对象",
-    "导航使用 Expo Router 或 React Navigation",
-    "组件 Props 使用 interface 定义",
-    "使用命名导出，非默认导出（Screen 组件除外）"
-  ],
   "commands": {
-    "install": "pnpm install",
-    "dev": "pnpm start",
-    "build": "eas build",
-    "test": "pnpm test",
-    "lint": "pnpm lint",
-    "typecheck": "pnpm typecheck"
-  }
+    "start": "pnpm expo start",
+    "ios": "pnpm expo run:ios",
+    "android": "pnpm expo run:android",
+    "test": "pnpm test"
+  },
+  "architecture": {
+    "overview": "Expo Router 驱动路由；平台差异通过 Platform.select / .native 后缀隔离",
+    "structure": "src/\n├── app/\n├── components/\n├── hooks/\n├── native/\n└── shared/"
+  },
+  "modules": ["app", "components", "hooks", "native", "shared"],
+  "rules": [
+    "平台专属代码使用 .ios.tsx / .android.tsx 后缀隔离",
+    "禁止在 JS 线程执行耗时任务，使用 InteractionManager 或 Reanimated",
+    "所有图片走 expo-image 并声明 contentFit"
+  ],
+  "nfr": [
+    "OTA 更新使用 EAS Update",
+    "崩溃监控接入 Sentry React Native"
+  ]
 }

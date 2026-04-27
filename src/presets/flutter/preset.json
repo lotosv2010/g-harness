@@ -1,35 +1,39 @@
 {
+  "$schema": "2",
   "name": "flutter",
-  "description": "Dart + Flutter 跨端移动应用预设",
+  "label": "Flutter",
+  "description": "Flutter + Dart 3 跨端应用",
   "techStack": {
-    "language": "Dart 3+",
-    "runtime": "Flutter Engine",
-    "framework": "Flutter 3",
-    "buildTool": "flutter build",
+    "language": "Dart 3",
+    "framework": "Flutter",
     "testRunner": "flutter test",
     "packageManager": "pub"
   },
-  "variables": {
-    "shared_dir": "lib/core",
-    "feature_dir": "lib/features",
-    "api_dir": "lib/data/api",
-    "shared_package": "lib/core",
-    "core_package": "lib/data",
-    "app_package": "lib"
+  "detect": {
+    "dependencies": [],
+    "files": ["pubspec.yaml"]
   },
-  "codeStyle": [
-    "使用 Feature-First 目录结构",
-    "状态管理使用 Riverpod / Bloc",
-    "Widget 保持小粒度，拆分到独立文件",
-    "使用 freezed / json_serializable 生成数据模型",
-    "文件名使用 snake_case"
-  ],
+  "variables": {
+    "shared_dir": "lib/shared",
+    "feature_dir": "lib/features"
+  },
   "commands": {
     "dev": "flutter run",
-    "build:apk": "flutter build apk",
-    "build:ios": "flutter build ios",
-    "test": "flutter test",
-    "lint": "dart analyze",
-    "format": "dart format ."
-  }
+    "build": "flutter build",
+    "test": "flutter test"
+  },
+  "architecture": {
+    "overview": "按 feature 切片组织；每个 feature 含 presentation / domain / data 三层",
+    "structure": "lib/\n├── features/\n│   └── <feature>/\n│       ├── presentation/\n│       ├── domain/\n│       └── data/\n├── shared/\n└── main.dart"
+  },
+  "modules": ["features", "shared", "core"],
+  "rules": [
+    "StatelessWidget 优先；StatefulWidget 仅在确有本地状态时使用",
+    "副作用通过 Riverpod / Bloc 隔离，禁止在 build() 内发起请求",
+    "资源通过 pubspec.yaml 声明后再引用"
+  ],
+  "nfr": [
+    "关键页面 FPS 目标 60",
+    "启用 flavors 区分 dev / staging / prod"
+  ]
 }

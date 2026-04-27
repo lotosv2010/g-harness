@@ -1,35 +1,39 @@
 {
+  "$schema": "2",
   "name": "nuxt",
-  "description": "Nuxt 3 + Vue 3 全栈应用预设",
+  "label": "Nuxt 3",
+  "description": "Nuxt 3 + Vue 3 + TypeScript 全栈框架",
   "techStack": {
     "language": "TypeScript",
-    "runtime": "Node.js 20+",
-    "framework": "Nuxt 3 (Vue 3)",
-    "buildTool": "Vite (Nuxt 内置)",
+    "framework": "Nuxt 3",
     "testRunner": "Vitest",
     "packageManager": "pnpm"
   },
-  "variables": {
-    "shared_dir": "composables",
-    "feature_dir": "pages",
-    "api_dir": "server/api",
-    "shared_package": "composables",
-    "core_package": "server",
-    "app_package": "app"
+  "detect": {
+    "dependencies": ["nuxt"],
+    "files": ["nuxt.config.ts", "nuxt.config.js"]
   },
-  "codeStyle": [
-    "使用 Composition API + <script setup>",
-    "组合式函数使用 use 前缀，放 composables/ 目录",
-    "页面组件使用 definePageMeta",
-    "API 路由使用 defineEventHandler",
-    "类型使用 interface 优先"
-  ],
+  "variables": {
+    "shared_dir": "utils",
+    "routes_dir": "pages",
+    "services_dir": "server/api"
+  },
   "commands": {
-    "install": "pnpm install",
     "dev": "pnpm dev",
     "build": "pnpm build",
-    "test": "pnpm test",
-    "lint": "pnpm lint",
-    "typecheck": "pnpm typecheck"
-  }
+    "generate": "pnpm generate",
+    "test": "pnpm test"
+  },
+  "architecture": {
+    "overview": "Pages 路由 + Components 复用 + Composables 抽象 + server/ 统一后端；自动导入遵循约定",
+    "structure": "├── pages/\n├── components/\n├── composables/\n├── server/\n│   ├── api/\n│   └── middleware/\n└── utils/"
+  },
+  "modules": ["pages", "components", "composables", "server", "middleware"],
+  "rules": [
+    "优先使用 Nuxt 自动导入，不手动 import 已被暴露的工具",
+    "server/ 与前端代码严格隔离，禁止共享运行时状态",
+    "使用 useFetch / useAsyncData，避免直接 fetch 在 setup 顶层"
+  ],
+  "nfr": ["API 路由标注缓存头并使用 Nitro 预渲染减小冷启动"],
+  "knowledgeSlug": "nuxt"
 }

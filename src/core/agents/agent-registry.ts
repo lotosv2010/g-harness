@@ -1,14 +1,17 @@
-// Agent 注册表：定义支持的 AI 开发助手及其配置格式
+// Agent 注册表：定义支持的 AI 开发助手及其配置格式（v0.2.0）
 
 export interface AgentDefinition {
   id: string
   name: string
   vendor: string
-  // 入口配置文件路径（相对项目根）
+  /** 目标项目里的入口文件相对路径 */
   entryFile: string
-  // 规则/协议配置目录（相对项目根），null 表示无独立配置目录
+  /** 目标项目里的配置目录相对路径；null 表示无独立配置目录 */
   configDir: string | null
-  // 入口模板文件名（src/templates/entries/ 下）
+  /**
+   * 入口模板相对路径（相对 src/templates/）。
+   * 例如 'claude/CLAUDE.template.md'。
+   */
   entryTemplate: string
   // 能力标记
   supportsHooks: boolean
@@ -16,7 +19,6 @@ export interface AgentDefinition {
   supportsSettings: boolean
   supportsProtocols: boolean
   supportsGuardrails: boolean
-  // 入口文件格式
   entryFormat: 'markdown' | 'plaintext'
 }
 
@@ -27,7 +29,7 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     vendor: 'Anthropic',
     entryFile: 'CLAUDE.md',
     configDir: '.claude',
-    entryTemplate: 'claude.template.md',
+    entryTemplate: 'claude/CLAUDE.template.md',
     supportsHooks: true,
     supportsSkills: true,
     supportsSettings: true,
@@ -41,7 +43,7 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     vendor: 'Anysphere',
     entryFile: '.cursorrules',
     configDir: '.cursor',
-    entryTemplate: 'cursor.template.txt',
+    entryTemplate: 'cursor/.cursorrules.template',
     supportsHooks: false,
     supportsSkills: false,
     supportsSettings: false,
@@ -55,7 +57,7 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     vendor: 'Codeium',
     entryFile: '.windsurfrules',
     configDir: '.windsurf',
-    entryTemplate: 'windsurf.template.txt',
+    entryTemplate: 'windsurf/.windsurfrules.template',
     supportsHooks: false,
     supportsSkills: false,
     supportsSettings: false,
@@ -69,7 +71,7 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     vendor: 'GitHub',
     entryFile: '.github/copilot-instructions.md',
     configDir: '.github',
-    entryTemplate: 'copilot.template.md',
+    entryTemplate: 'copilot/copilot-instructions.template.md',
     supportsHooks: false,
     supportsSkills: false,
     supportsSettings: false,
@@ -83,7 +85,7 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     vendor: 'ByteDance',
     entryFile: '.trae/rules/project.md',
     configDir: '.trae',
-    entryTemplate: 'trae.template.md',
+    entryTemplate: 'trae/project.template.md',
     supportsHooks: false,
     supportsSkills: false,
     supportsSettings: false,
@@ -97,7 +99,7 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     vendor: 'Moonshot AI',
     entryFile: 'AGENTS.md',
     configDir: '.agents',
-    entryTemplate: '',
+    entryTemplate: 'kimi/AGENTS.entry.template.md',
     supportsHooks: false,
     supportsSkills: false,
     supportsSettings: false,
@@ -111,7 +113,7 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     vendor: 'OpenAI',
     entryFile: 'AGENTS.md',
     configDir: '.codex',
-    entryTemplate: '',
+    entryTemplate: 'codex/AGENTS.entry.template.md',
     supportsHooks: false,
     supportsSkills: false,
     supportsSettings: false,

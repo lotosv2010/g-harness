@@ -1,0 +1,24 @@
+{
+  "$schema": "g-harness/guardrails/boundary-rules@1",
+  "project": "{{project_name}}",
+  "rules": [
+    {
+      "id": "no-env-read",
+      "description": "禁止读取 .env* 文件内容",
+      "patterns": ["\\.env", "\\.env\\..*"],
+      "action": "deny"
+    },
+    {
+      "id": "no-secret-patterns",
+      "description": "拦截常见密钥模式",
+      "patterns": ["id_rsa", "\\.pem$", "\\.key$", "AKIA[0-9A-Z]{16}"],
+      "action": "deny"
+    },
+    {
+      "id": "no-force-push",
+      "description": "禁止 force push 到受保护分支",
+      "branches": ["main", "master", "release/*"],
+      "action": "deny"
+    }
+  ]
+}

@@ -1,55 +1,29 @@
-// readIndex —— 读取项目索引三件套（PROJECT_MAP / FEATURES / ROUTES）
-// 来源：ADR-008 项目索引；Agent 浅层模式首选入口
+// readIndex 工具：读 docs/PROJECT_MAP.md / FEATURES.md / ROUTES.md（索引快照）
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { readFile } from 'node:fs/promises'
-import { assertPathSafe } from './security.js'
+import { join } from 'node:path'
+import type { ToolContext, ToolSpec } from './types.js'
 
-const INDEX_FILES = [
-  'docs/PROJECT_MAP.md',
-  'docs/FEATURES.md',
-  'docs/ROUTES.md',
-] as const
+const INDEX_FILES = ['docs/PROJECT_MAP.md', 'docs/FEATURES.md', 'docs/ROUTES.md']
 
-export interface ReadIndexResult {
-  found: string[]
-  missing: string[]
-  content: string
-}
-
-/**
- * 读取并拼接项目索引文件。
- * 成功文件以 `## <path>` 分段；不存在的文件列入 missing。
- */
-export async function readIndex(targetDir: string): Promise<ReadIndexResult> {
-  const found: string[] = []
-  const missing: string[] = []
-  const parts: string[] = []
-
-  for (const rel of INDEX_FILES) {
-    const abs = assertPathSafe(rel, targetDir)
-    try {
-      const content = await readFile(abs, 'utf-8')
-      found.push(rel)
-      parts.push(`## ${rel}\n\n${content.trim()}`)
-    } catch {
-      missing.push(rel)
-    }
-  }
-
+export function createReadIndexTool(ctx: ToolContext, z: any): ToolSpec {
   return {
-    found,
-    missing,
-    content: parts.join('\n\n---\n\n'),
+    name: 'readIndex',
+    description: '读取项目索引文件（docs/PROJECT_MAP.md / FEATURES.md / ROUTES.md），返回已存在文件的全文',
+    schema: z.object({}),
+    handler: async () => {
+      const chunks: string[] = []
+      for (const rel of INDEX_FILES) {
+        try {
+          const content = await readFile(join(ctx.targetDir, rel), 'utf-8')
+          chunks.push(`## ${rel}\n\n${content}`)
+        } catch {
+          // 缺失即跳过
+        }
+      }
+      if (chunks.length === 0) return '（未发现索引文件；可改用 list_dir 与 read_file 抽样分析）'
+      return chunks.join('\n\n---\n\n')
+    },
   }
 }
-
-/** LLM 可读的摘要字符串 —— 工具返回给模型的最终文本 */
-export function formatReadIndexResult(r: ReadIndexResult): string {
-  if (r.found.length === 0) {
-    return `【无可用索引】缺失：${r.missing.join(', ')}。请改用 readPackageJson/listDir 探索项目。`
-  }
-  return `【已读取索引】found=[${r.found.join(', ')}] missing=[${r.missing.join(', ')}]\n\n${r.content}`
-}
-
-export const READ_INDEX_DESCRIPTION =
-  '读取项目索引文件（docs/PROJECT_MAP.md / FEATURES.md / ROUTES.md）。无参数。返回拼接后的索引内容及缺失文件清单。优先使用此工具建立项目全貌。'

@@ -1,31 +1,33 @@
 {
+  "$schema": "2",
   "name": "vanilla",
-  "description": "纯 HTML + JavaScript 静态项目预设",
+  "label": "Vanilla JS/TS",
+  "description": "无特定框架的 Node / 浏览器脚手架",
   "techStack": {
-    "language": "JavaScript",
-    "runtime": "浏览器",
-    "framework": "无",
-    "buildTool": "无（或可选 Vite）",
-    "testRunner": "按项目配置",
-    "packageManager": "按项目配置"
+    "language": "TypeScript",
+    "packageManager": "pnpm",
+    "testRunner": "Vitest"
+  },
+  "detect": {
+    "dependencies": [],
+    "files": ["tsconfig.json"]
   },
   "variables": {
-    "shared_dir": "src/utils",
-    "feature_dir": "src/pages",
-    "api_dir": "src/api",
-    "shared_package": "src/utils",
-    "core_package": "src/core",
-    "app_package": "src"
+    "shared_dir": "src/shared"
   },
-  "codeStyle": [
-    "使用 ES Modules（type=\"module\"）",
-    "文件名使用 kebab-case",
-    "CSS 与 JS 文件按模块组织",
-    "避免全局变量污染，使用模块作用域"
-  ],
   "commands": {
-    "dev": "npx serve . 或直接打开 index.html",
-    "build": "按项目配置",
-    "lint": "按项目配置"
-  }
+    "dev": "pnpm dev",
+    "build": "pnpm build",
+    "test": "pnpm test"
+  },
+  "architecture": {
+    "overview": "单入口 + 按职责拆分模块；不引入跨层依赖",
+    "structure": "src/\n├── index.ts\n├── core/\n└── shared/"
+  },
+  "modules": ["core", "shared", "utils"],
+  "rules": [
+    "使用 ES Modules，禁止 CommonJS 混用",
+    "副作用集中在入口，业务函数保持纯"
+  ],
+  "nfr": ["构建产物需带 source map 以便线上排障"]
 }

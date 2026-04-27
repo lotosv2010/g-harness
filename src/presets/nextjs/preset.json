@@ -1,45 +1,42 @@
 {
+  "$schema": "2",
   "name": "nextjs",
-  "description": "Next.js 15 + App Router 全栈应用预设",
+  "label": "Next.js (App Router)",
+  "description": "Next.js 15 App Router + Server Components + TypeScript",
   "techStack": {
     "language": "TypeScript",
-    "runtime": "Node.js 20+",
     "framework": "Next.js 15",
-    "buildTool": "Next.js (内置)",
     "testRunner": "Vitest",
     "packageManager": "pnpm"
   },
+  "detect": {
+    "dependencies": ["next"],
+    "files": ["next.config.js", "next.config.mjs", "next.config.ts"]
+  },
   "variables": {
     "shared_dir": "src/lib",
-    "feature_dir": "src/features",
-    "api_dir": "src/app/api",
-    "shared_package": "src/lib",
-    "core_package": "src/core",
-    "app_package": "src/app"
+    "routes_dir": "src/app",
+    "feature_dir": "src/features"
   },
-  "codeStyle": [
-    "使用 App Router，禁止 Pages Router",
-    "组件默认 Server Component，需要交互时显式添加 'use client'",
-    "使用命名导出，页面组件除外（export default）",
-    "类型使用 interface 优先",
-    "测试文件与源文件同级或在 __tests__/ 目录"
-  ],
   "commands": {
-    "install": "pnpm install",
     "dev": "pnpm dev",
     "build": "pnpm build",
-    "test": "pnpm test",
-    "lint": "pnpm lint",
-    "typecheck": "pnpm typecheck"
+    "start": "pnpm start",
+    "test": "pnpm test"
   },
-  "fragments": {
-    "architectureLayers": "**分层：** app/ 路由 → Server Component → Server Action / Route Handler → Service → Data\n\n- 默认 Server Component，仅在需要交互时添加 'use client'\n- API 通过 `app/api/**/route.ts` 暴露，避免与页面路由混用\n- 数据层统一通过 `src/lib/` 的 Service 与 Repository",
-    "defaultModules": ["app", "components", "lib", "features", "hooks"],
-    "structureHint": "src/\n├── app/                  # 路由与页面（App Router）\n│   ├── (public)/\n│   ├── (dashboard)/\n│   └── api/              # Route Handlers\n├── components/           # 通用 UI 组件\n├── features/             # 领域功能（含 Server/Client 组件）\n├── lib/                  # 服务层 / Repository / 工具\n└── hooks/                # 可复用 Client Hook",
-    "extraNfr": [
-      "Server Component 中禁止直接访问浏览器 API",
-      "Route Handler 统一使用 Web Request/Response 类型",
-      "静态资源启用 next/image 和 next/font 的默认优化"
-    ]
-  }
+  "architecture": {
+    "overview": "App Router 路由驱动；Server Components 为主，Client 仅用于交互；Server Actions 作为主变更入口",
+    "structure": "src/\n├── app/         # 路由与布局\n├── components/\n├── features/\n├── lib/\n└── styles/"
+  },
+  "modules": ["app", "components", "features", "lib", "server-actions"],
+  "rules": [
+    "默认为 Server Component；需要交互才加 'use client'",
+    "数据获取优先在 RSC 或 Server Action 中完成",
+    "禁止在 Client Component 里直接访问数据库/密钥"
+  ],
+  "nfr": [
+    "所有路由段标注 cache / revalidate 策略",
+    "关键接口实现流式渲染（Suspense + loading.tsx）"
+  ],
+  "knowledgeSlug": "nextjs"
 }

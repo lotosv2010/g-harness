@@ -1,360 +1,200 @@
-// Deep Agent 主入口 —— runDeepAgent 编排器
-//
-// 职责：
-// 1. 预检：加载 optional 依赖 / 解析 provider + API key / 检测索引
-// 2. 构建：agent-factory 产出 runnable（注入主 prompt + subagents + 工具集 + 模型）
-// 3. 运行：用 TimeoutGuard + StepLimiter + CostTracker 包一层护栏后 invoke
-// 4. 提取：从 state.files 还原 DraftFile[]，过滤白名单外路径
-// 5. 观测：每一步写 JSONL trace，末尾写 summary
-// 6. 降级：任一级失败返回 { status: 'fallback', reason, message, partialDrafts, cost }
-//
-// 本文件不负责：
-// - 实际落盘（由 FileGenerator 消费 DraftFile[]）
-// - fallback 链编排到 llm-enhance/template（由 fallback.ts 处理）
-// - CLI 交互（由 init-interactive 处理）
+// runDeepAgent：Deep Agent 主入口（v0.2.0）—— 永不抛错，失败一律转降级。
 
 import { loadDeepAgentDeps } from './lazy-import.js'
 import { buildDeepAgent } from './agent-factory.js'
-import { DEPTH_PROFILES, DEFAULT_MODELS } from './config.js'
-import { CostTracker, StepLimiter, TimeoutGuard, isTimeoutError } from './guards/index.js'
-import { buildSystemPrompt, OUTPUT_WHITELIST_DEFAULT } from './prompts/system-prompt.js'
-import { buildSubagents } from './prompts/subagent-prompts.js'
-import { TraceWriter, makeStepEvent } from './trace/trace-writer.js'
+import { CostTracker } from './guards/cost-tracker.js'
+import { StepLimiter } from './guards/step-limiter.js'
+import { TimeoutGuard } from './guards/timeout.js'
+import { TraceWriter, createRunId } from './trace/trace-writer.js'
+import { DEFAULT_MODELS, DEPTH_PROFILES, inferProviderFromModel } from './config.js'
+import { buildFallback, classifyError } from './fallback.js'
+import { computeOutputWhitelist } from './prompts/system-prompt.js'
+import { assertPathSafe } from './tools/security.js'
 import type {
   AgentProvider,
   AgentStepEvent,
   DeepAgentOptions,
   DeepAgentResult,
   DraftFile,
-  FallbackReason,
 } from './types.js'
+import type { ToolContext } from './tools/index.js'
+import { resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { dirname } from 'node:path'
 
-const WHITELIST_SET = new Set<string>(OUTPUT_WHITELIST_DEFAULT)
-
-/**
- * 顶层入口：跑一次 Deep Agent 生成规范。
- * 永不抛错 —— 所有失败路径都返回 { status: 'fallback', ... }。
- */
-export async function runDeepAgent(options: DeepAgentOptions): Promise<DeepAgentResult> {
-  const trace = new TraceWriter({ targetDir: options.targetDir })
-  const emit = (ev: AgentStepEvent): void => {
-    options.onStep?.(ev)
-    void trace.append(ev)
-  }
-
-  // --- 1. 依赖加载 ---
-  const depsResult = await loadDeepAgentDeps()
-  if (!depsResult.ok) {
-    const reason: FallbackReason = 'deps-missing'
-    const message = `缺少 optional 依赖：${depsResult.missing.join(', ')}`
-    emit(makeStepEvent('error', { reason, message }))
-    await trace.writeSummary({ status: 'fallback', steps: 0, durationMs: 0, cost: null, errorMessage: message })
-    return { status: 'fallback', reason, message, partialDrafts: [], cost: null }
-  }
-
-  // --- 2. provider + key 解析（优先级：显式 options > env，ADR-011） ---
-  const credsResult = resolveCredentials(options.provider, options.apiKey)
-  if (!credsResult.ok) {
-    const reason: FallbackReason = 'no-key'
-    emit(makeStepEvent('error', { reason, message: credsResult.message }))
-    await trace.writeSummary({
-      status: 'fallback',
-      steps: 0,
-      durationMs: 0,
-      cost: null,
-      errorMessage: credsResult.message,
-    })
-    return { status: 'fallback', reason, message: credsResult.message, partialDrafts: [], cost: null }
-  }
-  const { provider, apiKey } = credsResult
-
-  // --- 3. 上下文构建 ---
-  const profile = DEPTH_PROFILES[options.depth]
-  const maxSteps = options.maxSteps ?? profile.maxSteps
-  const totalTimeoutMs = options.totalTimeoutMs ?? profile.totalTimeoutMs
-  // 模型优先级（ADR-011）：options.model > DEFAULT_MODELS[depth][provider]
-  const modelId = options.model ?? DEFAULT_MODELS[options.depth][provider]
-
-  const hasIndex = detectHasIndex(options)
-  const systemPrompt = buildSystemPrompt({
-    projectName: options.projectName,
-    projectDescription: options.projectDescription,
-    presetName: options.preset?.name ?? null,
-    depth: options.depth,
-    techStack: extractStack(options),
-    userTechStack: options.userTechStack,
-    hasIndex,
-    outputWhitelist: [...OUTPUT_WHITELIST_DEFAULT],
-  })
-  const subagents = buildSubagents({
-    projectName: options.projectName,
-    presetName: options.preset?.name ?? null,
-    depth: options.depth,
-  })
-
-  // --- 4. Agent 构建 ---
-  let built
-  try {
-    built = buildDeepAgent({
-      deps: depsResult.deps,
-      targetDir: options.targetDir,
-      depth: options.depth,
-      provider,
-      apiKey,
-      model: modelId,
-      systemPrompt,
-      enableAskUser: options.enableAskUser,
-      subagents,
-    })
-  } catch (err) {
-    const reason: FallbackReason = 'unsupported'
-    const message = err instanceof Error ? err.message : String(err)
-    emit(makeStepEvent('error', { reason, message }))
-    await trace.writeSummary({ status: 'fallback', steps: 0, durationMs: 0, cost: null, errorMessage: message })
-    return { status: 'fallback', reason, message, partialDrafts: [], cost: null }
-  }
-
-  emit(
-    makeStepEvent('message', {
-      phase: 'start',
-      model: built.modelId,
-      tools: built.toolNames,
-      subagents: subagents.map((s) => s.name),
-      depth: options.depth,
-    }),
-  )
-
-  // --- 5. 护栏 ---
-  const cost = new CostTracker({ provider, model: modelId, maxTokens: profile.maxTokens })
-  const steps = new StepLimiter({ maxSteps })
-  const timeout = new TimeoutGuard({ timeoutMs: totalTimeoutMs })
-
-  // --- 6. 运行 ---
-  let partialDrafts: DraftFile[] = []
-  try {
-    const result = await invokeAgent({
-      runnable: built.runnable,
-      prompt: systemPrompt,
-      signal: timeout.signal,
-      cost,
-      steps,
-      emit,
-    })
-
-    partialDrafts = extractDrafts(result.files)
-
-    if (timeout.timedOut) {
-      return await handleFallback(trace, emit, 'timeout', `总超时 ${totalTimeoutMs}ms`, partialDrafts, cost)
-    }
-    if (steps.isExceeded()) {
-      return await handleFallback(trace, emit, 'step-limit', `步数超限（${steps.current}/${steps.limit}）`, partialDrafts, cost)
-    }
-    if (cost.isExceeded()) {
-      return await handleFallback(trace, emit, 'token-limit', `token 超限（${cost.snapshot().inputTokens + cost.snapshot().outputTokens}/${profile.maxTokens}）`, partialDrafts, cost)
-    }
-    if (partialDrafts.length === 0) {
-      return await handleFallback(trace, emit, 'parse-error', 'agent 未产出任何白名单文件', partialDrafts, cost)
-    }
-
-    const report = cost.snapshot()
-    emit(makeStepEvent('message', { phase: 'done', drafts: partialDrafts.map((d) => d.outputPath) }))
-    await trace.writeSummary({
-      status: 'success',
-      steps: report.steps,
-      durationMs: report.durationMs,
-      cost: report,
-      draftFiles: partialDrafts.map((d) => d.outputPath),
-    })
-    return { status: 'success', drafts: partialDrafts, cost: report, tracePath: trace.filePath }
-  } catch (err) {
-    if (isTimeoutError(err)) {
-      return await handleFallback(trace, emit, 'timeout', `总超时触发`, partialDrafts, cost)
-    }
-    const message = err instanceof Error ? err.message : String(err)
-    return await handleFallback(trace, emit, 'network-error', message, partialDrafts, cost)
-  } finally {
-    timeout.dispose()
-  }
+/** 推断项目根（harnessRoot）：本文件编译后位于 dist/core/agents/deep-agent/index.js */
+function resolveHarnessRoot(): string {
+  const here = fileURLToPath(import.meta.url)
+  // dirname(dist/core/agents/deep-agent/index.js) → up 4 reaches repo root
+  return resolve(dirname(here), '..', '..', '..', '..')
 }
 
-// --- helpers -----------------------------------------------------------------
-
-interface InvokeResult {
-  files: Record<string, string>
-}
-
-interface LangGraphRunnable {
-  invoke: (input: unknown, cfg?: unknown) => Promise<unknown>
-  stream?: (input: unknown, cfg?: unknown) => AsyncIterable<unknown>
-}
-
-/**
- * 以 stream 优先、invoke 兜底的方式运行 agent。
- * 每一步聚合 usage + 写 trace。
- */
-async function invokeAgent(args: {
-  runnable: unknown
-  prompt: string
-  signal: AbortSignal
-  cost: CostTracker
-  steps: StepLimiter
-  emit: (ev: AgentStepEvent) => void
-}): Promise<InvokeResult> {
-  const { runnable, prompt, signal, cost, steps, emit } = args
-  const r = runnable as LangGraphRunnable
-  const input = { messages: [{ role: 'user', content: prompt }] }
-  const cfg = { signal, configurable: { thread_id: `g-harness-${Date.now()}` } }
-
-  let lastState: Record<string, unknown> = {}
-  if (typeof r.stream === 'function') {
-    for await (const chunk of r.stream(input, cfg)) {
-      if (!steps.tick()) break
-      const state = extractState(chunk)
-      if (state) lastState = { ...lastState, ...state }
-      const messages = extractMessages(state ?? chunk)
-      for (const m of messages) {
-        cost.addFromMessage(m)
-        emit(makeStepEvent('message', summarizeMessage(m)))
-      }
-      if (cost.isExceeded()) break
-    }
-  } else {
-    const final = await r.invoke(input, cfg)
-    lastState = (final as Record<string, unknown>) ?? {}
-    const messages = extractMessages(lastState)
-    for (const m of messages) cost.addFromMessage(m)
+function resolveProvider(opts: DeepAgentOptions): AgentProvider {
+  if (opts.provider) return opts.provider
+  if (opts.model) {
+    const p = inferProviderFromModel(opts.model)
+    if (p) return p
   }
-
-  const files = (lastState.files as Record<string, string> | undefined) ?? {}
-  return { files }
+  if (process.env.ANTHROPIC_API_KEY) return 'anthropic'
+  if (process.env.OPENAI_API_KEY) return 'openai'
+  return 'anthropic'
 }
 
-function extractState(chunk: unknown): Record<string, unknown> | null {
-  if (!chunk || typeof chunk !== 'object') return null
-  const c = chunk as Record<string, unknown>
-  // LangGraph stream 每个 chunk 是 { [nodeName]: stateUpdate }
-  for (const value of Object.values(c)) {
-    if (value && typeof value === 'object') return value as Record<string, unknown>
+function resolveApiKey(opts: DeepAgentOptions, provider: AgentProvider): string | null {
+  if (opts.apiKey) return opts.apiKey
+  if (provider === 'anthropic') return process.env.ANTHROPIC_API_KEY ?? null
+  return process.env.OPENAI_API_KEY ?? null
+}
+
+/** 从 deepagents 最终 state 里提取虚拟 FS（files 键值对） */
+function extractVirtualFiles(state: unknown): Record<string, string> {
+  if (!state || typeof state !== 'object') return {}
+  const obj = state as Record<string, unknown>
+  const files = obj.files
+  if (!files || typeof files !== 'object') return {}
+  const out: Record<string, string> = {}
+  for (const [k, v] of Object.entries(files as Record<string, unknown>)) {
+    if (typeof v === 'string') out[k] = v
   }
-  return null
+  return out
 }
 
-function extractMessages(state: unknown): unknown[] {
-  if (!state || typeof state !== 'object') return []
-  const s = state as Record<string, unknown>
-  const arr = s.messages
-  return Array.isArray(arr) ? arr : []
-}
-
-function summarizeMessage(m: unknown): Record<string, unknown> {
-  if (!m || typeof m !== 'object') return { type: 'unknown' }
-  const msg = m as Record<string, unknown>
-  const type = (msg.type ?? msg._getType?.constructor?.name ?? 'message') as string
-  const content = msg.content
-  const text = typeof content === 'string' ? content.slice(0, 500) : '[structured]'
-  const toolCalls = Array.isArray(msg.tool_calls) ? msg.tool_calls : undefined
-  return { type, text, toolCalls }
-}
-
-function extractDrafts(files: Record<string, string>): DraftFile[] {
+/** 将虚拟 FS 按白名单过滤为 DraftFile[] */
+function filterWhitelist(files: Record<string, string>, whitelist: string[], targetDir: string): DraftFile[] {
+  const allowed = new Set(whitelist.map((w) => w.replace(/\\/g, '/')))
   const drafts: DraftFile[] = []
   for (const [path, content] of Object.entries(files)) {
-    const normalized = path.replace(/^\.?\//, '').replace(/\\/g, '/')
-    if (!WHITELIST_SET.has(normalized)) continue
-    if (typeof content !== 'string' || content.trim().length === 0) continue
-    drafts.push({ outputPath: normalized, content })
+    const norm = path.replace(/\\/g, '/').replace(/^\.\//, '')
+    if (!allowed.has(norm)) continue
+    const safety = assertPathSafe(norm, targetDir)
+    if (!safety.ok) continue
+    drafts.push({ outputPath: norm, content, author: 'deep-agent' })
   }
   return drafts
 }
 
-function detectHasIndex(options: DeepAgentOptions): boolean {
-  const sr = options.scanResult
-  if (!sr) return false
-  const signals = sr.existingConfig as unknown as Record<string, unknown>
-  const indexKeys = ['hasProjectMap', 'hasFeaturesIndex', 'hasRoutesIndex']
-  return indexKeys.some((k) => signals[k] === true)
-}
+export async function runDeepAgent(opts: DeepAgentOptions): Promise<DeepAgentResult> {
+  const deps = await loadDeepAgentDeps()
+  if (!deps.ok) {
+    return buildFallback(
+      'deps-missing',
+      `缺少 optional 依赖：${deps.missing.join(', ')}；请 pnpm add -O ${deps.missing.join(' ')}`,
+    )
+  }
 
-function extractStack(options: DeepAgentOptions): {
-  language: string | null
-  framework: string | null
-  runtime: string | null
-  packageManager: string | null
-} {
-  const t = options.scanResult?.techStack
-  return {
-    language: t?.language ?? null,
-    framework: t?.framework ?? null,
-    runtime: t?.runtime ?? null,
-    packageManager: t?.packageManager ?? null,
+  const provider = resolveProvider(opts)
+  const apiKey = resolveApiKey(opts, provider)
+  if (!apiKey) {
+    return buildFallback(
+      'no-key',
+      `未检测到 ${provider === 'anthropic' ? 'ANTHROPIC_API_KEY' : 'OPENAI_API_KEY'}，Deep Agent 无法运行`,
+    )
+  }
+
+  const depth = opts.depth
+  const profile = DEPTH_PROFILES[depth]
+  const model = opts.model || DEFAULT_MODELS[depth][provider]
+  const totalTimeoutMs = opts.totalTimeoutMs ?? profile.totalTimeoutMs
+  const maxSteps = opts.maxSteps ?? profile.maxSteps
+
+  const runId = createRunId()
+  const trace = new TraceWriter(opts.targetDir, runId)
+  const cost = new CostTracker(provider, model)
+  const limiter = new StepLimiter(maxSteps)
+  const guard = new TimeoutGuard(totalTimeoutMs)
+
+  const emit = async (event: AgentStepEvent) => {
+    opts.onStep?.(event)
+    await trace.write(event)
+  }
+
+  const toolCtx: ToolContext = {
+    targetDir: opts.targetDir,
+    harnessRoot: resolveHarnessRoot(),
+    depth,
+    readFileLineLimit: profile.readFileLineLimit,
+    grepResultLimit: profile.grepResultLimit,
+    askUserRemaining: profile.askUserLimit,
+  }
+
+  await emit({ kind: 'message', timestamp: Date.now(), data: { msg: 'deep-agent 启动', depth, model } })
+
+  let built
+  try {
+    built = buildDeepAgent({
+      deps: deps.deps,
+      projectName: opts.projectName,
+      projectDescription: opts.projectDescription,
+      techStackText: opts.userTechStack ?? '',
+      presetName: opts.preset?.label ?? opts.preset?.name ?? '（通用）',
+      presetKnowledgeSlug: opts.preset?.knowledgeSlug ?? null,
+      agents: opts.agents,
+      depth,
+      provider,
+      model,
+      apiKey,
+      toolCtx,
+      enableAskUser: opts.enableAskUser === true,
+      fetchImpl: opts.fetchImpl,
+    })
+  } catch (err) {
+    guard.dispose()
+    const reason = classifyError(err)
+    const message = err instanceof Error ? err.message : String(err)
+    await emit({ kind: 'error', timestamp: Date.now(), data: { where: 'build', reason, message } })
+    return buildFallback(reason, message, [], cost.snapshot())
+  }
+
+  const whitelist = computeOutputWhitelist(opts.agents)
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const graph = built.graph as any
+    const invokePayload = {
+      messages: [{ role: 'user', content: '请按白名单生成所有规范文档并写入虚拟文件系统。' }],
+    }
+    const invokeOptions = {
+      recursionLimit: maxSteps * 2,
+      signal: guard.signal,
+    }
+
+    const final = await graph.invoke(invokePayload, invokeOptions)
+    limiter.tick()
+    cost.incrementStep()
+
+    // 尽力提取 token usage（LangChain v0.3 会在 messages 末尾带 usage_metadata）
+    if (final && typeof final === 'object') {
+      const msgs = (final as Record<string, unknown>).messages
+      if (Array.isArray(msgs)) {
+        for (const m of msgs) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const usage = (m as any)?.usage_metadata
+          if (usage && typeof usage === 'object') {
+            cost.addUsage(Number(usage.input_tokens ?? 0), Number(usage.output_tokens ?? 0))
+          }
+        }
+      }
+    }
+
+    const virtualFiles = extractVirtualFiles(final)
+    const drafts = filterWhitelist(virtualFiles, whitelist, opts.targetDir)
+    await emit({
+      kind: 'message',
+      timestamp: Date.now(),
+      data: { msg: 'deep-agent 完成', drafts: drafts.map((d) => d.outputPath) },
+    })
+
+    if (drafts.length === 0) {
+      return buildFallback('parse-error', 'Agent 未产出任何白名单文件', [], cost.snapshot())
+    }
+
+    guard.dispose()
+    return { status: 'success', drafts, cost: cost.snapshot(), tracePath: trace.path }
+  } catch (err) {
+    guard.dispose()
+    const reason = guard.isExpired() ? 'timeout' : limiter.exceeded() ? 'step-limit' : classifyError(err)
+    const message = err instanceof Error ? err.message : String(err)
+    await emit({ kind: 'error', timestamp: Date.now(), data: { where: 'invoke', reason, message } })
+    return buildFallback(reason, message, [], cost.snapshot())
   }
 }
-
-interface CredentialsResolved {
-  ok: true
-  provider: AgentProvider
-  apiKey: string
-}
-interface CredentialsFailed {
-  ok: false
-  message: string
-}
-
-/**
- * 解析 provider + apiKey，优先级（ADR-011）：
- * 1. 显式 provider + 显式 apiKey → 直用
- * 2. 显式 provider + env[provider] → 采纳 env
- * 3. 无显式：env 自动挑（anthropic 优先）
- */
-function resolveCredentials(
-  explicitProvider?: AgentProvider,
-  explicitKey?: string,
-): CredentialsResolved | CredentialsFailed {
-  const anthKey = process.env.ANTHROPIC_API_KEY
-  const oaiKey = process.env.OPENAI_API_KEY
-
-  if (explicitProvider === 'anthropic') {
-    const key = explicitKey ?? anthKey
-    if (!key) return { ok: false, message: '指定 anthropic 但未设置 ANTHROPIC_API_KEY' }
-    return { ok: true, provider: 'anthropic', apiKey: key }
-  }
-  if (explicitProvider === 'openai') {
-    const key = explicitKey ?? oaiKey
-    if (!key) return { ok: false, message: '指定 openai 但未设置 OPENAI_API_KEY' }
-    return { ok: true, provider: 'openai', apiKey: key }
-  }
-  // 无显式 provider：若同时给了 key 但没给 provider，视为错配
-  if (explicitKey) {
-    return { ok: false, message: '提供了 apiKey 但未指定 provider（ADR-011）' }
-  }
-  // 自动：anthropic 优先
-  if (anthKey) return { ok: true, provider: 'anthropic', apiKey: anthKey }
-  if (oaiKey) return { ok: true, provider: 'openai', apiKey: oaiKey }
-  return { ok: false, message: '未检测到 ANTHROPIC_API_KEY 或 OPENAI_API_KEY' }
-}
-
-async function handleFallback(
-  trace: TraceWriter,
-  emit: (ev: AgentStepEvent) => void,
-  reason: FallbackReason,
-  message: string,
-  partialDrafts: DraftFile[],
-  cost: CostTracker,
-): Promise<DeepAgentResult> {
-  const report = cost.snapshot()
-  emit(makeStepEvent('error', { reason, message }))
-  await trace.writeSummary({
-    status: 'fallback',
-    steps: report.steps,
-    durationMs: report.durationMs,
-    cost: report,
-    errorMessage: `${reason}: ${message}`,
-    draftFiles: partialDrafts.map((d) => d.outputPath),
-  })
-  return { status: 'fallback', reason, message, partialDrafts, cost: report }
-}
-
-// --- re-exports --------------------------------------------------------------
-
-export type { DeepAgentOptions, DeepAgentResult, DraftFile } from './types.js'
-export { OUTPUT_WHITELIST_DEFAULT } from './prompts/system-prompt.js'

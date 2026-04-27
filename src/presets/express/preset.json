@@ -1,34 +1,40 @@
 {
+  "$schema": "2",
   "name": "express",
-  "description": "轻量 Node.js API 预设（Express / Fastify / Hono）",
+  "label": "Express / Fastify",
+  "description": "轻量 Node.js 后端（Express 或 Fastify + TypeScript）",
   "techStack": {
     "language": "TypeScript",
-    "runtime": "Node.js 20+",
-    "framework": "Express / Fastify / Hono",
-    "buildTool": "tsx / tsup",
+    "framework": "Express",
+    "runtime": "Node.js",
     "testRunner": "Vitest",
     "packageManager": "pnpm"
   },
-  "variables": {
-    "shared_dir": "src/shared",
-    "feature_dir": "src/modules",
-    "api_dir": "src/routes",
-    "shared_package": "src/shared",
-    "core_package": "src/core",
-    "app_package": "src"
+  "detect": {
+    "dependencies": ["express", "fastify"],
+    "files": []
   },
-  "codeStyle": [
-    "使用命名导出，非默认导出",
-    "路由处理函数独立抽取为 controller",
-    "业务逻辑封装在 service 层",
-    "类型使用 interface 优先"
-  ],
+  "variables": {
+    "services_dir": "src/routes",
+    "shared_dir": "src/shared"
+  },
   "commands": {
-    "install": "pnpm install",
     "dev": "pnpm dev",
     "build": "pnpm build",
-    "test": "pnpm test",
-    "lint": "pnpm lint",
-    "typecheck": "pnpm typecheck"
-  }
+    "test": "pnpm test"
+  },
+  "architecture": {
+    "overview": "按资源拆分 route → controller → service → repository 四层",
+    "structure": "src/\n├── routes/\n├── controllers/\n├── services/\n├── repositories/\n└── shared/"
+  },
+  "modules": ["routes", "controllers", "services", "repositories", "shared", "middlewares"],
+  "rules": [
+    "中间件集中注册在 app 初始化入口",
+    "Controller 不可直接写数据库，必须经过 Service",
+    "错误交由统一 error handler 中间件处理"
+  ],
+  "nfr": [
+    "请求日志包含 traceId",
+    "暴露 /healthz 探活接口"
+  ]
 }

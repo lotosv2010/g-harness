@@ -1,247 +1,197 @@
-// LLM 补全层 — 可选增强：在规则版 ContentCompletion 基础上，用 LLM 润色叙述性字段
+// 窄 LLM 增强（v0.2.0 白名单：architecture_overview + module_breakdown）
 //
-// 设计要点：
-// - 无 API key 时静默降级到规则版（zero-dep、zero-risk）
-// - 仅润色自然语言字段（projectPositioning / productBoundaries / moduleBreakdown）
-// - 保持表格、Markdown 结构由规则层决定，避免 LLM 产出破坏模板
-// - 任何网络/解析错误一律回落规则版，并在 reason 中标注
-// - 使用 Node 18+ 内建 fetch，不引入新依赖
+// 设计原则：
+// - 仅改写两个叙述性字段，其他变量维持规则版产出
+// - 失败（无 key / 网络错 / 解析失败）透明降级，不抛错
+// - 降级时返回原值，调用方通过 ok 标志判断是否命中 LLM
+// - 不使用 LangChain，直接 fetch 文本接口，避免增加依赖
 
-import type { ContentCompletion } from './content-completer.js'
-import type { DescriptionAnalysis } from './description-analyzer.js'
-import type { ScanResult } from '../scanner/project-scanner.js'
+import type { TemplateVariables } from '../commands/init-types.js'
+import type { AgentProvider } from '../agents/deep-agent/types.js'
 
-export interface LlmCompleterOptions {
-  analysis: DescriptionAnalysis
-  ruleBased: ContentCompletion
+export interface EnhanceInput {
+  provider?: AgentProvider
+  model?: string
+  apiKey?: string
   projectName: string
   projectDescription: string
-  scanResult: ScanResult
-  /** 请求超时（毫秒），默认 15000 */
-  timeoutMs?: number
-  /** 强制指定供应商，否则按环境变量自动选择 */
-  provider?: 'anthropic' | 'openai'
-  /** 显式指定模型 ID（ADR-011），否则按 DEFAULT_MODEL_BY_PROVIDER 回落 */
-  model?: string
-  /** 显式指定 API Key（ADR-011，来自交互输入），否则按 env 回落 */
-  apiKey?: string
-  /** 覆盖环境变量（测试用） */
-  env?: Partial<Record<'ANTHROPIC_API_KEY' | 'OPENAI_API_KEY', string>>
-  /** 注入 fetch 便于测试 */
+  techStackText: string
+  variables: TemplateVariables
   fetchImpl?: typeof fetch
+  /** 单次请求超时（毫秒），默认 30s */
+  timeoutMs?: number
 }
 
-/** llm-enhance 路径的默认模型（选便宜档，够用于叙述性改写） */
-const DEFAULT_MODEL_BY_PROVIDER: Record<LlmProvider, string> = {
+export type EnhanceReason =
+  | 'no-key'
+  | 'network-error'
+  | 'parse-error'
+  | 'timeout'
+  | 'unsupported'
+
+export type EnhanceResult =
+  | { ok: true; variables: TemplateVariables; provider: AgentProvider; model: string }
+  | { ok: false; reason: EnhanceReason; message: string; variables: TemplateVariables }
+
+const DEFAULT_MODEL_BY_PROVIDER: Record<AgentProvider, string> = {
   anthropic: 'claude-haiku-4-5',
   openai: 'gpt-4o-mini',
 }
 
-export type LlmProvider = 'anthropic' | 'openai'
-
-export interface LlmEnhanceResult {
-  completion: ContentCompletion
-  /** 实际使用的供应商，无则为 null */
-  provider: LlmProvider | null
-  /** 是否成功增强（覆盖了至少一个字段） */
-  enhanced: boolean
-  /** 未增强时的降级原因 */
-  reason?: 'no-key' | 'timeout' | 'network-error' | 'parse-error' | 'empty'
-}
-
-/** 可被 LLM 覆盖的字段白名单 */
-const OVERRIDABLE_FIELDS = ['projectPositioning', 'productBoundaries', 'moduleBreakdown'] as const
-
-type OverridableField = (typeof OVERRIDABLE_FIELDS)[number]
-
-/**
- * 尝试用 LLM 增强规则版 ContentCompletion。
- * 无 API key 或任何失败场景都回落到规则版，永不抛错。
- */
-export async function enhanceWithLlm(opts: LlmCompleterOptions): Promise<LlmEnhanceResult> {
-  const env = { ...readEnv(), ...(opts.env ?? {}) }
-  const provider = resolveProvider(env, opts.provider)
-
-  if (!provider) {
-    return { completion: opts.ruleBased, provider: null, enhanced: false, reason: 'no-key' }
+export async function enhanceWithLlm(input: EnhanceInput): Promise<EnhanceResult> {
+  const resolvedProvider = input.provider ?? resolveProviderFromEnv()
+  if (!resolvedProvider) {
+    return { ok: false, reason: 'no-key', message: '未配置 LLM API key，跳过 LLM 增强', variables: input.variables }
   }
 
-  // apiKey 优先级（ADR-011）：显式 > env
-  const key = opts.apiKey ?? (provider === 'anthropic' ? env.ANTHROPIC_API_KEY : env.OPENAI_API_KEY)
-  if (!key) {
-    return { completion: opts.ruleBased, provider: null, enhanced: false, reason: 'no-key' }
+  const apiKey = input.apiKey ?? envKeyFor(resolvedProvider)
+  if (!apiKey) {
+    return { ok: false, reason: 'no-key', message: `${resolvedProvider} API key 缺失`, variables: input.variables }
   }
 
-  // 模型优先级（ADR-011）：显式 > DEFAULT_MODEL_BY_PROVIDER
-  const model = opts.model ?? DEFAULT_MODEL_BY_PROVIDER[provider]
+  const model = input.model ?? DEFAULT_MODEL_BY_PROVIDER[resolvedProvider]
+  const fetcher = input.fetchImpl ?? globalThis.fetch
+  const timeoutMs = input.timeoutMs ?? 30_000
 
-  const timeoutMs = opts.timeoutMs ?? 15000
-  const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), timeoutMs)
+  const prompt = buildPrompt(input)
 
   try {
-    const prompt = buildPrompt(opts)
-    const raw = await callProvider(provider, key, model, prompt, controller.signal, opts.fetchImpl ?? fetch)
-    const parsed = parseOverrides(raw)
+    const raw = await callModel({
+      provider: resolvedProvider,
+      model,
+      apiKey,
+      prompt,
+      fetcher,
+      timeoutMs,
+    })
+    const parsed = parseJsonBlock(raw)
     if (!parsed) {
-      return { completion: opts.ruleBased, provider, enhanced: false, reason: 'parse-error' }
+      return { ok: false, reason: 'parse-error', message: 'LLM 返回无法解析为目标 JSON', variables: input.variables }
     }
-
-    const merged = mergeOverrides(opts.ruleBased, parsed)
-    const enhanced = Object.keys(parsed).length > 0
-    return {
-      completion: merged,
-      provider,
-      enhanced,
-      reason: enhanced ? undefined : 'empty',
+    const merged: TemplateVariables = { ...input.variables }
+    if (typeof parsed.architecture_overview === 'string' && parsed.architecture_overview.trim()) {
+      merged.architecture_overview = parsed.architecture_overview.trim()
     }
+    if (typeof parsed.module_breakdown === 'string' && parsed.module_breakdown.trim()) {
+      merged.module_breakdown = parsed.module_breakdown.trim()
+    }
+    return { ok: true, variables: merged, provider: resolvedProvider, model }
   } catch (err) {
-    const aborted = err instanceof Error && err.name === 'AbortError'
-    return {
-      completion: opts.ruleBased,
-      provider,
-      enhanced: false,
-      reason: aborted ? 'timeout' : 'network-error',
+    const reason: EnhanceReason = (err as { name?: string }).name === 'AbortError' ? 'timeout' : 'network-error'
+    return { ok: false, reason, message: (err as Error).message, variables: input.variables }
+  }
+}
+
+function resolveProviderFromEnv(): AgentProvider | null {
+  if (process.env.ANTHROPIC_API_KEY) return 'anthropic'
+  if (process.env.OPENAI_API_KEY) return 'openai'
+  return null
+}
+
+function envKeyFor(provider: AgentProvider): string | undefined {
+  return provider === 'anthropic' ? process.env.ANTHROPIC_API_KEY : process.env.OPENAI_API_KEY
+}
+
+function buildPrompt(input: EnhanceInput): string {
+  return [
+    '你是一名高级软件架构师。基于以下项目输入，为 Harness Engineering 规范文档改写两段叙述。',
+    '',
+    `项目名：${input.projectName}`,
+    `定位：${input.projectDescription}`,
+    `技术栈：${input.techStackText || '（未指定）'}`,
+    '',
+    '规则版已给出的草稿（供参考）：',
+    `- architecture_overview：${input.variables.architecture_overview}`,
+    `- module_breakdown：${input.variables.module_breakdown}`,
+    '',
+    '请输出一个严格 JSON 对象，仅包含两个键：',
+    '- architecture_overview（一句话，≤ 80 字，描述分层与数据流方向）',
+    '- module_breakdown（markdown bullet 列表，3-6 项，每项 "- `name/`：职责"）',
+    '',
+    '要求：',
+    '1. 不新增其它字段；不要把项目名硬塞进架构说明；不要讨论工具链',
+    '2. 输出必须是纯 JSON，可被 JSON.parse 解析，禁止 markdown 代码块围栏',
+    '3. 使用中文',
+  ].join('\n')
+}
+
+interface CallModelInput {
+  provider: AgentProvider
+  model: string
+  apiKey: string
+  prompt: string
+  fetcher: typeof fetch
+  timeoutMs: number
+}
+
+async function callModel(input: CallModelInput): Promise<string> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), input.timeoutMs)
+  try {
+    if (input.provider === 'anthropic') {
+      return await callAnthropic(input, controller.signal)
     }
+    return await callOpenAI(input, controller.signal)
   } finally {
     clearTimeout(timer)
   }
 }
 
-function readEnv(): Record<'ANTHROPIC_API_KEY' | 'OPENAI_API_KEY', string | undefined> {
-  return {
-    ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
-    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
-  }
-}
-
-function resolveProvider(
-  env: Record<string, string | undefined>,
-  forced?: LlmProvider,
-): LlmProvider | null {
-  if (forced) return forced
-  if (env.ANTHROPIC_API_KEY) return 'anthropic'
-  if (env.OPENAI_API_KEY) return 'openai'
-  return null
-}
-
-function buildPrompt(opts: LlmCompleterOptions): string {
-  const { projectName, projectDescription, analysis, scanResult, ruleBased } = opts
-  const stack = [scanResult.techStack.framework, scanResult.techStack.language]
-    .filter(Boolean)
-    .join(' + ') || '未指定'
-
-  return `你是一位资深软件架构文档撰写者，请根据以下项目信息，优化 SPEC/ARCHITECTURE 文档中的叙述性内容。
-
-## 项目信息
-- 名称：${projectName}
-- 描述：${projectDescription || '（无）'}
-- 应用类型：${analysis.appType}
-- 业务领域：${analysis.domain ?? '通用'}
-- 识别特性：${analysis.features.join('、') || '未识别'}
-- 建议模块：${analysis.suggestedModules.join('、') || '未识别'}
-- 技术栈：${stack}
-
-## 当前规则版生成的内容（供参考基准）
-### projectPositioning
-${ruleBased.projectPositioning}
-
-### productBoundaries
-${ruleBased.productBoundaries}
-
-### moduleBreakdown
-${ruleBased.moduleBreakdown}
-
-## 任务
-请改写上述 3 个字段，让语言更自然、更切合项目实际。**要求**：
-1. 仅返回一个 JSON 对象，键名必须是 \`projectPositioning\` / \`productBoundaries\` / \`moduleBreakdown\` 的子集
-2. 值必须是 Markdown 字符串，保持与规则版相同的结构（如列表、标题、表格）
-3. 若某字段无法改进则省略该键
-4. 禁止返回 JSON 以外的任何内容（不要代码块围栏、不要前后说明）
-5. 保持中文输出
-
-请输出 JSON：`
-}
-
-async function callProvider(
-  provider: LlmProvider,
-  key: string,
-  model: string,
-  prompt: string,
-  signal: AbortSignal,
-  fetchImpl: typeof fetch,
-): Promise<string> {
-  if (provider === 'anthropic') {
-    const res = await fetchImpl('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      signal,
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': key,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model,
-        max_tokens: 2048,
-        messages: [{ role: 'user', content: prompt }],
-      }),
-    })
-    if (!res.ok) throw new Error(`anthropic ${res.status}`)
-    const data = (await res.json()) as { content?: Array<{ type: string; text?: string }> }
-    const text = data.content?.find((c) => c.type === 'text')?.text ?? ''
-    return text
-  }
-
-  // openai chat completions
-  const res = await fetchImpl('https://api.openai.com/v1/chat/completions', {
+async function callAnthropic(input: CallModelInput, signal: AbortSignal): Promise<string> {
+  const res = await input.fetcher('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     signal,
     headers: {
       'content-type': 'application/json',
-      authorization: `Bearer ${key}`,
+      'x-api-key': input.apiKey,
+      'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
-      model,
-      max_tokens: 2048,
-      messages: [{ role: 'user', content: prompt }],
+      model: input.model,
+      max_tokens: 800,
+      messages: [{ role: 'user', content: input.prompt }],
     }),
   })
-  if (!res.ok) throw new Error(`openai ${res.status}`)
-  const data = (await res.json()) as {
-    choices?: Array<{ message?: { content?: string } }>
-  }
-  return data.choices?.[0]?.message?.content ?? ''
+  if (!res.ok) throw new Error(`Anthropic HTTP ${res.status}`)
+  const json = (await res.json()) as { content?: Array<{ text?: string }> }
+  const text = json.content?.map((c) => c.text ?? '').join('') ?? ''
+  if (!text) throw new Error('Anthropic 返回空内容')
+  return text
 }
 
-function parseOverrides(raw: string): Partial<Record<OverridableField, string>> | null {
-  if (!raw.trim()) return null
+async function callOpenAI(input: CallModelInput, signal: AbortSignal): Promise<string> {
+  const res = await input.fetcher('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    signal,
+    headers: {
+      'content-type': 'application/json',
+      authorization: `Bearer ${input.apiKey}`,
+    },
+    body: JSON.stringify({
+      model: input.model,
+      max_tokens: 800,
+      messages: [{ role: 'user', content: input.prompt }],
+    }),
+  })
+  if (!res.ok) throw new Error(`OpenAI HTTP ${res.status}`)
+  const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> }
+  const text = json.choices?.[0]?.message?.content ?? ''
+  if (!text) throw new Error('OpenAI 返回空内容')
+  return text
+}
 
-  // 容错：去除可能的代码块围栏
-  let text = raw.trim()
-  const fence = text.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/)
-  if (fence) text = fence[1]
-
-  let obj: unknown
+function parseJsonBlock(raw: string): { architecture_overview?: string; module_breakdown?: string } | null {
+  const trimmed = raw.trim()
   try {
-    obj = JSON.parse(text)
+    return JSON.parse(trimmed) as { architecture_overview?: string; module_breakdown?: string }
   } catch {
-    return null
-  }
-
-  if (!obj || typeof obj !== 'object') return null
-  const out: Partial<Record<OverridableField, string>> = {}
-  for (const key of OVERRIDABLE_FIELDS) {
-    const val = (obj as Record<string, unknown>)[key]
-    if (typeof val === 'string' && val.trim().length > 0) {
-      out[key] = val
+    // 容错：尝试抽取第一个 { ... } 块
+    const match = trimmed.match(/\{[\s\S]*\}/)
+    if (!match) return null
+    try {
+      return JSON.parse(match[0]) as { architecture_overview?: string; module_breakdown?: string }
+    } catch {
+      return null
     }
   }
-  return out
-}
-
-function mergeOverrides(
-  base: ContentCompletion,
-  overrides: Partial<Record<OverridableField, string>>,
-): ContentCompletion {
-  return { ...base, ...overrides }
 }

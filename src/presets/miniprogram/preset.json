@@ -1,34 +1,37 @@
 {
+  "$schema": "2",
   "name": "miniprogram",
-  "description": "微信小程序预设",
+  "label": "微信小程序",
+  "description": "微信小程序原生 + TypeScript",
   "techStack": {
-    "language": "TypeScript / JavaScript",
-    "runtime": "微信小程序运行时",
-    "framework": "微信小程序原生 / Taro / uni-app",
-    "buildTool": "微信开发者工具 / Taro CLI",
-    "testRunner": "miniprogram-simulate / Jest",
-    "packageManager": "pnpm"
+    "language": "TypeScript",
+    "framework": "WeChat Mini Program",
+    "packageManager": "npm"
+  },
+  "detect": {
+    "dependencies": [],
+    "files": ["project.config.json", "app.json"]
   },
   "variables": {
-    "shared_dir": "src/utils",
-    "feature_dir": "src/pages",
-    "api_dir": "src/api",
-    "shared_package": "src/utils",
-    "core_package": "src/core",
-    "app_package": "src"
+    "shared_dir": "utils",
+    "routes_dir": "pages"
   },
-  "codeStyle": [
-    "页面放 pages/ 目录，组件放 components/ 目录",
-    "使用 Component 构造器定义组件，Page 构造器定义页面",
-    "接口请求封装在 api/ 目录，统一使用 wx.request 封装",
-    "工具函数放 utils/ 目录",
-    "样式文件使用 rpx 单位"
-  ],
   "commands": {
-    "install": "pnpm install",
-    "dev": "pnpm dev",
-    "build": "pnpm build",
-    "test": "pnpm test",
-    "lint": "pnpm lint"
-  }
+    "dev": "npm run dev:mp-weixin",
+    "build": "npm run build:mp-weixin"
+  },
+  "architecture": {
+    "overview": "Pages 与 Components 严格分离；全局状态通过 app.globalData 或 mobx-miniprogram",
+    "structure": "├── app.ts\n├── pages/\n├── components/\n└── utils/"
+  },
+  "modules": ["pages", "components", "utils"],
+  "rules": [
+    "禁止在 Page 中混入通用组件逻辑，统一抽成 Component",
+    "网络请求统一走 utils/request.ts 并带错误重试",
+    "所有 wx.xxx API 须处理 fail 分支"
+  ],
+  "nfr": [
+    "分包加载关键页面，主包控制在 2MB 以内",
+    "使用骨架屏减少空白时间"
+  ]
 }

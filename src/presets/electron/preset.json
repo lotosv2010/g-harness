@@ -1,36 +1,41 @@
 {
+  "$schema": "2",
   "name": "electron",
-  "description": "Electron 桌面应用预设（主进程 + 渲染进程）",
+  "label": "Electron Desktop",
+  "description": "Electron + TypeScript + Vite 的跨平台桌面应用",
   "techStack": {
     "language": "TypeScript",
-    "runtime": "Node.js 20+ / Chromium",
-    "framework": "Electron 33+",
-    "buildTool": "electron-builder / electron-vite",
+    "framework": "Electron",
+    "buildTool": "Vite",
     "testRunner": "Vitest",
     "packageManager": "pnpm"
   },
-  "variables": {
-    "shared_dir": "src/shared",
-    "feature_dir": "src/renderer/features",
-    "api_dir": "src/main/ipc",
-    "shared_package": "src/shared",
-    "core_package": "src/main",
-    "app_package": "src/renderer"
+  "detect": {
+    "dependencies": ["electron"],
+    "files": ["electron-builder.yml", "electron.vite.config.ts"]
   },
-  "codeStyle": [
-    "主进程代码放 src/main/，渲染进程代码放 src/renderer/",
-    "共享类型和工具放 src/shared/，双端可引用",
-    "IPC 通信使用类型安全的 channel 定义",
-    "preload 脚本放 src/preload/，严格限制暴露的 API",
-    "使用命名导出，非默认导出"
-  ],
+  "variables": {
+    "shared_dir": "src/shared"
+  },
   "commands": {
-    "install": "pnpm install",
     "dev": "pnpm dev",
     "build": "pnpm build",
-    "test": "pnpm test",
-    "lint": "pnpm lint",
-    "typecheck": "pnpm typecheck",
-    "package": "pnpm package"
-  }
+    "package": "pnpm package",
+    "test": "pnpm test"
+  },
+  "architecture": {
+    "overview": "严格隔离 main / preload / renderer 三进程；IPC 通过类型化 channel 通信",
+    "structure": "src/\n├── main/\n├── preload/\n├── renderer/\n└── shared/"
+  },
+  "modules": ["main", "preload", "renderer", "shared", "ipc"],
+  "rules": [
+    "禁止在 renderer 直接启用 nodeIntegration，必须通过 preload 暴露有限 API",
+    "所有 IPC 通道名集中在 shared/ipc-channels.ts 定义",
+    "主进程禁止阻塞事件循环的同步任务"
+  ],
+  "nfr": [
+    "启用自动更新（electron-updater）",
+    "崩溃上报使用 Electron Crash Reporter"
+  ],
+  "knowledgeSlug": "electron"
 }

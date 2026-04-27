@@ -1,35 +1,38 @@
 {
+  "$schema": "2",
   "name": "vite-vue",
-  "description": "Vue 3 + Vite 6 单页应用预设",
+  "label": "Vite + Vue",
+  "description": "Vite 6 + Vue 3 Composition API + TypeScript",
   "techStack": {
     "language": "TypeScript",
-    "runtime": "Node.js 20+",
     "framework": "Vue 3",
     "buildTool": "Vite 6",
     "testRunner": "Vitest",
     "packageManager": "pnpm"
   },
-  "variables": {
-    "shared_dir": "src/composables",
-    "feature_dir": "src/views",
-    "api_dir": "src/api",
-    "shared_package": "src/composables",
-    "core_package": "src/core",
-    "app_package": "src"
+  "detect": {
+    "dependencies": ["vue", "vite"],
+    "files": ["vite.config.ts", "vue.config.js"]
   },
-  "codeStyle": [
-    "使用 Composition API + <script setup>",
-    "组合式函数使用 use 前缀",
-    "组件文件名使用 PascalCase",
-    "类型使用 interface 优先",
-    "测试文件与源文件同级或在 __tests__/ 目录"
-  ],
+  "variables": {
+    "shared_dir": "src/shared",
+    "feature_dir": "src/features",
+    "routes_dir": "src/views"
+  },
   "commands": {
-    "install": "pnpm install",
     "dev": "pnpm dev",
     "build": "pnpm build",
-    "test": "pnpm test",
-    "lint": "pnpm lint",
-    "typecheck": "pnpm typecheck"
-  }
+    "test": "pnpm test"
+  },
+  "architecture": {
+    "overview": "Views → Components → Composables → Stores → Shared；Pinia 按 feature 分 store",
+    "structure": "src/\n├── views/\n├── components/\n├── composables/\n├── stores/\n└── shared/"
+  },
+  "modules": ["views", "components", "composables", "stores", "shared", "api"],
+  "rules": [
+    "使用 <script setup>，禁止 Options API 新增",
+    "Composables 以 use 开头并返回响应式引用",
+    "组件 props 必须声明类型"
+  ],
+  "nfr": ["使用 defineAsyncComponent 做路由级懒加载"]
 }

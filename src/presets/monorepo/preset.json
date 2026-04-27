@@ -1,34 +1,37 @@
 {
+  "$schema": "2",
   "name": "monorepo",
-  "description": "Monorepo 工程预设（Turborepo / Nx + pnpm workspace）",
+  "label": "Monorepo (pnpm workspace)",
+  "description": "基于 pnpm workspace 的多包仓库",
   "techStack": {
     "language": "TypeScript",
-    "runtime": "Node.js 20+",
-    "framework": "Turborepo / Nx",
-    "buildTool": "Turborepo / Nx + tsup / tsc",
-    "testRunner": "Vitest",
-    "packageManager": "pnpm (workspace)"
+    "packageManager": "pnpm",
+    "testRunner": "Vitest"
+  },
+  "detect": {
+    "dependencies": [],
+    "files": ["pnpm-workspace.yaml", "turbo.json", "nx.json"]
   },
   "variables": {
-    "shared_dir": "packages/shared",
-    "feature_dir": "apps",
-    "api_dir": "apps/api",
-    "shared_package": "packages/shared",
-    "core_package": "packages/core",
-    "app_package": "apps/web"
+    "shared_dir": "packages/shared"
   },
-  "codeStyle": [
-    "使用命名导出，非默认导出",
-    "公共包通过 workspace 协议引用（workspace:*）",
-    "类型使用 interface 优先",
-    "每个包有独立的 tsconfig.json 和 package.json"
-  ],
   "commands": {
-    "install": "pnpm install",
-    "dev": "pnpm dev --filter <package>",
-    "build": "pnpm build",
-    "test": "pnpm test",
-    "lint": "pnpm lint",
-    "typecheck": "pnpm typecheck"
-  }
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint"
+  },
+  "architecture": {
+    "overview": "apps/ 部署入口 + packages/ 可复用库；通过 workspace protocol 依赖本地包",
+    "structure": "├── apps/\n│   └── <app>/\n├── packages/\n│   └── <package>/\n└── pnpm-workspace.yaml"
+  },
+  "modules": ["apps", "packages", "tools"],
+  "rules": [
+    "packages/* 必须是可发布粒度；禁止应用级耦合代码进入 packages",
+    "跨包引用统一走 workspace:*，禁止直接相对路径",
+    "公共构建工具放 tools/ 目录，避免污染包根"
+  ],
+  "nfr": [
+    "CI 使用 turbo / nx 的远程缓存加速增量构建",
+    "每个 package 独立的 CHANGELOG 与版本"
+  ]
 }

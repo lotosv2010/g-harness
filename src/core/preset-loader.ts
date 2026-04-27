@@ -1,36 +1,76 @@
-import { readFile } from 'node:fs/promises'
+// Preset 加载器 —— Schema v2（v0.2.0）
+
+import { readFile, readdir } from 'node:fs/promises'
 import { join } from 'node:path'
 
-export interface PresetFragment {
-  /** 架构分层说明（覆盖 content-completer 的应用类型默认值） */
-  architectureLayers?: string
-  /** 推荐模块清单（覆盖 analyzer.suggestedModules 的默认值） */
-  defaultModules?: string[]
-  /** 项目结构示例（覆盖 project_structure_hint） */
-  structureHint?: string
-  /** 额外的 NFR 要点 */
-  extraNfr?: string[]
+export interface PresetTechStack {
+  language?: string
+  runtime?: string
+  framework?: string
+  buildTool?: string
+  testRunner?: string
+  packageManager?: string
 }
 
+export interface PresetDetect {
+  dependencies?: string[]
+  files?: string[]
+}
+
+export interface PresetArchitecture {
+  /** 架构分层一句话概述（注入 architecture_overview） */
+  overview?: string
+  /** 结构示例树（注入 project_structure） */
+  structure?: string
+}
+
+/** Preset Schema v2（v0.2.0） */
 export interface Preset {
+  $schema?: string
   name: string
-  description: string
-  techStack: Record<string, string>
-  variables: Record<string, string>
-  codeStyle: string[]
-  commands: Record<string, string>
-  fragments?: PresetFragment
+  label: string
+  description?: string
+  techStack: PresetTechStack
+  detect?: PresetDetect
+  /** 注入到模板变量（如 shared_dir / feature_dir） */
+  variables?: Record<string, string>
+  /** 命令表 —— 用于 commands 变量 */
+  commands?: Record<string, string>
+  architecture?: PresetArchitecture
+  /** 推荐模块清单 */
+  modules?: string[]
+  /** 编码规则片段（多条） */
+  rules?: string[]
+  /** 非功能性要求条目 */
+  nfr?: string[]
+  /** Deep Agent 知识库标识符，默认等于 name */
+  knowledgeSlug?: string
 }
 
-export async function loadPreset(
-  harnessRoot: string,
-  presetName: string,
-): Promise<Preset | null> {
+/** 加载单个预设 */
+export async function loadPreset(harnessRoot: string, presetName: string): Promise<Preset | null> {
   try {
     const presetPath = join(harnessRoot, 'src', 'presets', presetName, 'preset.json')
     const content = await readFile(presetPath, 'utf-8')
     return JSON.parse(content) as Preset
   } catch {
     return null
+  }
+}
+
+/** 列出所有可用预设（用于交互式选择） */
+export async function listPresets(harnessRoot: string): Promise<Preset[]> {
+  const presetsDir = join(harnessRoot, 'src', 'presets')
+  try {
+    const entries = await readdir(presetsDir, { withFileTypes: true })
+    const results: Preset[] = []
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue
+      const preset = await loadPreset(harnessRoot, entry.name)
+      if (preset) results.push(preset)
+    }
+    return results.sort((a, b) => a.name.localeCompare(b.name))
+  } catch {
+    return []
   }
 }

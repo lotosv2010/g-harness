@@ -1,5 +1,6 @@
-// Deep Agent 公共类型层
+// Deep Agent 公共类型层（v0.2.0）
 
+import type { AgentDefinition } from '../agent-registry.js'
 import type { Preset } from '../../preset-loader.js'
 import type { ScanResult } from '../../scanner/project-scanner.js'
 
@@ -14,7 +15,7 @@ export interface DraftFile {
   /** 相对 targetDir 的路径，如 'docs/SPEC.md' */
   outputPath: string
   content: string
-  /** 来自哪个子 agent（用于 trace） */
+  /** 产出来源子 agent（用于 trace） */
   author?: string
 }
 
@@ -40,23 +41,25 @@ export interface DeepAgentOptions {
   projectName: string
   projectDescription: string
   depth: Depth
-  /** 可选强制指定供应商，否则按环境变量优先级 anthropic > openai */
+  /** 已选 agents，用于动态白名单 */
+  agents: AgentDefinition[]
+  /** 显式指定供应商，否则按 env 优先级 anthropic > openai */
   provider?: AgentProvider
   /** 显式指定模型 ID（ADR-011），优先级 > DEFAULT_MODELS[depth][provider] */
   model?: string
-  /** 显式指定 API Key（ADR-011，来自交互输入），优先级 > env */
+  /** 显式指定 API Key（ADR-011），优先级 > env */
   apiKey?: string
-  /** 用户在 Stage 3 自填的技术栈原文（逗号分隔），优先于 scanner 识别结果作为 Agent 上下文 */
+  /** 用户自填的技术栈原文（逗号分隔），优先于 scanner 识别结果作为 Agent 上下文 */
   userTechStack?: string
-  /** 是否启用 askUser 工具（Human-in-the-loop）；非交互模式下强制 false */
+  /** 是否启用 askUser 工具；非交互模式下强制 false */
   enableAskUser?: boolean
-  /** 超时覆盖（毫秒），否则按 depth 默认值 */
+  /** 总超时覆盖（毫秒），否则按 depth 默认值 */
   totalTimeoutMs?: number
   /** 步数覆盖，否则按 depth 默认值 */
   maxSteps?: number
   /** 注入 fetch 便于测试 */
   fetchImpl?: typeof fetch
-  /** 实时事件回调（用于 CLI 打印思考/工具调用） */
+  /** 实时事件回调（CLI 打印思考/工具调用） */
   onStep?: (event: AgentStepEvent) => void
 }
 
@@ -78,7 +81,7 @@ export type FallbackReason =
   | 'parse-error'
   | 'unsupported'
 
-/** runDeepAgent 的运行结果 */
+/** runDeepAgent 的运行结果（永不抛错） */
 export type DeepAgentResult =
   | {
       status: 'success'
@@ -92,7 +95,7 @@ export type DeepAgentResult =
       message: string
       /** 已累积的部分草稿（可能为空） */
       partialDrafts: DraftFile[]
-      /** 已消耗的成本（即使降级也要展示） */
+      /** 已消耗的成本（即使降级也展示） */
       cost: CostReport | null
     }
 
@@ -103,7 +106,6 @@ export interface EstimateReport {
   estimatedOutputTokens: number
   estimatedUsd: number
   estimatedDurationSec: number
-  /** 若已知关键文件清单 */
   sampledFiles?: string[]
   /** 价目表数据源日期（yyyy-mm-dd） */
   pricingAsOf: string

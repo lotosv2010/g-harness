@@ -1,62 +1,36 @@
-// Deep Agent 只读工具集统一导出
-//
-// 所有工具：
-// 1. 纯函数形式，接受 (args, targetDir) → Promise<Result>，无副作用
-// 2. 对应 format* 函数将结果转为 LLM 可读文本
-// 3. 路径安全统一走 tools/security.ts
+// Deep Agent 工具集装配（按 depth 过滤）
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-export { assertPathSafe, isPathSafe, PathAccessError } from './security.js'
+import type { Depth } from '../types.js'
+import type { ToolContext, ToolSpec } from './types.js'
+import { createReadIndexTool } from './read-index.js'
+import { createReadPackageJsonTool } from './read-package-json.js'
+import { createReadReadmeTool } from './read-readme.js'
+import { createListDirTool } from './list-dir.js'
+import { createReadFileTool } from './read-file.js'
+import { createGrepTool } from './grep.js'
+import { createReadPresetKnowledgeTool } from './read-preset-knowledge.js'
+import { createAskUserTool } from './ask-user.js'
 
-export {
-  readIndex,
-  formatReadIndexResult,
-  READ_INDEX_DESCRIPTION,
-  type ReadIndexResult,
-} from './read-index.js'
+export type { ToolContext, ToolSpec } from './types.js'
 
-export {
-  readPackageJson,
-  formatPackageJsonSummary,
-  READ_PACKAGE_JSON_DESCRIPTION,
-  type PackageJsonSummary,
-} from './read-package-json.js'
-
-export {
-  readReadme,
-  formatReadmeResult,
-  READ_README_DESCRIPTION,
-  type ReadReadmeResult,
-} from './read-readme.js'
-
-export {
-  listDir,
-  formatListDirResult,
-  LIST_DIR_DESCRIPTION,
-  type ListDirResult,
-  type DirEntry,
-} from './list-dir.js'
-
-export {
-  readFile,
-  formatReadFileResult,
-  READ_FILE_DESCRIPTION,
-  type ReadFileResult,
-  type ReadFileOptions,
-} from './read-file.js'
-
-export {
-  grep,
-  formatGrepResult,
-  GREP_DESCRIPTION,
-  type GrepResult,
-  type GrepHit,
-  type GrepOptions,
-} from './grep.js'
-
-export {
-  readPresetKnowledge,
-  formatPresetKnowledgeResult,
-  READ_PRESET_KNOWLEDGE_DESCRIPTION,
-  type ReadPresetKnowledgeResult,
-  type PresetKnowledgeContext,
-} from './read-preset-knowledge.js'
+/** 基于 depth 构建 ToolSpec 集合（尚未用 deepagents.tool() 包装） */
+export function buildToolSpecs(depth: Depth, ctx: ToolContext, z: any, enableAskUser: boolean): ToolSpec[] {
+  const specs: ToolSpec[] = [
+    createReadIndexTool(ctx, z),
+    createReadPackageJsonTool(ctx, z),
+    createReadReadmeTool(ctx, z),
+    createReadPresetKnowledgeTool(ctx, z),
+  ]
+  if (depth !== 'shallow') {
+    specs.push(createListDirTool(ctx, z))
+    specs.push(createReadFileTool(ctx, z))
+  }
+  if (depth === 'deep') {
+    specs.push(createGrepTool(ctx, z))
+  }
+  if (enableAskUser && ctx.askUserRemaining > 0) {
+    specs.push(createAskUserTool(ctx, z))
+  }
+  return specs
+}

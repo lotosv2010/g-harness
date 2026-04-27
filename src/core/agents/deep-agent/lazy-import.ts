@@ -1,10 +1,10 @@
-// Deep Agent 依赖的懒加载入口
+// Deep Agent 依赖懒加载（v0.2.0）
 //
 // 设计要点：
-// - deepagents / @langchain/* / zod 均为 optionalDependencies
-// - 任一缺失都不能导致 g-harness 主流程崩溃（呼应 ADR-010 三级降级链）
-// - 单次进程内结果缓存，避免重复 import
-// - 仅在 deep-agent 路径启用时调用
+// - deepagents / @langchain/* / zod 是 optionalDependencies
+// - 任一缺失都不能导致 g-harness 主流程崩溃（降级链最外层）
+// - 单次进程内缓存结果，避免重复动态 import
+// - 仅在启用 deep-agent 路径时调用
 
 export interface DeepAgentDeps {
   createDeepAgent: unknown
@@ -20,16 +20,11 @@ export type DeepAgentLoadResult =
 
 let cached: DeepAgentLoadResult | null = null
 
-/**
- * 尝试动态加载 deep-agent 所需的全部 optional 依赖。
- * 任一缺失时返回 ok:false + 缺失的包名列表，不抛错。
- */
 export async function loadDeepAgentDeps(): Promise<DeepAgentLoadResult> {
   if (cached) return cached
 
   const missing: string[] = []
   const resolved: Partial<DeepAgentDeps> = {}
-
   const entries: Array<[keyof DeepAgentDeps, string, string]> = [
     ['createDeepAgent', 'deepagents', 'createDeepAgent'],
     ['ChatAnthropic', '@langchain/anthropic', 'ChatAnthropic'],
@@ -52,16 +47,11 @@ export async function loadDeepAgentDeps(): Promise<DeepAgentLoadResult> {
     }
   }
 
-  if (missing.length > 0) {
-    cached = { ok: false, missing }
-    return cached
-  }
-
-  cached = { ok: true, deps: resolved as DeepAgentDeps }
+  cached = missing.length > 0 ? { ok: false, missing } : { ok: true, deps: resolved as DeepAgentDeps }
   return cached
 }
 
-/** 仅供测试使用：重置缓存 */
+/** 仅供测试使用 */
 export function __resetLazyImportCache(): void {
   cached = null
 }

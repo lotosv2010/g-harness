@@ -27,13 +27,8 @@ export { analyzeDescription, completeContent, autoDescribe, enhanceWithLlm } fro
 export type {
   DescriptionAnalysis,
   AppType,
-  AppTypeHint,
-  ContentCompletion,
-  ContentCompletionInput,
-  AutoDescribeResult,
-  LlmCompleterOptions,
-  LlmEnhanceResult,
-  LlmProvider,
+  EnhanceInput,
+  EnhanceResult,
 } from './core/analyzer/index.js'
 
 export { buildProjectIndex, renderProjectMap, renderFeatures, renderRoutes, detectIndexDrift } from './core/indexer/index.js'

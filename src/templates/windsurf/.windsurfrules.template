@@ -1,0 +1,18 @@
+项目: {{project_name}}
+定位: {{project_description}}
+
+技术栈:
+{{tech_stack}}
+
+架构速览:
+{{architecture_overview}}
+
+核心规则:
+{{code_standards}}
+
+安全边界:
+- 禁止读取 .env* / 硬编码密钥
+- 破坏性操作需确认
+- 未经用户要求不自行 git commit / git push
+
+参考文件: AGENTS.md, docs/SPEC.md, docs/ARCHITECTURE.md

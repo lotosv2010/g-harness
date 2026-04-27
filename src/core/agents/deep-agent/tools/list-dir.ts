@@ -1,97 +1,44 @@
-// listDir —— 列目标目录下的一级条目，过滤黑名单
-// 不递归，避免 token 爆炸；Agent 需要深入时逐层调用
+// listDir 工具：列目录，过滤敏感与无关路径
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { readdir, stat } from 'node:fs/promises'
-import { join } from 'node:path'
-import { assertPathSafe, PathAccessError } from './security.js'
+import { readdir } from 'node:fs/promises'
+import type { ToolContext, ToolSpec } from './types.js'
+import { assertPathSafe } from './security.js'
 
-export interface DirEntry {
-  name: string
-  type: 'file' | 'dir' | 'symlink' | 'other'
-  size?: number
-}
-
-export interface ListDirResult {
-  path: string
-  exists: boolean
-  entries: DirEntry[]
-  truncated: boolean
-  skipped: string[]
-}
-
-const HIDDEN_SKIP = new Set(['.git', '.next', '.nuxt', '.turbo', '.cache'])
-const NOISE_SKIP = new Set(['node_modules', 'dist', 'coverage', 'out', 'build'])
-const DEFAULT_MAX_ENTRIES = 200
-
-/**
- * 列出相对路径 `relPath` 下的条目；非递归。
- * 路径必须在 targetDir 内，否则抛 PathAccessError。
- */
-export async function listDir(
-  relPath: string,
-  targetDir: string,
-  maxEntries: number = DEFAULT_MAX_ENTRIES,
-): Promise<ListDirResult> {
-  const abs = assertPathSafe(relPath || '.', targetDir)
-
-  let dirents
-  try {
-    dirents = await readdir(abs, { withFileTypes: true })
-  } catch {
-    return { path: relPath, exists: false, entries: [], truncated: false, skipped: [] }
-  }
-
-  const entries: DirEntry[] = []
-  const skipped: string[] = []
-
-  for (const d of dirents) {
-    if (HIDDEN_SKIP.has(d.name) || NOISE_SKIP.has(d.name)) {
-      skipped.push(d.name)
-      continue
-    }
-    if (entries.length >= maxEntries) break
-
-    const type: DirEntry['type'] = d.isFile()
-      ? 'file'
-      : d.isDirectory()
-        ? 'dir'
-        : d.isSymbolicLink()
-          ? 'symlink'
-          : 'other'
-
-    let size: number | undefined
-    if (type === 'file') {
-      try {
-        const s = await stat(join(abs, d.name))
-        size = s.size
-      } catch {
-        // 读不到 stat 不致命
-      }
-    }
-    entries.push({ name: d.name, type, size })
-  }
-
+export function createListDirTool(ctx: ToolContext, z: any): ToolSpec {
   return {
-    path: relPath,
-    exists: true,
-    entries,
-    truncated: dirents.length - skipped.length > entries.length,
-    skipped,
+    name: 'listDir',
+    description: '列出目标项目内某目录的第一层条目（过滤 node_modules / .git / dist / coverage / .env 等）',
+    schema: z.object({
+      path: z.string().describe('相对 targetDir 的目录路径，如 "src" 或 "."'),
+    }),
+    handler: async (input) => {
+      const rel = typeof input.path === 'string' ? input.path : '.'
+      const check = assertPathSafe(rel, ctx.targetDir)
+      if (!check.ok) return `ERROR: ${check.reason}`
+      const startDir = check.resolvedPath
+      if (!startDir) return 'ERROR: 路径解析失败'
+      try {
+        const entries = await readdir(startDir, { withFileTypes: true })
+        const filtered = entries
+          .filter((e) => !shouldHide(e.name))
+          .map((e) => (e.isDirectory() ? `📁 ${e.name}/` : `📄 ${e.name}`))
+        return filtered.length === 0 ? '（空目录或全部被过滤）' : filtered.join('\n')
+      } catch (err) {
+        return `ERROR: ${(err as Error).message}`
+      }
+    },
   }
 }
 
-export function formatListDirResult(r: ListDirResult): string {
-  if (!r.exists) return `【目录不存在】${r.path}`
-  const lines: string[] = [`【${r.path || '.'}】${r.entries.length} 项${r.truncated ? '（已截断）' : ''}`]
-  for (const e of r.entries) {
-    const sizePart = e.size !== undefined ? ` (${e.size}B)` : ''
-    lines.push(`  ${e.type === 'dir' ? '📁' : e.type === 'symlink' ? '🔗' : '📄'} ${e.name}${sizePart}`)
-  }
-  if (r.skipped.length > 0) lines.push(`  [skipped: ${r.skipped.join(', ')}]`)
-  return lines.join('\n')
+function shouldHide(name: string): boolean {
+  return (
+    name.startsWith('.env') ||
+    name === 'node_modules' ||
+    name === '.git' ||
+    name === 'dist' ||
+    name === 'coverage' ||
+    name === '.next' ||
+    name === '.turbo'
+  )
 }
-
-export const LIST_DIR_DESCRIPTION =
-  '列出指定相对路径下的目录条目（非递归）。参数：{ path: string }。自动过滤 node_modules/.git/dist/coverage 等噪音。'
-
-export { PathAccessError }

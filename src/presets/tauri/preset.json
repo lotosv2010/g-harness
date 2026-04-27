@@ -1,35 +1,38 @@
 {
+  "$schema": "2",
   "name": "tauri",
-  "description": "Tauri 2 桌面应用预设（Rust 后端 + Web 前端）",
+  "label": "Tauri Desktop",
+  "description": "Tauri 2 + Rust 后端 + 任意前端框架",
   "techStack": {
     "language": "TypeScript + Rust",
-    "runtime": "系统原生 WebView + Rust",
     "framework": "Tauri 2",
-    "buildTool": "Vite + Cargo",
-    "testRunner": "Vitest（前端）/ cargo test（Rust）",
+    "buildTool": "Vite",
     "packageManager": "pnpm"
   },
-  "variables": {
-    "shared_dir": "src/shared",
-    "feature_dir": "src/features",
-    "api_dir": "src-tauri/src/commands",
-    "shared_package": "src/shared",
-    "core_package": "src-tauri/src",
-    "app_package": "src"
+  "detect": {
+    "dependencies": ["@tauri-apps/api"],
+    "files": ["src-tauri/tauri.conf.json"]
   },
-  "codeStyle": [
-    "前端代码放 src/，Rust 代码放 src-tauri/",
-    "Tauri 命令通过 #[tauri::command] 定义，前端通过 @tauri-apps/api 调用",
-    "共享类型在前端 src/shared/ 中定义",
-    "使用命名导出，非默认导出",
-    "Rust 代码遵循 clippy 规范"
-  ],
+  "variables": {
+    "shared_dir": "src/shared"
+  },
   "commands": {
-    "install": "pnpm install",
     "dev": "pnpm tauri dev",
     "build": "pnpm tauri build",
-    "test": "pnpm test",
-    "lint": "pnpm lint",
-    "typecheck": "pnpm typecheck"
-  }
+    "test": "pnpm test"
+  },
+  "architecture": {
+    "overview": "Rust 核心 (src-tauri) 通过 invoke 命令暴露能力；前端只负责 UI，高风险能力在 Rust 侧校验",
+    "structure": "├── src/             # 前端\n├── src-tauri/       # Rust 后端\n│   ├── src/\n│   └── tauri.conf.json"
+  },
+  "modules": ["src", "src-tauri", "shared"],
+  "rules": [
+    "所有 Tauri 命令必须在 allowlist 明示声明",
+    "禁止在前端持久化敏感数据，使用 Rust 侧 store",
+    "跨进程数据使用 serde 严格结构体"
+  ],
+  "nfr": [
+    "启用 CSP 严格模式",
+    "自动更新开启签名校验"
+  ]
 }

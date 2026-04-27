@@ -1,32 +1,22 @@
 {
+  "$schema": "2",
   "name": "base",
-  "description": "通用基础预设（技术栈无关）",
-  "techStack": {
-    "language": "TypeScript / JavaScript",
-    "runtime": "Node.js",
-    "framework": "无特定框架",
-    "buildTool": "按项目配置",
-    "testRunner": "按项目配置",
-    "packageManager": "按项目配置"
-  },
+  "label": "通用基础",
+  "description": "技术栈无关的基线规范，适合不匹配任何预设的场景",
+  "techStack": {},
   "variables": {
-    "shared_dir": "src/shared",
-    "feature_dir": "src/features",
-    "api_dir": "src/api",
-    "shared_package": "src/shared",
-    "core_package": "src/core",
-    "app_package": "src"
+    "shared_dir": "src/shared"
   },
-  "codeStyle": [
-    "使用命名导出，非默认导出",
-    "类型使用 interface 优先",
-    "命名遵循项目约定"
+  "commands": {},
+  "architecture": {
+    "overview": "按职责分层；避免循环依赖；测试与实现邻近",
+    "structure": "src/\n└── <按职责拆分的模块>"
+  },
+  "modules": ["core", "shared"],
+  "rules": [
+    "关注单一职责，单文件不超过 300 行",
+    "优先命名导出，避免默认导出",
+    "异步错误必须被处理或显式传播"
   ],
-  "commands": {
-    "install": "npm install",
-    "dev": "npm run dev",
-    "build": "npm run build",
-    "test": "npm test",
-    "lint": "npm run lint"
-  }
+  "nfr": ["关键路径需具备可观测性与可回滚手段"]
 }
