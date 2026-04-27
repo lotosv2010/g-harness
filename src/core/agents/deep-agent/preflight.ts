@@ -1,6 +1,6 @@
 // Deep Agent pre-flight 预估：在真正触发 LLM 之前给用户看成本预估。
 
-import { DEPTH_PROFILES, MODEL_PRICING, PRICING_AS_OF, calcCost } from './config.js'
+import { DEPTH_PROFILES, PRICING_AS_OF, calcCost, isKnownModel } from './config.js'
 import type { Depth, EstimateReport } from './types.js'
 
 /**
@@ -27,5 +27,5 @@ export function estimate(depth: Depth, model: string): EstimateReport {
 
 /** 校验模型 ID 是否在价目表内 */
 export function isSupportedModel(model: string): boolean {
-  return Object.prototype.hasOwnProperty.call(MODEL_PRICING, model)
+  return isKnownModel(model)
 }

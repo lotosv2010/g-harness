@@ -6,7 +6,14 @@ import { CostTracker } from './guards/cost-tracker.js'
 import { StepLimiter } from './guards/step-limiter.js'
 import { TimeoutGuard } from './guards/timeout.js'
 import { TraceWriter, createRunId } from './trace/trace-writer.js'
-import { DEFAULT_MODELS, DEPTH_PROFILES, inferProviderFromModel } from './config.js'
+import {
+  DEFAULT_MODELS,
+  DEPTH_PROFILES,
+  PROVIDER_REGISTRY,
+  detectDefaultProvider,
+  inferProviderFromModel,
+  readProviderEnv,
+} from './config.js'
 import { buildFallback, classifyError } from './fallback.js'
 import { computeOutputWhitelist } from './prompts/system-prompt.js'
 import { assertPathSafe } from './tools/security.js'
@@ -35,15 +42,19 @@ function resolveProvider(opts: DeepAgentOptions): AgentProvider {
     const p = inferProviderFromModel(opts.model)
     if (p) return p
   }
-  if (process.env.ANTHROPIC_API_KEY) return 'anthropic'
-  if (process.env.OPENAI_API_KEY) return 'openai'
-  return 'anthropic'
+  return detectDefaultProvider(process.env) ?? 'anthropic'
 }
 
 function resolveApiKey(opts: DeepAgentOptions, provider: AgentProvider): string | null {
   if (opts.apiKey) return opts.apiKey
-  if (provider === 'anthropic') return process.env.ANTHROPIC_API_KEY ?? null
-  return process.env.OPENAI_API_KEY ?? null
+  const { apiKey } = readProviderEnv(provider, process.env)
+  return apiKey ?? null
+}
+
+function resolveBaseUrl(opts: DeepAgentOptions, provider: AgentProvider): string | undefined {
+  if (opts.baseUrl) return opts.baseUrl
+  const { baseUrl } = readProviderEnv(provider, process.env)
+  return baseUrl
 }
 
 /** 从 deepagents 最终 state 里提取虚拟 FS（files 键值对） */
@@ -83,11 +94,15 @@ export async function runDeepAgent(opts: DeepAgentOptions): Promise<DeepAgentRes
   }
 
   const provider = resolveProvider(opts)
+  const providerCfg = PROVIDER_REGISTRY[provider]
   const apiKey = resolveApiKey(opts, provider)
-  if (!apiKey) {
+  const baseUrl = resolveBaseUrl(opts, provider)
+
+  if (providerCfg.requiresApiKey && !apiKey) {
+    const envNames = providerCfg.apiKeyEnvVars.join(' / ')
     return buildFallback(
       'no-key',
-      `未检测到 ${provider === 'anthropic' ? 'ANTHROPIC_API_KEY' : 'OPENAI_API_KEY'}，Deep Agent 无法运行`,
+      `未检测到 ${envNames}（${providerCfg.label}），Deep Agent 无法运行`,
     )
   }
 
@@ -132,7 +147,8 @@ export async function runDeepAgent(opts: DeepAgentOptions): Promise<DeepAgentRes
       depth,
       provider,
       model,
-      apiKey,
+      apiKey: apiKey ?? '',
+      baseUrl,
       toolCtx,
       enableAskUser: opts.enableAskUser === true,
       fetchImpl: opts.fetchImpl,

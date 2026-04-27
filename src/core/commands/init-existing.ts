@@ -4,7 +4,15 @@ import * as p from '@clack/prompts'
 import { AGENT_REGISTRY } from '../agents/agent-registry.js'
 import { listPresets } from '../preset-loader.js'
 import { autoDescribe } from '../analyzer/auto-describe.js'
-import { getModelChoices, DEFAULT_MODELS } from '../agents/deep-agent/config.js'
+import {
+  ALL_PROVIDERS,
+  DEFAULT_MODELS,
+  PROVIDER_REGISTRY,
+  detectDefaultProvider,
+  getModelChoices,
+  readProviderEnv,
+} from '../agents/deep-agent/config.js'
+import pc from 'picocolors'
 import { isCancelled, inferProjectName } from './init-shared.js'
 import type { WizardContext, WizardResult, GenerateMode } from './init-types.js'
 import type { AgentDefinition } from '../agents/agent-registry.js'
@@ -54,6 +62,7 @@ export async function runExistingProjectWizard(
   let provider: AgentProvider | undefined
   let model: string | undefined
   let apiKey: string | undefined
+  let baseUrl: string | undefined
 
   if (enableLlm === true) {
     mode = ctx.cli.mode === 'llm-enhance' ? 'llm-enhance' : 'deep-agent'
@@ -74,34 +83,60 @@ export async function runExistingProjectWizard(
       }
     }
 
+    const defaultProv = detectDefaultProvider(process.env) ?? 'anthropic'
     const prov = await p.select({
       message: '选择 LLM 供应商',
-      initialValue: 'anthropic',
-      options: [
-        { value: 'anthropic', label: 'Anthropic' },
-        { value: 'openai', label: 'OpenAI' },
-      ],
+      initialValue: defaultProv,
+      options: ALL_PROVIDERS.map((pid) => ({
+        value: pid,
+        label: PROVIDER_REGISTRY[pid].label,
+      })),
     })
     if (isCancelled(prov)) return null
     provider = prov as AgentProvider
+    const providerCfg = PROVIDER_REGISTRY[provider]
+    const envVals = readProviderEnv(provider, process.env)
 
     const choices = getModelChoices(provider)
+    const initialModel = envVals.model ?? DEFAULT_MODELS[depth ?? 'medium'][provider]
     const mdl = await p.select({
       message: '选择模型',
-      initialValue: DEFAULT_MODELS[depth ?? 'medium'][provider],
+      initialValue: initialModel,
       options: choices.map((c) => ({ value: c.id, label: c.label })),
     })
     if (isCancelled(mdl)) return null
     model = mdl as string
 
-    const envVar = provider === 'anthropic' ? 'ANTHROPIC_API_KEY' : 'OPENAI_API_KEY'
-    const existing = process.env[envVar]
-    if (existing) {
-      apiKey = existing
+    if (providerCfg.requiresApiKey) {
+      const envVar = providerCfg.apiKeyEnvVars[0]
+      if (envVals.apiKey) {
+        p.log.info(`已从环境变量 ${envVar} 读取 API key`)
+        apiKey = envVals.apiKey
+      } else {
+        const key = await p.password({
+          message: `输入 ${envVar}（输入会被遮蔽；可留空）`,
+        })
+        if (isCancelled(key)) return null
+        const trimmed = (key as string | undefined)?.trim() ?? ''
+        if (trimmed) {
+          apiKey = trimmed
+          p.log.warn(pc.yellow('⚠ 通过参数传入的 API key 可能被 shell history 记录'))
+        }
+      }
     } else {
-      const key = await p.password({ message: `输入 ${envVar}（可留空）` })
-      if (isCancelled(key)) return null
-      apiKey = ((key as string | undefined) ?? '').trim() || undefined
+      p.log.info(`${providerCfg.label} 无需 API key`)
+    }
+
+    if (providerCfg.baseUrlEnvVars.length > 0 || providerCfg.defaultBaseUrl) {
+      const defaultBase = envVals.baseUrl ?? providerCfg.defaultBaseUrl ?? ''
+      const urlInput = await p.text({
+        message: `${providerCfg.label} base URL（回车使用默认）`,
+        placeholder: defaultBase || '留空',
+        defaultValue: defaultBase,
+      })
+      if (isCancelled(urlInput)) return null
+      const urlTrimmed = ((urlInput as string) || defaultBase).trim()
+      if (urlTrimmed) baseUrl = urlTrimmed
     }
   }
 
@@ -123,6 +158,7 @@ export async function runExistingProjectWizard(
     provider,
     model,
     apiKey,
+    baseUrl,
   }
 }
 
@@ -203,5 +239,6 @@ function buildNonInteractiveResult(ctx: WizardContext, isReinit: boolean): Wizar
     provider: ctx.cli.provider,
     model: ctx.cli.model,
     apiKey: ctx.cli.apiKey,
+    baseUrl: ctx.cli.baseUrl,
   }
 }

@@ -25,6 +25,7 @@ export class DeepAgentStrategy implements GenerationStrategy {
       provider: ctx.provider,
       model: ctx.model,
       apiKey: ctx.apiKey,
+      baseUrl: ctx.baseUrl,
       userTechStack: ctx.meta.techStackText,
       fetchImpl: ctx.fetchImpl,
       onStep: (ev) => {

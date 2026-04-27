@@ -8,6 +8,12 @@
 
 import type { TemplateVariables } from '../commands/init-types.js'
 import type { AgentProvider } from '../agents/deep-agent/types.js'
+import {
+  DEFAULT_MODELS,
+  PROVIDER_REGISTRY,
+  detectDefaultProvider,
+  readProviderEnv,
+} from '../agents/deep-agent/config.js'
 
 export interface EnhanceInput {
   provider?: AgentProvider
@@ -33,23 +39,29 @@ export type EnhanceResult =
   | { ok: true; variables: TemplateVariables; provider: AgentProvider; model: string }
   | { ok: false; reason: EnhanceReason; message: string; variables: TemplateVariables }
 
-const DEFAULT_MODEL_BY_PROVIDER: Record<AgentProvider, string> = {
-  anthropic: 'claude-haiku-4-5',
-  openai: 'gpt-4o-mini',
-}
-
 export async function enhanceWithLlm(input: EnhanceInput): Promise<EnhanceResult> {
-  const resolvedProvider = input.provider ?? resolveProviderFromEnv()
+  const resolvedProvider = input.provider ?? detectDefaultProvider(process.env)
   if (!resolvedProvider) {
     return { ok: false, reason: 'no-key', message: '未配置 LLM API key，跳过 LLM 增强', variables: input.variables }
   }
 
-  const apiKey = input.apiKey ?? envKeyFor(resolvedProvider)
-  if (!apiKey) {
+  // 窄增强仅支持直连 HTTP 的 provider：anthropic/openai
+  if (resolvedProvider !== 'anthropic' && resolvedProvider !== 'openai') {
+    return {
+      ok: false,
+      reason: 'unsupported',
+      message: `窄 LLM 增强暂不支持 ${resolvedProvider}；请改用 Deep Agent 或切换至 anthropic/openai`,
+      variables: input.variables,
+    }
+  }
+
+  const providerCfg = PROVIDER_REGISTRY[resolvedProvider]
+  const apiKey = input.apiKey ?? readProviderEnv(resolvedProvider, process.env).apiKey
+  if (providerCfg.requiresApiKey && !apiKey) {
     return { ok: false, reason: 'no-key', message: `${resolvedProvider} API key 缺失`, variables: input.variables }
   }
 
-  const model = input.model ?? DEFAULT_MODEL_BY_PROVIDER[resolvedProvider]
+  const model = input.model ?? DEFAULT_MODELS.medium[resolvedProvider]
   const fetcher = input.fetchImpl ?? globalThis.fetch
   const timeoutMs = input.timeoutMs ?? 30_000
 
@@ -59,7 +71,7 @@ export async function enhanceWithLlm(input: EnhanceInput): Promise<EnhanceResult
     const raw = await callModel({
       provider: resolvedProvider,
       model,
-      apiKey,
+      apiKey: apiKey ?? '',
       prompt,
       fetcher,
       timeoutMs,
@@ -80,16 +92,6 @@ export async function enhanceWithLlm(input: EnhanceInput): Promise<EnhanceResult
     const reason: EnhanceReason = (err as { name?: string }).name === 'AbortError' ? 'timeout' : 'network-error'
     return { ok: false, reason, message: (err as Error).message, variables: input.variables }
   }
-}
-
-function resolveProviderFromEnv(): AgentProvider | null {
-  if (process.env.ANTHROPIC_API_KEY) return 'anthropic'
-  if (process.env.OPENAI_API_KEY) return 'openai'
-  return null
-}
-
-function envKeyFor(provider: AgentProvider): string | undefined {
-  return provider === 'anthropic' ? process.env.ANTHROPIC_API_KEY : process.env.OPENAI_API_KEY
 }
 
 function buildPrompt(input: EnhanceInput): string {
@@ -116,7 +118,7 @@ function buildPrompt(input: EnhanceInput): string {
 }
 
 interface CallModelInput {
-  provider: AgentProvider
+  provider: 'anthropic' | 'openai'
   model: string
   apiKey: string
   prompt: string

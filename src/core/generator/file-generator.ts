@@ -35,6 +35,7 @@ export interface GenerateOptions {
   provider?: AgentProvider
   model?: string
   apiKey?: string
+  baseUrl?: string
   /** 额外注入变量（覆盖规则版） */
   extraVariables?: Partial<TemplateVariables>
   fetchImpl?: typeof fetch
@@ -90,6 +91,7 @@ export class FileGenerator {
       provider: opts.provider,
       model: opts.model,
       apiKey: opts.apiKey,
+      baseUrl: opts.baseUrl,
       fetchImpl: opts.fetchImpl,
       onMessage: opts.onMessage,
     }

@@ -4,7 +4,14 @@ import * as p from '@clack/prompts'
 import pc from 'picocolors'
 import { AGENT_REGISTRY } from '../agents/agent-registry.js'
 import { listPresets } from '../preset-loader.js'
-import { getModelChoices, DEFAULT_MODELS } from '../agents/deep-agent/config.js'
+import {
+  ALL_PROVIDERS,
+  DEFAULT_MODELS,
+  PROVIDER_REGISTRY,
+  detectDefaultProvider,
+  getModelChoices,
+  readProviderEnv,
+} from '../agents/deep-agent/config.js'
 import { isCancelled, inferProjectName } from './init-shared.js'
 import type {
   WizardContext,
@@ -52,6 +59,7 @@ export async function runNewProjectWizard(ctx: WizardContext): Promise<WizardRes
   let provider: AgentProvider | undefined
   let model: string | undefined
   let apiKey: string | undefined
+  let baseUrl: string | undefined
 
   if (enableLlm === true) {
     mode = 'deep-agent'
@@ -72,44 +80,64 @@ export async function runNewProjectWizard(ctx: WizardContext): Promise<WizardRes
       depth = d as Depth
     }
 
-    // Q8: provider
+    // Q8: provider（7 家可选）
+    const defaultProv = detectDefaultProvider(process.env) ?? 'anthropic'
     const prov = await p.select({
       message: '选择 LLM 供应商',
-      initialValue: 'anthropic',
-      options: [
-        { value: 'anthropic', label: 'Anthropic（Claude）' },
-        { value: 'openai', label: 'OpenAI（GPT）' },
-      ],
+      initialValue: defaultProv,
+      options: ALL_PROVIDERS.map((pid) => ({
+        value: pid,
+        label: PROVIDER_REGISTRY[pid].label,
+      })),
     })
     if (isCancelled(prov)) return null
     provider = prov as AgentProvider
+    const providerCfg = PROVIDER_REGISTRY[provider]
+    const envVals = readProviderEnv(provider, process.env)
 
     // Q9: model（严格列表）
     const choices = getModelChoices(provider)
+    const initialModel = envVals.model ?? DEFAULT_MODELS[depth][provider]
     const mdl = await p.select({
       message: '选择模型',
-      initialValue: DEFAULT_MODELS[depth][provider],
+      initialValue: initialModel,
       options: choices.map((c) => ({ value: c.id, label: c.label })),
     })
     if (isCancelled(mdl)) return null
     model = mdl as string
 
-    // Q10: api key（password）
-    const envVar = provider === 'anthropic' ? 'ANTHROPIC_API_KEY' : 'OPENAI_API_KEY'
-    const existing = process.env[envVar]
-    if (existing) {
-      p.log.info(`已从环境变量 ${envVar} 读取 API key`)
-      apiKey = existing
-    } else {
-      const key = await p.password({
-        message: `输入 ${envVar}（输入会被遮蔽；也可留空并通过 env 提供）`,
-      })
-      if (isCancelled(key)) return null
-      const trimmed = (key as string | undefined)?.trim() ?? ''
-      if (trimmed) {
-        apiKey = trimmed
-        p.log.warn(pc.yellow('⚠ 通过参数传入的 API key 可能被 shell history 记录'))
+    // Q10: API key（password）—— ollama 无需 key
+    if (providerCfg.requiresApiKey) {
+      const envVar = providerCfg.apiKeyEnvVars[0]
+      if (envVals.apiKey) {
+        p.log.info(`已从环境变量 ${envVar} 读取 API key`)
+        apiKey = envVals.apiKey
+      } else {
+        const key = await p.password({
+          message: `输入 ${envVar}（输入会被遮蔽；也可留空并通过 env 提供）`,
+        })
+        if (isCancelled(key)) return null
+        const trimmed = (key as string | undefined)?.trim() ?? ''
+        if (trimmed) {
+          apiKey = trimmed
+          p.log.warn(pc.yellow('⚠ 通过参数传入的 API key 可能被 shell history 记录'))
+        }
       }
+    } else {
+      p.log.info(`${providerCfg.label} 无需 API key`)
+    }
+
+    // Q10.5: base URL（仅当 provider 配置了 baseUrlEnvVars 或有 defaultBaseUrl）
+    if (providerCfg.baseUrlEnvVars.length > 0 || providerCfg.defaultBaseUrl) {
+      const defaultBase = envVals.baseUrl ?? providerCfg.defaultBaseUrl ?? ''
+      const urlInput = await p.text({
+        message: `${providerCfg.label} base URL（回车使用默认）`,
+        placeholder: defaultBase || '留空',
+        defaultValue: defaultBase,
+      })
+      if (isCancelled(urlInput)) return null
+      const urlTrimmed = ((urlInput as string) || defaultBase).trim()
+      if (urlTrimmed) baseUrl = urlTrimmed
     }
 
     if (ctx.cli.mode === 'llm-enhance') {
@@ -135,6 +163,7 @@ export async function runNewProjectWizard(ctx: WizardContext): Promise<WizardRes
     provider,
     model,
     apiKey,
+    baseUrl,
   }
 }
 
@@ -238,5 +267,6 @@ function buildNonInteractiveResult(ctx: WizardContext): WizardResult {
     provider: ctx.cli.provider,
     model: ctx.cli.model,
     apiKey: ctx.cli.apiKey,
+    baseUrl: ctx.cli.baseUrl,
   }
 }

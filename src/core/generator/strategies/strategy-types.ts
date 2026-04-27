@@ -25,6 +25,7 @@ export interface GenerationContext {
   provider?: AgentProvider
   model?: string
   apiKey?: string
+  baseUrl?: string
   fetchImpl?: typeof fetch
   /** 事件回调（CLI 可用于打印 trace） */
   onMessage?: (msg: string) => void

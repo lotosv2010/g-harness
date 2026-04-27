@@ -1,11 +1,12 @@
 // Deep Agent 工厂：将 ToolSpec + system prompt + subAgents 装配为可执行 agent。
 //
 // 注意：本模块不应在未加载 optional deps 的情况下被 import；由 index.ts 守门。
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { buildToolSpecs, type ToolContext, type ToolSpec } from './tools/index.js'
 import { buildSystemPrompt } from './prompts/system-prompt.js'
 import { SUBAGENTS } from './prompts/subagent-prompts.js'
-import { DEFAULT_MODELS } from './config.js'
+import { DEFAULT_MODELS, PROVIDER_REGISTRY } from './config.js'
 import type { DeepAgentDeps } from './lazy-import.js'
 import type { AgentDefinition } from '../agent-registry.js'
 import type { AgentProvider, Depth } from './types.js'
@@ -22,6 +23,7 @@ export interface BuildAgentInput {
   provider: AgentProvider
   model: string
   apiKey: string
+  baseUrl?: string
   toolCtx: ToolContext
   enableAskUser: boolean
   fetchImpl?: typeof fetch
@@ -29,7 +31,6 @@ export interface BuildAgentInput {
 
 export interface BuiltAgent {
   /** deepagents 返回的 graph 实例（具 invoke / stream 方法） */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   graph: any
   systemPrompt: string
   toolSpecs: ToolSpec[]
@@ -37,32 +38,86 @@ export interface BuiltAgent {
   model: string
 }
 
+export class MissingChatModelError extends Error {
+  constructor(public readonly provider: AgentProvider, public readonly pkg: string) {
+    super(`Provider "${provider}" 需要 optional 依赖 ${pkg}，请 pnpm add -O ${pkg}`)
+    this.name = 'MissingChatModelError'
+  }
+}
+
 /** 根据 provider 构建 LangChain chat model 实例 */
 function buildChatModel(input: BuildAgentInput): unknown {
-  const { deps, provider, model, apiKey, fetchImpl } = input
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const ChatAnthropic = deps.ChatAnthropic as any
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const ChatOpenAI = deps.ChatOpenAI as any
+  const { deps, provider, model, apiKey, baseUrl, fetchImpl } = input
+  const cfg = PROVIDER_REGISTRY[provider]
+  const effectiveBaseUrl = baseUrl ?? cfg.defaultBaseUrl
 
-  if (provider === 'anthropic') {
-    return new ChatAnthropic({
-      model,
-      apiKey,
-      maxTokens: 4096,
-      ...(fetchImpl ? { clientOptions: { fetch: fetchImpl } } : {}),
-    })
+  switch (cfg.protocol) {
+    case 'anthropic-compat': {
+      const Ctor = deps.ChatAnthropic as any
+      if (!Ctor) throw new MissingChatModelError(provider, '@langchain/anthropic')
+      return new Ctor({
+        modelName: model,
+        anthropicApiKey: apiKey,
+        anthropicApiUrl: effectiveBaseUrl,
+        maxTokens: 4096,
+        ...(fetchImpl ? { clientOptions: { fetch: fetchImpl } } : {}),
+      })
+    }
+
+    case 'openai-compat': {
+      const Ctor = deps.ChatOpenAI as any
+      if (!Ctor) throw new MissingChatModelError(provider, '@langchain/openai')
+      const extraKwargs = cfg.extraKwargs
+      return new Ctor({
+        model,
+        apiKey,
+        configuration: {
+          ...(effectiveBaseUrl ? { baseURL: effectiveBaseUrl } : {}),
+          ...(fetchImpl ? { fetch: fetchImpl } : {}),
+        },
+        ...(extraKwargs ? { modelKwargs: extraKwargs } : {}),
+      })
+    }
+
+    case 'deepseek': {
+      const Ctor = deps.ChatDeepSeek as any
+      if (!Ctor) throw new MissingChatModelError(provider, '@langchain/deepseek')
+      return new Ctor({
+        apiKey,
+        model,
+        ...(effectiveBaseUrl ? { configuration: { baseURL: effectiveBaseUrl } } : {}),
+      })
+    }
+
+    case 'google': {
+      const Ctor = deps.ChatGoogleGenerativeAI as any
+      if (!Ctor) throw new MissingChatModelError(provider, '@langchain/google-genai')
+      return new Ctor({
+        apiKey,
+        model,
+      })
+    }
+
+    case 'ollama': {
+      const Ctor = deps.ChatOllama as any
+      if (!Ctor) throw new MissingChatModelError(provider, '@langchain/ollama')
+      return new Ctor({
+        model,
+        baseUrl: effectiveBaseUrl,
+        temperature: 0,
+        maxRetries: 2,
+      })
+    }
+
+    default: {
+      const _exhaustive: never = cfg.protocol
+      throw new Error(`未知协议：${String(_exhaustive)}`)
+    }
   }
-  return new ChatOpenAI({
-    model,
-    apiKey,
-    ...(fetchImpl ? { configuration: { fetch: fetchImpl } } : {}),
-  })
 }
 
 /** 将 ToolSpec 列表包装为 deepagents 的 LangChain tool */
 function wrapTools(deps: DeepAgentDeps, specs: ToolSpec[]): unknown[] {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const tool = deps.tool as any
   return specs.map((spec) =>
     tool(spec.handler, {
@@ -88,7 +143,6 @@ export function buildDeepAgent(input: BuildAgentInput): BuiltAgent {
   const llmTools = wrapTools(input.deps, toolSpecs)
   const chatModel = buildChatModel({ ...input, model })
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const createDeepAgent = input.deps.createDeepAgent as any
   const graph = createDeepAgent({
     model: chatModel,

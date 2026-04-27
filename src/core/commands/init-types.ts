@@ -40,6 +40,7 @@ export interface InitCliOptions {
   model?: string
   provider?: AgentProvider
   apiKey?: string
+  baseUrl?: string
   /** 用于向导入口检测是否应进入已有项目分支 */
   targetDir: string
 }
@@ -68,6 +69,7 @@ export interface WizardResult {
   provider?: AgentProvider
   model?: string
   apiKey?: string
+  baseUrl?: string
 }
 
 /** 12 键模板变量 schema（v0.2.0 终版） */

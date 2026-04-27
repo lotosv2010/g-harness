@@ -7,8 +7,15 @@ import type { ScanResult } from '../../scanner/project-scanner.js'
 /** 分析深度：浅（只读索引）→ 中（抽样入口）→ 深（全量反演） */
 export type Depth = 'shallow' | 'medium' | 'deep'
 
-/** LLM 供应商 */
-export type AgentProvider = 'anthropic' | 'openai'
+/** LLM 供应商（v0.2.1 扩展：对齐 g-fund-agent 多 provider 支持） */
+export type AgentProvider =
+  | 'anthropic'
+  | 'openai'
+  | 'deepseek'
+  | 'minimax'
+  | 'gemini'
+  | 'moonshot'
+  | 'ollama'
 
 /** Agent 产出的草稿文件（落盘前的虚拟产物） */
 export interface DraftFile {
@@ -49,6 +56,8 @@ export interface DeepAgentOptions {
   model?: string
   /** 显式指定 API Key（ADR-011），优先级 > env */
   apiKey?: string
+  /** 显式指定 base URL（兼容 minimax/moonshot/deepseek/ollama），优先级 > env */
+  baseUrl?: string
   /** 用户自填的技术栈原文（逗号分隔），优先于 scanner 识别结果作为 Agent 上下文 */
   userTechStack?: string
   /** 是否启用 askUser 工具；非交互模式下强制 false */

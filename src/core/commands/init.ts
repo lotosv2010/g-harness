@@ -39,6 +39,7 @@ interface RawCliFlags {
   model?: string
   provider?: string
   apiKey?: string
+  baseUrl?: string
 }
 
 function normalizeMode(raw: RawCliFlags): GenerateMode | undefined {
@@ -70,6 +71,7 @@ function normalizeCli(raw: RawCliFlags, targetDir: string): InitCliOptions {
     model: raw.model,
     provider: raw.provider as AgentProvider | undefined,
     apiKey: raw.apiKey,
+    baseUrl: raw.baseUrl,
     targetDir,
   }
 }
@@ -102,12 +104,17 @@ async function runInit(rawFlags: RawCliFlags, targetDirArg?: string): Promise<vo
     return
   }
 
-  // 非交互 + deep-agent 且无 API key → 直接失败
+  // 非交互 + deep-agent 且无 API key → 直接失败（ollama 无需 key）
   if (result.mode === 'deep-agent' && !result.apiKey) {
-    const envVar = result.provider === 'openai' ? 'OPENAI_API_KEY' : 'ANTHROPIC_API_KEY'
-    if (!process.env[envVar]) {
-      p.cancel(pc.red(`缺少 ${envVar}；Deep Agent 无法运行`))
-      return
+    const { PROVIDER_REGISTRY, readProviderEnv } = await import('../agents/deep-agent/config.js')
+    const prov = result.provider ?? 'anthropic'
+    const cfg = PROVIDER_REGISTRY[prov]
+    if (cfg.requiresApiKey) {
+      const envKey = readProviderEnv(prov, process.env).apiKey
+      if (!envKey) {
+        p.cancel(pc.red(`缺少 ${cfg.apiKeyEnvVars.join(' / ')}（${cfg.label}）；Deep Agent 无法运行`))
+        return
+      }
     }
   }
 
@@ -130,6 +137,7 @@ async function runInit(rawFlags: RawCliFlags, targetDirArg?: string): Promise<vo
       provider: result.provider,
       model: result.model,
       apiKey: result.apiKey,
+      baseUrl: result.baseUrl,
       onMessage: (msg) => spinner.message(msg),
     })
     spinner.stop(`完成（策略：${gen.usedStrategy}${gen.degradedFrom ? ` ← 降级自 ${gen.degradedFrom}` : ''}）`)
@@ -179,8 +187,9 @@ export const initCommand = new Command('init')
   .option('--llm', '[弃用] 等价 --mode llm-enhance')
   .option('--deep-agent', '[弃用] 等价 --mode deep-agent')
   .option('--model <id>', 'LLM 模型 id')
-  .option('--provider <name>', 'anthropic | openai')
+  .option('--provider <name>', 'anthropic | openai | deepseek | minimax | gemini | moonshot | ollama')
   .option('--api-key <key>', 'API Key（慎用 —— 可能落 shell history）')
+  .option('--base-url <url>', '自定义 base URL（兼容 minimax/moonshot/deepseek/ollama）')
   .action(async (dir: string | undefined, opts: RawCliFlags) => {
     await runInit(opts, dir)
   })
