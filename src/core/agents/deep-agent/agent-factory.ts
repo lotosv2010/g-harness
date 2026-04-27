@@ -144,14 +144,15 @@ export function buildDeepAgent(input: BuildAgentInput): BuiltAgent {
   const chatModel = buildChatModel({ ...input, model })
 
   const createDeepAgent = input.deps.createDeepAgent as any
+  // deepagents@1.x 参数名为 systemPrompt（不是 instructions），字符串会被包装进 SystemMessage
   const graph = createDeepAgent({
     model: chatModel,
     tools: llmTools,
-    instructions: systemPrompt,
+    systemPrompt,
     subagents: SUBAGENTS.map((s) => ({
       name: s.name,
       description: s.description,
-      prompt: s.prompt,
+      systemPrompt: s.prompt,
     })),
   })
 

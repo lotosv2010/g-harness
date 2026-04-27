@@ -2,7 +2,7 @@
 
 import * as p from '@clack/prompts'
 import { AGENT_REGISTRY } from '../agents/agent-registry.js'
-import { listPresets } from '../preset-loader.js'
+import { detectPreset, listPresets, loadPreset } from '../preset-loader.js'
 import { autoDescribe } from '../analyzer/auto-describe.js'
 import {
   ALL_PROVIDERS,
@@ -37,8 +37,8 @@ export async function runExistingProjectWizard(
   const projectDescription = await askDescription(auto.projectDescription)
   if (projectDescription === null) return null
 
-  // Stage 3：preset
-  const presetPick = await askPreset(ctx)
+  // Stage 3：preset —— 自动推断 + 允许用户手动覆盖
+  const presetPick = await resolvePreset(ctx)
   if (!presetPick) return null
 
   // Stage 4：conflict 策略（reinit 默认 skip）
@@ -201,31 +201,84 @@ async function askDescription(auto: string): Promise<string | null> {
   return ((value as string) || auto).trim()
 }
 
-async function askPreset(
+/**
+ * 已有项目默认自动推断 preset；用户显式 --preset 时以 CLI 为准；
+ * 推断失败或用户主动要改，才回退到选单。
+ */
+async function resolvePreset(
   ctx: WizardContext,
 ): Promise<{ name: string; preset: Preset } | null> {
   const presets = await listPresets(ctx.harnessRoot)
   if (presets.length === 0) return null
-  const defaultPreset = presets.find((p) => p.name === 'nextjs') ? 'nextjs' : presets[0]?.name ?? 'base'
+
+  // CLI --preset 优先
+  if (ctx.cli.preset) {
+    const hit = presets.find((x) => x.name === ctx.cli.preset)
+    if (hit) {
+      p.log.info(`已通过 --preset 指定：${pc.cyan(hit.label)}`)
+      return { name: hit.name, preset: hit }
+    }
+    p.log.warn(`CLI 指定的预设 "${ctx.cli.preset}" 未找到，回退到自动推断`)
+  }
+
+  const detected = await detectPreset(ctx.harnessRoot, ctx.targetDir)
+  const detectedPreset = detected ? presets.find((x) => x.name === detected) : null
+
+  // 无 TTY 或 --yes → 直接使用推断结果（找不到则 base）
+  if (!ctx.isInteractive) {
+    const fallback = detectedPreset ?? presets.find((x) => x.name === 'base') ?? presets[0]
+    if (!fallback) return null
+    return { name: fallback.name, preset: fallback }
+  }
+
+  if (detectedPreset) {
+    const confirmed = await p.confirm({
+      message: `检测到技术栈：${pc.cyan(detectedPreset.label)}，使用该预设？`,
+      initialValue: true,
+    })
+    if (isCancelled(confirmed)) return null
+    if (confirmed === true) return { name: detectedPreset.name, preset: detectedPreset }
+  } else {
+    p.log.warn('未能从 package.json 自动推断技术栈，请手动选择')
+  }
+
+  // 用户选择"否"或推断失败 → 选单
   const picked = await p.select({
-    message: '技术栈预设',
-    initialValue: defaultPreset,
-    options: presets.map((p) => ({ value: p.name, label: p.label })),
+    message: '手动选择技术栈预设',
+    initialValue: detectedPreset?.name ?? 'base',
+    options: presets.map((x) => ({ value: x.name, label: x.label })),
   })
   if (isCancelled(picked)) return null
   const name = picked as string
-  const preset = presets.find((x) => x.name === name)
+  const preset = presets.find((x) => x.name === name) ?? (await loadPreset(ctx.harnessRoot, name))
   if (!preset) return null
   return { name, preset }
 }
 
-function buildNonInteractiveResult(ctx: WizardContext, isReinit: boolean): WizardResult {
+async function buildNonInteractiveResult(
+  ctx: WizardContext,
+  isReinit: boolean,
+): Promise<WizardResult> {
   const claude = AGENT_REGISTRY.find((a) => a.id === 'claude')
   const projectName = inferProjectName(ctx)
+
+  // 非交互模式下自动推断 preset：CLI > 自动探测 > null
+  let presetName = ctx.cli.preset ?? 'base'
+  let preset: Preset | null = null
+  if (ctx.cli.preset) {
+    preset = await loadPreset(ctx.harnessRoot, ctx.cli.preset)
+  } else {
+    const detected = await detectPreset(ctx.harnessRoot, ctx.targetDir)
+    if (detected) {
+      presetName = detected
+      preset = await loadPreset(ctx.harnessRoot, detected)
+    }
+  }
+
   return {
     agents: claude ? [claude] : [],
-    preset: null,
-    presetName: ctx.cli.preset ?? 'base',
+    preset,
+    presetName,
     meta: {
       projectName,
       projectDescription: `${projectName} 项目`,

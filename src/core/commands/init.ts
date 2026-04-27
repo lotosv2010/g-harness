@@ -121,6 +121,9 @@ async function runInit(rawFlags: RawCliFlags, targetDirArg?: string): Promise<vo
   const generator = new FileGenerator()
   const spinner = p.spinner()
   spinner.start('生成中…')
+  // Deep Agent 流式日志缓冲：spinner 信息只显示最近一行，完整轨迹 outro 前打印
+  const agentLog: string[] = []
+  const isDeepAgent = result.mode === 'deep-agent'
 
   try {
     const gen = await generator.generate({
@@ -138,9 +141,22 @@ async function runInit(rawFlags: RawCliFlags, targetDirArg?: string): Promise<vo
       model: result.model,
       apiKey: result.apiKey,
       baseUrl: result.baseUrl,
-      onMessage: (msg) => spinner.message(msg),
+      onMessage: (msg) => {
+        if (msg.startsWith('[deep-agent] ')) {
+          agentLog.push(msg.slice('[deep-agent] '.length))
+        }
+        // spinner 始终只展示最新一行
+        spinner.message(msg)
+      },
     })
     spinner.stop(`完成（策略：${gen.usedStrategy}${gen.degradedFrom ? ` ← 降级自 ${gen.degradedFrom}` : ''}）`)
+
+    // Deep Agent 路径下：把完整轨迹以 note 形式回放给用户
+    if (isDeepAgent && agentLog.length > 0) {
+      const shown = agentLog.slice(-40) // 保护终端：最多展示最后 40 行
+      const trimmedHint = agentLog.length > shown.length ? `… 已省略前 ${agentLog.length - shown.length} 条\n` : ''
+      p.note(trimmedHint + shown.join('\n'), 'Deep Agent 执行轨迹')
+    }
 
     if (gen.degradeReason) {
       p.log.warn(pc.yellow(`降级原因：${gen.degradeReason}`))
@@ -157,6 +173,10 @@ async function runInit(rawFlags: RawCliFlags, targetDirArg?: string): Promise<vo
     p.log.error((err as Error).message)
     process.exitCode = 1
   }
+  // LangChain/LangGraph 可能持有 HTTP keep-alive socket 或事件监听，导致 Node event loop 无法退出。
+  // 主流程完成后给 stdout flush 一点时间，然后显式 exit，避免 CLI 挂起。
+  await new Promise((r) => setTimeout(r, 50))
+  process.exit(process.exitCode ?? 0)
 }
 
 function actionIcon(action: 'created' | 'overwritten' | 'skipped'): string {

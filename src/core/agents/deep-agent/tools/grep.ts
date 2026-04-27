@@ -10,8 +10,11 @@ const SKIP_DIRS = new Set(['node_modules', '.git', 'dist', 'coverage', '.next', 
 
 export function createGrepTool(ctx: ToolContext, z: any): ToolSpec {
   return {
-    name: 'grep',
-    description: '递归搜索目标项目的文本匹配（过滤 node_modules/.git/dist），返回 path:line:preview，总条数上限由 depth 决定',
+    // 注意：deepagents@1.x 内置 `grep` 工具（作用于虚拟 FS），此处改名避免 TOOL_NAME_COLLISION
+    name: 'projectGrep',
+    description:
+      '在目标项目（真实磁盘）里递归搜索文本匹配；过滤 node_modules/.git/dist/.env*；返回 path:line:preview。' +
+      '与 deepagents 内置 `grep`（操作虚拟 FS）不同，本工具只读真实项目。',
     schema: z.object({
       pattern: z.string().describe('文本匹配模式（普通字符串，非正则；大小写敏感）'),
       rootPath: z.string().optional().describe('起始目录（默认 "."）'),

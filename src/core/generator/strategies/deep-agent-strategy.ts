@@ -5,6 +5,18 @@ import { LlmEnhanceStrategy } from './llm-enhance-strategy.js'
 import { TemplateStrategy } from './template-strategy.js'
 import type { DraftFile, GenerationContext, GenerationStrategy, StrategyResult } from './strategy-types.js'
 
+function formatArgs(args: unknown): string {
+  if (!args || typeof args !== 'object') return ''
+  const entries = Object.entries(args as Record<string, unknown>)
+  if (entries.length === 0) return ''
+  const first = entries[0]
+  const key = first[0]
+  const val = first[1]
+  const shown = typeof val === 'string' ? val : JSON.stringify(val)
+  const trimmed = shown.length > 60 ? shown.slice(0, 60) + '…' : shown
+  return entries.length > 1 ? `${key}=${trimmed}, …` : `${key}=${trimmed}`
+}
+
 export class DeepAgentStrategy implements GenerationStrategy {
   readonly name = 'deep-agent' as const
 
@@ -29,28 +41,60 @@ export class DeepAgentStrategy implements GenerationStrategy {
       userTechStack: ctx.meta.techStackText,
       fetchImpl: ctx.fetchImpl,
       onStep: (ev) => {
-        if (ev.kind === 'message' || ev.kind === 'error') {
-          const data = JSON.stringify(ev.data)
-          ctx.onMessage?.(`[deep-agent] ${data}`)
+        // 把 Deep Agent 的思考 / 工具调用 / 结果 / 错误 转成人类可读进度行
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const d = ev.data as any
+        let line: string | null = null
+        switch (ev.kind) {
+          case 'thought':
+            line = `💭 ${d?.text ?? ''}`
+            break
+          case 'tool_call':
+            line = `🔧 ${d?.name ?? 'tool'}(${formatArgs(d?.args)})`
+            break
+          case 'tool_result':
+            line = `✓ ${d?.name ?? 'tool'} → ${d?.preview ?? ''}`
+            break
+          case 'message':
+            line = d?.msg ?? (d?.text ? `🤖 ${d.text}` : null)
+            break
+          case 'error':
+            line = `✗ ${d?.reason ?? 'error'}: ${d?.message ?? ''}`
+            break
         }
+        if (line) ctx.onMessage?.(`[deep-agent] ${line}`)
       },
     })
 
     if (result.status === 'success') {
       // Deep Agent 产出 ≤ 白名单；再用模板策略补齐剩余文件（protocols / guardrails / ADR / tasks 等）
-      const deepDrafts = result.drafts.map((d): DraftFile => ({
-        outputPath: d.outputPath,
-        content: d.content,
-      }))
-      const deepPaths = new Set(deepDrafts.map((d) => d.outputPath))
+      // 关键：Agent 产出内容不足（空串 / 小于阈值 / 仍含未替换占位符）时视为无效，退回模板版本
+      const MIN_MEANINGFUL_BYTES = 80
+      const validDeepDrafts: DraftFile[] = []
+      const invalidPaths: string[] = []
+      for (const d of result.drafts) {
+        const trimmed = d.content.trim()
+        const hasPlaceholder = /\{\{\s*\w+\s*\}\}/.test(trimmed)
+        if (trimmed.length < MIN_MEANINGFUL_BYTES || hasPlaceholder) {
+          invalidPaths.push(d.outputPath)
+          continue
+        }
+        validDeepDrafts.push({ outputPath: d.outputPath, content: d.content })
+      }
+      const deepPaths = new Set(validDeepDrafts.map((d) => d.outputPath))
 
       const base = await new TemplateStrategy().produce(ctx)
-      const merged: DraftFile[] = [...deepDrafts]
+      const merged: DraftFile[] = [...validDeepDrafts]
       for (const d of base.drafts) {
         if (!deepPaths.has(d.outputPath)) merged.push(d)
       }
+      if (invalidPaths.length > 0) {
+        ctx.onMessage?.(
+          `Deep Agent 产出但内容不足的 ${invalidPaths.length} 个文件退回模板：${invalidPaths.slice(0, 6).join(', ')}${invalidPaths.length > 6 ? ' …' : ''}`,
+        )
+      }
       ctx.onMessage?.(
-        `Deep Agent 成功：${deepDrafts.length} 文件由 Agent 产出；${merged.length - deepDrafts.length} 由模板补齐`,
+        `Deep Agent 成功：${validDeepDrafts.length} 文件由 Agent 产出；${merged.length - validDeepDrafts.length} 由模板补齐`,
       )
       return { drafts: merged, usedStrategy: 'deep-agent' }
     }

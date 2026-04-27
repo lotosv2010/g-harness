@@ -109,8 +109,10 @@ export const PROVIDER_REGISTRY: Record<AgentProvider, ProviderConfig> = {
     defaultModel: 'claude-haiku-4-5',
     requiresApiKey: true,
     modelChoices: [
+      { id: 'claude-opus-4-7', label: 'Claude Opus 4.7（$15/$75）— 旗舰推理', inputPerM: 15.0, outputPerM: 75.0, recommendedFor: ['deep'] },
+      { id: 'claude-opus-4-6', label: 'Claude Opus 4.6（$15/$75）— 旗舰稳定版', inputPerM: 15.0, outputPerM: 75.0, recommendedFor: ['deep'] },
+      { id: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6（$3/$15）— 平衡质量', inputPerM: 3.0, outputPerM: 15.0, recommendedFor: ['medium', 'deep'] },
       { id: 'claude-haiku-4-5', label: 'Claude Haiku 4.5（$1/$5）— 快且便宜', inputPerM: 1.0, outputPerM: 5.0, recommendedFor: ['shallow', 'medium'] },
-      { id: 'claude-sonnet-4-5', label: 'Claude Sonnet 4.5（$3/$15）— 质量优先', inputPerM: 3.0, outputPerM: 15.0, recommendedFor: ['deep'] },
     ],
   },
   openai: {
@@ -150,7 +152,8 @@ export const PROVIDER_REGISTRY: Record<AgentProvider, ProviderConfig> = {
     defaultModel: 'MiniMax-M2.7',
     requiresApiKey: true,
     modelChoices: [
-      { id: 'MiniMax-M2.7', label: 'MiniMax-M2.7（国产、Anthropic 协议）', inputPerM: 0.3, outputPerM: 1.5, recommendedFor: ['shallow', 'medium', 'deep'] },
+      { id: 'MiniMax-M2.7', label: 'MiniMax-M2.7（最新、Anthropic 协议）', inputPerM: 0.3, outputPerM: 1.5, recommendedFor: ['medium', 'deep'] },
+      { id: 'MiniMax-M2.5', label: 'MiniMax-M2.5（稳定版）', inputPerM: 0.2, outputPerM: 1.1, recommendedFor: ['shallow', 'medium'] },
     ],
   },
   gemini: {
@@ -174,13 +177,12 @@ export const PROVIDER_REGISTRY: Record<AgentProvider, ProviderConfig> = {
     baseUrlEnvVars: ['MOONSHOT_BASE_URL'],
     modelEnvVars: ['MOONSHOT_MODEL'],
     defaultBaseUrl: 'https://api.moonshot.cn/v1',
-    defaultModel: 'kimi-k2.5',
+    defaultModel: 'kimi-k2.6',
     requiresApiKey: true,
     extraKwargs: { thinking: { type: 'disabled' } },
     modelChoices: [
-      { id: 'kimi-k2.5', label: 'Kimi K2.5（128k 长上下文）', inputPerM: 0.8, outputPerM: 2.4, recommendedFor: ['medium', 'deep'] },
-      { id: 'moonshot-v1-32k', label: 'Moonshot v1 32k', inputPerM: 1.5, outputPerM: 1.5, recommendedFor: ['shallow', 'medium'] },
-      { id: 'moonshot-v1-128k', label: 'Moonshot v1 128k', inputPerM: 4.0, outputPerM: 4.0, recommendedFor: ['deep'] },
+      { id: 'kimi-k2.6', label: 'Kimi K2.6（最新、长上下文）', inputPerM: 1.0, outputPerM: 3.0, recommendedFor: ['medium', 'deep'] },
+      { id: 'kimi-k2.5', label: 'Kimi K2.5（128k 长上下文）', inputPerM: 0.8, outputPerM: 2.4, recommendedFor: ['shallow', 'medium'] },
     ],
   },
   ollama: {
@@ -216,16 +218,16 @@ export const DEFAULT_MODELS: Record<Depth, Record<AgentProvider, string>> = {
     deepseek: 'deepseek-chat',
     minimax: 'MiniMax-M2.7',
     gemini: 'gemini-2.5-flash',
-    moonshot: 'kimi-k2.5',
+    moonshot: 'kimi-k2.6',
     ollama: 'qwen3.5:cloud',
   },
   deep: {
-    anthropic: 'claude-sonnet-4-5',
+    anthropic: 'claude-sonnet-4-6',
     openai: 'gpt-4o',
     deepseek: 'deepseek-reasoner',
     minimax: 'MiniMax-M2.7',
     gemini: 'gemini-2.5-pro',
-    moonshot: 'moonshot-v1-128k',
+    moonshot: 'kimi-k2.6',
     ollama: 'qwen3.5:cloud',
   },
 }
