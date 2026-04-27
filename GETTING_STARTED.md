@@ -1,6 +1,6 @@
 # 快速开始
 
-> 本指南帮助你在 5 分钟内将 G-Forge 接入任意项目。
+> 本指南帮助你在 5 分钟内将 G-Harness 接入任意项目。
 
 ---
 
@@ -16,10 +16,10 @@
 
 ```bash
 # 全局安装
-npm install -g gforge
+npm install -g g-harness
 
 # 或者直接用 npx（无需安装）
-npx gforge init
+npx g-harness init
 ```
 
 ---
@@ -29,10 +29,10 @@ npx gforge init
 ### 2.1 交互式初始化（推荐）
 
 ```bash
-gforge init
+g-harness init
 ```
 
-G-Forge 通过 **6 阶段引导式 Wizard** 完成初始化，新建项目和已有项目都适用：
+G-Harness 通过 **6 阶段引导式 Wizard** 完成初始化，新建项目和已有项目都适用：
 
 ```
 ◆  Stage 1: 项目检测
@@ -45,14 +45,14 @@ G-Forge 通过 **6 阶段引导式 Wizard** 完成初始化，新建项目和已
 │  ○ GitHub Copilot（GitHub）— 支持规则
 │  ○ Trae（ByteDance）— 支持规则
 │
-◆  Stage 3: 检测到 React，推荐预设：vite-react
-│  ● 使用推荐预设 vite-react
-│  ○ 选择其他预设
-│
 ◆  Stage 4: 项目元信息
 │  项目名称: my-app
 │  项目描述: （可跳过）
 │  源码目录: src
+│
+◆  Stage 3: 请输入计划使用的技术栈（逗号分隔）
+│  TypeScript, React, Next.js, Tailwind CSS
+│  ↳ 已识别预设：nextjs（内部用于加载模板片段库）
 │
 ◆  Stage 5: 输出配置
 │  ● 核心层（推荐）
@@ -67,33 +67,33 @@ G-Forge 通过 **6 阶段引导式 Wizard** 完成初始化，新建项目和已
 **智能特性**：
 - 自动检测已有项目的技术栈并推荐预设
 - 检测到已有 AI 配置（如 `.cursorrules`）时自动预选对应 agent
-- 已接入 G-Forge 的项目会提示使用 `gforge context sync`
+- 已接入 G-Harness 的项目会提示使用 `g-harness context sync`
 - 所有步骤都有智能默认值，按回车即可快速通过
 
 ### 2.2 非交互式 — 指定参数
 
 ```bash
 # CI/CD 友好：跳过所有交互
-gforge init --agent claude --preset vite-react --yes
+g-harness init --agent claude --preset vite-react --yes
 
 # 多个 AI 助手
-gforge init --agent claude,cursor --preset nextjs
+g-harness init --agent claude,cursor --preset nextjs
 
 # 启用 LLM 内容增强（检测到 API key 才生效，失败透明降级）
 export ANTHROPIC_API_KEY=sk-ant-...
-gforge init --llm
+g-harness init --llm
 
 # 已有项目：指定冲突策略
-gforge init --conflict prompt     # 逐文件确认
-gforge init --conflict overwrite  # 覆盖所有（等同 --force）
+g-harness init --conflict prompt     # 逐文件确认
+g-harness init --conflict overwrite  # 覆盖所有（等同 --force）
 
 # 指定项目名
-gforge init --name my-app --preset vanilla
+g-harness init --name my-app --preset vanilla
 ```
 
 ### LLM 内容增强（v1.3）
 
-G-Forge 默认使用**规则版**内容补全（关键词匹配 + 预设片段库），无外部依赖。若检测到 `ANTHROPIC_API_KEY` 或 `OPENAI_API_KEY` 且启用 `--llm`（或在交互模式的 Stage 5 勾选），则用 LLM 改写三段叙述性内容：
+G-Harness 默认使用**规则版**内容补全（关键词匹配 + 预设片段库），无外部依赖。若检测到 `ANTHROPIC_API_KEY` 或 `OPENAI_API_KEY` 且启用 `--llm`（或在交互模式的 Stage 5 勾选），则用 LLM 改写三段叙述性内容：
 
 | 字段 | 含义 | 白名单 |
 |------|------|--------|
@@ -126,12 +126,12 @@ export ANTHROPIC_API_KEY=sk-ant-...   # 或 OPENAI_API_KEY
 **CLI 示例：**
 
 ```bash
-gforge init --deep-agent --depth medium --yes
-gforge init --deep-agent --depth deep         # 交互模式下选择 deep 会显示实时预估
+g-harness init --deep-agent --depth medium --yes
+g-harness init --deep-agent --depth deep         # 交互模式下选择 deep 会显示实时预估
 
 # 显式指定模型（ADR-011）
-gforge init --deep-agent --depth deep --model claude-sonnet-4-5 --yes
-gforge init --llm --model gpt-4o-mini --yes   # 窄增强路径也支持 --model
+g-harness init --deep-agent --depth deep --model claude-sonnet-4-5 --yes
+g-harness init --llm --model gpt-4o-mini --yes   # 窄增强路径也支持 --model
 ```
 
 **模型 / Key 交互选择（ADR-011）：**
@@ -142,10 +142,10 @@ gforge init --llm --model gpt-4o-mini --yes   # 窄增强路径也支持 --model
 ```bash
 # 推荐：env 传递 key
 export ANTHROPIC_API_KEY=sk-ant-...
-gforge init --deep-agent --depth deep --model claude-sonnet-4-5 --yes
+g-harness init --deep-agent --depth deep --model claude-sonnet-4-5 --yes
 
 # 临时覆盖（会触发 shell history 警告）
-gforge init --llm --provider openai --model gpt-4o --api-key sk-... --yes
+g-harness init --llm --provider openai --model gpt-4o --api-key sk-... --yes
 ```
 
 | Provider | 模型选项 | 推荐档位 |
@@ -165,30 +165,30 @@ gforge init --llm --provider openai --model gpt-4o --api-key sk-... --yes
 
 **三级降级链**：`deep-agent → llm-enhance → template`。任一级失败（依赖缺失 / 无 API key / 超时 / token 超限 / 解析失败 / 网络错误）自动下沉，主流程永不崩溃。
 
-**可观测性**：每次运行写入 `docs/.gforge/agent-trace-{ts}.jsonl`，末尾 summary 行记录步数 / token / 费用 / 降级原因；Stage 6 预览展示预计成本与耗时。
+**可观测性**：每次运行写入 `docs/.g-harness/agent-trace-{ts}.jsonl`，末尾 summary 行记录步数 / token / 费用 / 降级原因；Stage 6 预览展示预计成本与耗时。
 
 ### 2.3 已有项目 — 自动扫描
 
 ```bash
-gforge init --scan
+g-harness init --scan
 ```
 
-G-Forge 会扫描 `package.json`、目录结构和配置文件，自动选择最匹配的预设。交互模式下，Stage 3 会展示推荐结果供你确认或修正。
+G-Harness 会扫描 `package.json`、目录结构和配置文件，自动选择最匹配的预设。交互模式下，Stage 3 会展示推荐结果供你确认或修正。
 
 ### 2.3 预览模式
 
 不确定会生成什么？先预览：
 
 ```bash
-gforge init --preset vite-react --dry-run
+g-harness init --preset vite-react --dry-run
 ```
 
 ### 2.4 完整输出
 
-默认 `gforge init` 只输出核心文件（上下文 + 约束层）。添加 `--full` 输出完整文档体系：
+默认 `g-harness init` 只输出核心文件（上下文 + 约束层）。添加 `--full` 输出完整文档体系：
 
 ```bash
-gforge init --preset vite-react --full
+g-harness init --preset vite-react --full
 ```
 
 **核心层（默认，以 Claude Code 为例）：**
@@ -231,10 +231,10 @@ tests/                       # 测试基础结构
 
 | 阶段 | 时间 | 操作 | 效果 |
 |------|------|------|------|
-| 1 | 第 1 天 | `gforge init`（仅核心层） | AI 立即理解项目结构和约束 |
+| 1 | 第 1 天 | `g-harness init`（仅核心层） | AI 立即理解项目结构和约束 |
 | 2 | 第 1 周 | 按团队需求调整 `.claude/rules/` | AI 输出符合团队规范 |
 | 3 | 第 2 周 | 启用钩子（`settings.json` 已配置） | 实时阻止架构违规 |
-| 4 | 持续 | `gforge init --full` 补充完整文档 | 全面工程治理 |
+| 4 | 持续 | `g-harness init --full` 补充完整文档 | 全面工程治理 |
 
 ---
 
@@ -244,16 +244,16 @@ tests/                       # 测试基础结构
 
 ```bash
 # 全量校验
-gforge validate
+g-harness validate
 
 # 仅校验暂存区文件（推荐在 pre-commit 中使用）
-gforge check --staged
+g-harness check --staged
 
 # 自动修复可修复的问题
-gforge validate --fix
+g-harness validate --fix
 
 # JSON 格式输出（CI 集成）
-gforge validate --format json --severity error
+g-harness validate --format json --severity error
 ```
 
 **内置校验规则：**
@@ -274,10 +274,10 @@ gforge validate --format json --severity error
 
 ```bash
 # 自动更新 CLAUDE.md（技术栈、模块地图）
-gforge context sync
+g-harness context sync
 
 # 检查一致性（不修改）
-gforge context check
+g-harness context check
 ```
 
 ### 4.3 项目索引（v1.3）
@@ -286,16 +286,16 @@ gforge context check
 
 ```bash
 # 首次生成三个索引文件
-gforge index
+g-harness index
 # → docs/PROJECT_MAP.md   （模块清单 → 文件路径）
 # → docs/FEATURES.md      （功能清单 → 入口文件）
 # → docs/ROUTES.md        （路由表 → handler）
 
 # 监听模式：src/ 变化时 500ms 防抖增量刷新
-gforge index --watch
+g-harness index --watch
 
 # 漂移检测：对比索引 vs 实际代码，CI 友好
-gforge index --check
+g-harness index --check
 # → 识别 added / removed / dangling 三类漂移
 # → 发现漂移时 exit 1
 ```
@@ -306,17 +306,17 @@ gforge index --check
 
 ### 4.4 版本迁移
 
-G-Forge 升级后，迁移项目配置：
+G-Harness 升级后，迁移项目配置：
 
 ```bash
 # 自动迁移
-gforge migrate
+g-harness migrate
 
 # 预览迁移方案
-gforge migrate --dry-run
+g-harness migrate --dry-run
 
 # 指定版本区间
-gforge migrate --from 0.1 --to 0.2
+g-harness migrate --from 0.1 --to 0.2
 ```
 
 ---
@@ -384,7 +384,7 @@ gforge migrate --from 0.1 --to 0.2
 ### GitHub Actions
 
 ```yaml
-name: G-Forge Validate
+name: G-Harness Validate
 on: [push, pull_request]
 
 jobs:
@@ -395,13 +395,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - run: npm install -g gforge
-      - run: gforge validate --format json --severity error
+      - run: npm install -g g-harness
+      - run: g-harness validate --format json --severity error
 ```
 
 ### Pre-commit Hook
 
-`gforge init` 会自动安装 pre-commit hook（如果 `.git/` 存在）。hook 在提交前运行 `gforge validate`，阻断不合规的代码提交。
+`g-harness init` 会自动安装 pre-commit hook（如果 `.git/` 存在）。hook 在提交前运行 `g-harness validate`，阻断不合规的代码提交。
 
 ---
 
@@ -412,7 +412,7 @@ jobs:
 默认跳过已有文件。使用 `--force` 强制覆盖：
 
 ```bash
-gforge init --preset vite-react --force
+g-harness init --preset vite-react --force
 ```
 
 ### 预设选错了怎么办？
@@ -420,24 +420,24 @@ gforge init --preset vite-react --force
 重新初始化并用 `--force` 覆盖：
 
 ```bash
-gforge init --preset vite-vue --force
+g-harness init --preset vite-vue --force
 ```
 
 ### 不使用 Claude Code 可以用吗？
 
-可以。G-Forge 原生支持 Claude Code、Cursor、Windsurf、GitHub Copilot、Trae 五种 AI 助手，以及兼容任意 agent 的通用模式。初始化时选择对应的 AI 助手即可：
+可以。G-Harness 原生支持 Claude Code、Cursor、Windsurf、GitHub Copilot、Trae 五种 AI 助手，以及兼容任意 agent 的通用模式。初始化时选择对应的 AI 助手即可：
 
 ```bash
-gforge init --agent cursor    # Cursor 用户
-gforge init --agent copilot   # GitHub Copilot 用户
-gforge init --agent generic   # 其他 AI 工具（仅生成 AGENTS.md）
+g-harness init --agent cursor    # Cursor 用户
+g-harness init --agent copilot   # GitHub Copilot 用户
+g-harness init --agent generic   # 其他 AI 工具（仅生成 AGENTS.md）
 ```
 
 注意：钩子、协议、技能等高级功能目前仅 Claude Code 支持，其他 agent 仅生成规则文件。
 
-### 如何卸载 G-Forge？
+### 如何卸载 G-Harness？
 
-删除生成的文件即可。G-Forge 不修改 `package.json`、不安装运行时依赖，删除后项目功能不受任何影响。
+删除生成的文件即可。G-Harness 不修改 `package.json`、不安装运行时依赖，删除后项目功能不受任何影响。
 
 ---
 

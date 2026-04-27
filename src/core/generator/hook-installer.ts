@@ -9,7 +9,7 @@ interface HookInstallResult {
 
 // 安装 git pre-commit hook 到目标项目
 export async function installPreCommitHook(
-  gforgeRoot: string,
+  harnessRoot: string,
   targetDir: string,
   options: { overwrite: boolean; dryRun: boolean },
 ): Promise<HookInstallResult> {
@@ -30,7 +30,7 @@ export async function installPreCommitHook(
     return { installed: true, skipped: false }
   }
 
-  const hookSource = join(gforgeRoot, 'src', 'templates', 'git-hooks', 'pre-commit.sh')
+  const hookSource = join(harnessRoot, 'src', 'templates', 'git-hooks', 'pre-commit.sh')
   const content = await readFile(hookSource, 'utf-8')
 
   await mkdir(gitHooksDir, { recursive: true })

@@ -31,4 +31,4 @@
 
 ## 注册方式
 
-钩子在 `.claude/settings.json` 中配置（由 `gforge init` 自动生成）。
+钩子在 `.claude/settings.json` 中配置（由 `g-harness init` 自动生成）。

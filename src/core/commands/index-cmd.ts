@@ -1,4 +1,4 @@
-// gforge index — 扫描项目生成 PROJECT_MAP / FEATURES / ROUTES 三个 Markdown 索引
+// g-harness index — 扫描项目生成 PROJECT_MAP / FEATURES / ROUTES 三个 Markdown 索引
 
 import { mkdir, writeFile, readFile } from 'node:fs/promises'
 import { watch } from 'node:fs'
@@ -83,7 +83,7 @@ export const indexCommand = new Command('index')
     const outputDir = join(rootDir, options.output ?? 'docs')
 
     if (!options.watch) {
-      console.log(pc.bold('\n🔎 G-Forge 项目索引生成\n'))
+      console.log(pc.bold('\n🔎 G-Harness 项目索引生成\n'))
     }
 
     // --json：一次性输出
@@ -104,7 +104,7 @@ export const indexCommand = new Command('index')
       const report = await detectIndexDrift(rootDir, outputDir, index)
       if (!report.hasIndex) {
         console.log(pc.yellow('未检测到现有索引文件（PROJECT_MAP / FEATURES / ROUTES）'))
-        console.log(pc.dim('请先运行 `gforge index` 生成索引，再使用 --check 做漂移检测'))
+        console.log(pc.dim('请先运行 `g-harness index` 生成索引，再使用 --check 做漂移检测'))
         process.exit(1)
       }
       const { added, removed, dangling } = report.totals
@@ -125,7 +125,7 @@ export const indexCommand = new Command('index')
         console.log(color(`  ${sign} [${item.kind}] ${item.description}`))
       }
       console.log()
-      console.log(pc.yellow('建议运行 `gforge index` 重新生成索引\n'))
+      console.log(pc.yellow('建议运行 `g-harness index` 重新生成索引\n'))
       process.exit(1)
     }
 
@@ -162,7 +162,7 @@ async function runWatchMode(rootDir: string, outputDir: string, outputRel: strin
     process.exit(1)
   }
 
-  console.log(pc.bold(pc.cyan('\n👁  G-Forge 索引监听模式\n')))
+  console.log(pc.bold(pc.cyan('\n👁  G-Harness 索引监听模式\n')))
   console.log(pc.dim(`监听目录：${srcDir}`))
   console.log(pc.dim(`输出目录：${outputDir}`))
   console.log(pc.dim('按 Ctrl+C 退出\n'))

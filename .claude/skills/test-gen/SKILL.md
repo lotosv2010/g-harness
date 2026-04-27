@@ -37,7 +37,7 @@ extensions:
 
 1. **优先读取索引**（`docs/PROJECT_MAP.md` / `docs/FEATURES.md`）
    - 通过 `$filepath` 反查所属模块及其 exports
-   - 若索引不存在或未收录该文件，先建议运行 `gforge index`
+   - 若索引不存在或未收录该文件，先建议运行 `g-harness index`
 2. 读取 `$filepath` 源文件
 3. 分析所有导出项（函数、类、接口）
 4. 对每个导出项分析：
@@ -47,7 +47,7 @@ extensions:
    - 边界条件（空值、极值、类型边界）
 5. 生成测试文件到对应位置
 6. 确保测试可独立运行
-7. 生成后提示运行 `gforge index` 刷新索引
+7. 生成后提示运行 `g-harness index` 刷新索引
 
 ## 测试文件位置
 
@@ -97,7 +97,7 @@ describe('ClassName', () => {
 ```typescript
 import { describe, it, expect } from 'vitest'
 
-describe('gforge <command>', () => {
+describe('g-harness <command>', () => {
   it('正常参数执行成功', async () => {})
   it('缺少必要参数报错', async () => {})
   it('--dry-run 不写入文件', async () => {})

@@ -2,7 +2,7 @@ import { Command } from 'commander'
 import pc from 'picocolors'
 import { ConfigMigrator } from '../migrator/config-migrator.js'
 import { detectVersion, getCurrentVersion } from '../migrator/version-detector.js'
-import { getGForgeRoot } from '../paths.js'
+import { getHarnessRoot } from '../paths.js'
 import type { MigrateResult } from '../migrator/config-migrator.js'
 
 interface CliMigrateOptions {
@@ -14,13 +14,13 @@ interface CliMigrateOptions {
 export const migrateCommand = new Command('migrate')
   .description('规范版本升级时迁移配置文件')
   .option('--from <version>', '源版本（省略则自动检测）')
-  .option('--to <version>', '目标版本（默认使用当前 G-Forge 版本）')
+  .option('--to <version>', '目标版本（默认使用当前 G-Harness 版本）')
   .option('--dry-run', '仅预览迁移方案，不实际写入')
   .action(async (options: CliMigrateOptions) => {
     const targetDir = process.cwd()
-    const gforgeRoot = getGForgeRoot()
+    const harnessRoot = getHarnessRoot()
 
-    console.log(pc.bold('\n⬆ G-Forge 配置迁移\n'))
+    console.log(pc.bold('\n⬆ G-Harness 配置迁移\n'))
 
     // 检测版本
     const fromVersion = options.from ?? await detectVersion(targetDir)
@@ -39,7 +39,7 @@ export const migrateCommand = new Command('migrate')
     const migrator = new ConfigMigrator()
     const result = await migrator.migrate({
       targetDir,
-      gforgeRoot,
+      harnessRoot,
       fromVersion,
       toVersion,
       dryRun: options.dryRun ?? false,
@@ -63,8 +63,8 @@ function printResult(result: MigrateResult, dryRun: boolean): void {
   const total = result.migrated.length + result.skipped.length + result.manualRequired.length
 
   if (total === 0) {
-    console.log(pc.dim('未检测到 G-Forge 管理的文件。\n'))
-    console.log(pc.dim('提示: 请先运行 `gforge init` 初始化项目。\n'))
+    console.log(pc.dim('未检测到 G-Harness 管理的文件。\n'))
+    console.log(pc.dim('提示: 请先运行 `g-harness init` 初始化项目。\n'))
     return
   }
 

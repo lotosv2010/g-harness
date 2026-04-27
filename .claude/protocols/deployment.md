@@ -1,7 +1,7 @@
-# 部署协议（g-forge 自身）
+# 部署协议（g-harness 自身）
 
 > 当用户请求"发布"、"发 npm"、"打 tag"、"灰度"、"回滚"时，遵循本协议。
-> 注：g-forge 本身是 CLI 工具，部署 = npm 发布 + GitHub Release。
+> 注：g-harness 本身是 CLI 工具，部署 = npm 发布 + GitHub Release。
 
 ---
 
@@ -37,8 +37,8 @@
 ## 阶段 4：验证
 
 **必做：**
-1. 通过 `npx gforge@latest --version` 验证发布成功
-2. 在空目录运行 `gforge init` 确认核心流程可用
+1. 通过 `npx g-harness@latest --version` 验证发布成功
+2. 在空目录运行 `g-harness init` 确认核心流程可用
 3. 检查 npm 页面元数据（README、keywords）是否正确
 
 ## 阶段 5：收尾

@@ -1,6 +1,6 @@
-# Prompt：g-forge 功能开发
+# Prompt：g-harness 功能开发
 
-> 向 Claude Code 下达 g-forge 功能开发指令时使用。
+> 向 Claude Code 下达 g-harness 功能开发指令时使用。
 
 ---
 

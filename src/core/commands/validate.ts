@@ -12,7 +12,7 @@ interface CliValidateOptions {
 }
 
 export const validateCommand = new Command('validate')
-  .description('校验项目是否符合 G-Forge 规则')
+  .description('校验项目是否符合 G-Harness 规则')
   .option('--fix', '自动修复可修复的违规（R001、R002、R003）')
   .option('--rule <id>', '仅检查指定规则（如 R005、A003）')
   .option('--format <format>', '输出格式（text | json）', 'text')
@@ -20,7 +20,7 @@ export const validateCommand = new Command('validate')
   .action(async (options: CliValidateOptions) => {
     const targetDir = process.cwd()
 
-    console.log(pc.bold('\n🔍 G-Forge 规范校验\n'))
+    console.log(pc.bold('\n🔍 G-Harness 规范校验\n'))
 
     const validateOptions: ValidateOptions = {
       severity: (options.severity as 'error' | 'warning') ?? 'warning',

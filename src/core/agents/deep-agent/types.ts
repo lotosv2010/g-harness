@@ -46,6 +46,8 @@ export interface DeepAgentOptions {
   model?: string
   /** 显式指定 API Key（ADR-011，来自交互输入），优先级 > env */
   apiKey?: string
+  /** 用户在 Stage 3 自填的技术栈原文（逗号分隔），优先于 scanner 识别结果作为 Agent 上下文 */
+  userTechStack?: string
   /** 是否启用 askUser 工具（Human-in-the-loop）；非交互模式下强制 false */
   enableAskUser?: boolean
   /** 超时覆盖（毫秒），否则按 depth 默认值 */

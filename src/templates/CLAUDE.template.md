@@ -1,6 +1,6 @@
 # CLAUDE.md — Claude Code 项目配置
 
-> 由 G-Forge 生成。Claude Code 在此目录工作时自动加载。
+> 由 G-Harness 生成。Claude Code 在此目录工作时自动加载。
 > 通用 AI 规范见 `AGENTS.md`，本文件仅包含 Claude Code 特有的配置。
 
 ---
@@ -23,14 +23,14 @@
 
 每次执行任务前，按顺序读取（**优先读取索引，避免整库扫描**）：
 1. 本文件（`CLAUDE.md`）
-2. `docs/PROJECT_MAP.md`（模块清单 → 文件，由 `gforge index` 生成）
+2. `docs/PROJECT_MAP.md`（模块清单 → 文件，由 `g-harness index` 生成）
 3. `docs/FEATURES.md`（功能清单 → 入口文件）
 4. `docs/ROUTES.md`（路由表 → handler 文件）
 5. `AGENTS.md`（通用规范）
 6. 相关 ADR（`docs/decisions/`）
 7. 当前活跃任务（`docs/tasks/CURRENT.md`）
 
-> **索引缺失或过期？** 运行 `gforge index` 重新生成。PROJECT_MAP/FEATURES/ROUTES 是 AI 定位代码的"地图"——优先读它们，而不是 `ls src/` 或 `grep` 整库。
+> **索引缺失或过期？** 运行 `g-harness index` 重新生成。PROJECT_MAP/FEATURES/ROUTES 是 AI 定位代码的"地图"——优先读它们，而不是 `ls src/` 或 `grep` 整库。
 
 ### 执行协议
 

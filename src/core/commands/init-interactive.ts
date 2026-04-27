@@ -25,6 +25,8 @@ export interface ProjectMeta {
   projectName: string
   projectDescription: string
   srcDir: string
+  /** 用户填写的技术栈自由文本（逗号分隔，如 "TypeScript, React, Next.js, Tailwind CSS"） */
+  techStack?: string
   /** 元信息来源：manual（用户输入）或 auto（从 package.json/README 自动推导） */
   source: 'manual' | 'auto'
   /** auto 模式下的证据来源 */
@@ -65,14 +67,14 @@ export async function stage1DetectProject(detection: ProjectDetection): Promise<
   if (mode === 'new') {
     p.log.info(pc.cyan('检测到空目录，将以新项目模式初始化'))
   } else if (mode === 'reinit') {
-    const version = detection.gforgeVersion
-      ? ` (v${detection.gforgeVersion})`
+    const version = detection.harnessVersion
+      ? ` (v${detection.harnessVersion})`
       : ''
     const agents = detection.existingAgents.length > 0
       ? `，已配置 ${detection.existingAgents.join(', ')}`
       : ''
-    p.log.warn(pc.yellow(`检测到已接入 G-Forge${version}${agents}`))
-    p.log.info(pc.dim('建议使用 gforge context sync 更新现有配置'))
+    p.log.warn(pc.yellow(`检测到已接入 G-Harness${version}${agents}`))
+    p.log.info(pc.dim('建议使用 g-harness context sync 更新现有配置'))
 
     const shouldContinue = await p.confirm({
       message: '继续 init 将重新生成配置文件，是否继续？',
@@ -144,114 +146,101 @@ export async function stage2SelectAgents(
   return { agents, cancelled: false }
 }
 
-// ── Stage 3: 技术栈 & 预设选择 ──
+// ── Stage 3: 技术栈自由文本输入（B 方案） ──
 
-interface PresetOption {
-  value: string
-  label: string
-  hint?: string
+export interface Stage3Result {
+  /** 用户输入的技术栈原文（逗号分隔） */
+  techStack: string
+  /** 从技术栈文本反推出的预设名（内部使用，用于加载模板变量） */
+  inferredPreset: string
 }
 
-const PRESET_GROUPS: Array<{ group: string; presets: PresetOption[] }> = [
-  {
-    group: '前端框架',
-    presets: [
-      { value: 'nextjs', label: 'Next.js', hint: 'React 全栈，App Router' },
-      { value: 'nuxt', label: 'Nuxt', hint: 'Vue 3 全栈，约定式路由' },
-      { value: 'vite-react', label: 'React + Vite', hint: 'React 19 + Vite 6' },
-      { value: 'vite-vue', label: 'Vue + Vite', hint: 'Vue 3 + Vite 6' },
-      { value: 'vanilla', label: 'Vanilla', hint: '纯 HTML + JS' },
-    ],
-  },
-  {
-    group: '后端框架',
-    presets: [
-      { value: 'nestjs', label: 'NestJS', hint: 'TypeScript 企业级后端' },
-      { value: 'express', label: 'Express / Hono / Fastify', hint: '轻量 Node.js 后端' },
-      { value: 'fastapi', label: 'FastAPI', hint: 'Python 异步后端' },
-    ],
-  },
-  {
-    group: '桌面 & 移动',
-    presets: [
-      { value: 'electron', label: 'Electron', hint: '跨平台桌面应用' },
-      { value: 'tauri', label: 'Tauri', hint: 'Rust + Web 桌面应用' },
-      { value: 'react-native', label: 'React Native', hint: 'Expo 跨端移动应用' },
-      { value: 'flutter', label: 'Flutter', hint: 'Dart 跨端应用' },
-    ],
-  },
-  {
-    group: '小程序 & 跨端',
-    presets: [
-      { value: 'miniprogram', label: '微信小程序', hint: '原生小程序开发' },
-      { value: 'uniapp', label: 'uni-app', hint: 'Vue 3 跨端' },
-    ],
-  },
-  {
-    group: '工程化',
-    presets: [
-      { value: 'monorepo', label: 'Monorepo', hint: 'Turborepo / Nx' },
-      { value: 'base', label: '通用基础', hint: '技术栈无关' },
-    ],
-  },
-]
-
-export async function stage3SelectPreset(
+/**
+ * Stage 3：让用户自由输入技术栈，内部自动反推预设。
+ * 老项目：默认值来自 scanner（如 "Next.js, TypeScript, pnpm"）
+ * 新项目：placeholder 给一组常见组合作参考
+ */
+export async function stage3TechStack(
   detection: ProjectDetection,
   mode: ProjectMode,
-): Promise<string | null> {
-  // 已有项目：推荐预设 + 确认/修正
-  if (mode !== 'new' && detection.scanResult.techStack.framework) {
-    const recommended = detectPresetFromFramework(detection.scanResult.techStack.framework)
-    const action = await p.select({
-      message: `检测到 ${detection.scanResult.techStack.framework}，推荐预设：${recommended}`,
-      options: [
-        { value: 'accept', label: `使用推荐预设 ${recommended}` },
-        { value: 'choose', label: '选择其他预设' },
-        { value: 'none', label: '不使用预设（仅生成基础规范）' },
-      ],
-    })
+): Promise<Stage3Result | null> {
+  const scanned = detection.scanResult.techStack
+  const defaultStack = mode === 'new' ? '' : formatScannedStack(scanned)
+  const placeholder = mode === 'new'
+    ? '例如：TypeScript, React, Next.js, Tailwind CSS'
+    : defaultStack || '例如：TypeScript, React, Next.js, Tailwind CSS'
 
-    if (p.isCancel(action)) return null
-    if (action === 'accept') return recommended
-    if (action === 'none') return 'base'
-    // fall through to full list
-  }
-
-  // 新建项目 或 用户选择"其他预设"：展示分组列表
-  const allOptions: Array<{ value: string; label: string; hint?: string }> = []
-  for (const group of PRESET_GROUPS) {
-    allOptions.push({ value: `__group_${group.group}`, label: pc.dim(`── ${group.group} ──`), hint: '' })
-    allOptions.push(...group.presets)
-  }
-
-  const selected = await p.select({
-    message: '选择技术栈预设',
-    options: allOptions.filter((o) => !o.value.startsWith('__group_')),
+  const input = await p.text({
+    message: '请输入计划使用的技术栈（逗号分隔）',
+    placeholder,
+    defaultValue: defaultStack,
+    validate: (value) => {
+      if (!value || value.trim().length === 0) return '至少输入一项技术'
+      return undefined
+    },
   })
+  if (p.isCancel(input)) return null
 
-  if (p.isCancel(selected)) return null
-  return selected as string
+  const techStack = (input as string).trim()
+  const inferredPreset = inferPresetFromText(techStack, scanned.framework)
+
+  if (mode !== 'new' && inferredPreset !== 'base') {
+    p.log.info(pc.dim(`已识别预设：${inferredPreset}（内部用于加载模板片段库）`))
+  }
+
+  return { techStack, inferredPreset }
 }
 
-function detectPresetFromFramework(framework: string): string {
-  const map: Record<string, string> = {
-    'next.js': 'nextjs',
-    react: 'vite-react',
-    vue: 'vite-vue',
-    nuxt: 'nuxt',
-    electron: 'electron',
-    tauri: 'tauri',
-    'react native': 'react-native',
-    nestjs: 'nestjs',
-    nest: 'nestjs',
-    express: 'express',
-    fastify: 'express',
-    hono: 'express',
-    angular: 'base',
-    svelte: 'base',
+/** 将扫描到的技术栈格式化为一行逗号分隔的默认值 */
+function formatScannedStack(t: ProjectDetection['scanResult']['techStack']): string {
+  const parts: string[] = []
+  if (t.framework) parts.push(t.framework)
+  if (t.language) parts.push(t.language)
+  if (t.buildTool) parts.push(t.buildTool)
+  if (t.testRunner) parts.push(t.testRunner)
+  if (t.packageManager) parts.push(t.packageManager)
+  return parts.filter((v, i, a) => a.indexOf(v) === i).join(', ')
+}
+
+/**
+ * 从自由文本 + 扫描结果推断预设名。关键词优先级：
+ * 用户文本显式提到 > scanner 识别的 framework > base 兜底
+ */
+export function inferPresetFromText(text: string, scannedFramework: string | null): string {
+  const lower = text.toLowerCase()
+
+  // 关键词映射（顺序敏感：特异性高的在前）
+  const rules: Array<[RegExp, string]> = [
+    [/\bnext(\.js)?\b/, 'nextjs'],
+    [/\bnuxt(\.js)?\s?3?\b/, 'nuxt'],
+    [/\bnest(\.js)?\b/, 'nestjs'],
+    [/\breact[\s-]?native\b|\bexpo\b/, 'react-native'],
+    [/\btauri\b/, 'tauri'],
+    [/\belectron\b/, 'electron'],
+    [/\bfastapi\b/, 'fastapi'],
+    [/\bfastify\b|\bexpress\b|\bhono\b/, 'express'],
+    [/\bflutter\b|\bdart\b/, 'flutter'],
+    [/\buni[\s-]?app\b/, 'uniapp'],
+    [/\bmini[\s-]?program\b|微信小程序|小程序/, 'miniprogram'],
+    [/\bturborepo\b|\bnx\b|\bmonorepo\b/, 'monorepo'],
+    [/\bvue\b/, 'vite-vue'],
+    [/\breact\b|\bvite\b/, 'vite-react'],
+    [/\bvanilla\b|纯\s?html/, 'vanilla'],
+  ]
+
+  for (const [re, preset] of rules) {
+    if (re.test(lower)) return preset
   }
-  return map[framework.toLowerCase()] ?? 'base'
+
+  // 回退到扫描到的 framework
+  if (scannedFramework) {
+    const scanned = scannedFramework.toLowerCase()
+    for (const [re, preset] of rules) {
+      if (re.test(scanned)) return preset
+    }
+  }
+
+  return 'base'
 }
 
 // ── Stage 4: 项目元信息收集 ──

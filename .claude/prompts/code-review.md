@@ -1,6 +1,6 @@
-# Prompt：g-forge 代码审查
+# Prompt：g-harness 代码审查
 
-> 请求 Claude Code 审查 g-forge 代码变更时使用。
+> 请求 Claude Code 审查 g-harness 代码变更时使用。
 
 ---
 

@@ -5,11 +5,11 @@ date: 2026-04-24
 superseded_by: null
 ---
 
-# 重设计 gforge init 交互流程
+# 重设计 g-harness init 交互流程
 
 ## 背景
 
-当前 `gforge init` 的交互流程是线性的：选 Agent → 扫描 → 自动推断预设 → 生成。
+当前 `g-harness init` 的交互流程是线性的：选 Agent → 扫描 → 自动推断预设 → 生成。
 这个流程存在几个问题：
 
 1. **不区分新建项目和已有项目**：两种场景的用户心智模型完全不同——新建项目想"给我最佳实践"，已有项目想"别破坏我现有的东西"
@@ -19,7 +19,7 @@ superseded_by: null
 5. **无确认预览**：用户看不到"将要生成什么"的汇总就直接执行了
 6. **市场差距**：`create-next-app`、`npm create vite`、`nx init` 等主流工具都有精心设计的交互引导
 
-期望：让 `gforge init` 的交互体验达到市场一线 CLI 工具水准，同时体现 Harness Engineering 的渐进式接入思想。
+期望：让 `g-harness init` 的交互体验达到市场一线 CLI 工具水准，同时体现 Harness Engineering 的渐进式接入思想。
 
 ## 决策
 
@@ -33,12 +33,12 @@ superseded_by: null
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  gforge init                                            │
+│  g-harness init                                            │
 │                                                         │
 │  Stage 1: 项目检测                                      │
 │  ├─ 扫描 cwd（package.json? git? 现有 AI 配置?）        │
-│  ├─ 判定：新建项目 / 已有项目 / 已接入 G-Forge          │
-│  └─ 已接入 → 建议 gforge context sync                  │
+│  ├─ 判定：新建项目 / 已有项目 / 已接入 G-Harness          │
+│  └─ 已接入 → 建议 g-harness context sync                  │
 │                                                         │
 │  Stage 2: AI 助手选择                                   │
 │  ├─ multiselect 选择 agent（复用现有逻辑）              │
@@ -71,8 +71,8 @@ superseded_by: null
 | 条件 | 裁剪行为 |
 |------|----------|
 | 空目录（无 package.json） | 跳过 Stage 3 扫描推荐，直接展示预设列表 |
-| 已有项目但未接入 G-Forge | 完整 6 阶段 |
-| 已接入 G-Forge（检测到 CLAUDE.md + .claude/） | 提示"已接入"并建议 `gforge context sync`，用户可选择继续 reinit |
+| 已有项目但未接入 G-Harness | 完整 6 阶段 |
+| 已接入 G-Harness（检测到 CLAUDE.md + .claude/） | 提示"已接入"并建议 `g-harness context sync`，用户可选择继续 reinit |
 | `--preset` 已指定 | 跳过 Stage 3 |
 | `--agent` 已指定 | 跳过 Stage 2 |
 | 非交互环境（CI/piped stdin） | 全部用默认值，等同 `--agent claude --preset base` |
@@ -89,7 +89,7 @@ superseded_by: null
 
 ### 方案 C：配置文件驱动
 
-首次运行生成 `.gforgerc.json`，后续 init 读取配置文件。
+首次运行生成 `.g-harnessrc.json`，后续 init 读取配置文件。
 
 - 优点：CI 场景友好
 - 缺点：增加用户学习成本；首次仍需要交互；与 `--preset` / `--agent` flag 语义重叠
@@ -107,9 +107,9 @@ interface ProjectDetection {
   hasPackageJson: boolean
   hasGit: boolean
   
-  // G-Forge 接入状态
-  hasGForgeConfig: boolean   // 任一 AI 配置文件存在
-  gforgeVersion: string | null  // 从 AGENTS.md 版本标记中读取
+  // G-Harness 接入状态
+  hasHarnessConfig: boolean   // 任一 AI 配置文件存在
+  harnessVersion: string | null  // 从 AGENTS.md 版本标记中读取
   existingAgents: string[]   // 已存在的 agent 配置（如 ['claude', 'cursor']）
   
   // 原有 ScanResult 保持不变
@@ -121,7 +121,7 @@ interface ProjectDetection {
 
 **行为分支：**
 - `isEmpty` → 输出提示"检测到空目录，将以新项目模式初始化"
-- `hasGForgeConfig && gforgeVersion` → 输出提示"检测到已接入 G-Forge（vX.X），建议使用 gforge context sync 更新。继续 init 将重新生成配置。"，用户 confirm 是否继续
+- `hasHarnessConfig && harnessVersion` → 输出提示"检测到已接入 G-Harness（vX.X），建议使用 g-harness context sync 更新。继续 init 将重新生成配置。"，用户 confirm 是否继续
 - 其他 → 正常继续
 
 ### Stage 2: AI 助手选择
@@ -211,7 +211,7 @@ interface ProjectDetection {
 
 CI 场景完整命令示例：
 ```bash
-gforge init --agent claude --preset vite-react --yes
+g-harness init --agent claude --preset vite-react --yes
 ```
 
 ## 影响

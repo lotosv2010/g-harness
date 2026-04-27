@@ -5,7 +5,7 @@
  * - 以 Markdown 二级标题（## ）作为段落分隔符
  * - 包含 {{variable}} 占位符的段落视为模板段落
  * - 不包含占位符且被用户修改过的段落视为用户段落
- * - 文件头部（第一个 ## 之前）包含 G-Forge 标记的视为模板头部
+ * - 文件头部（第一个 ## 之前）包含 G-Harness 标记的视为模板头部
  */
 
 import { mergeSections, calculateCustomization, normalizeWhitespace } from './section-merger.js'

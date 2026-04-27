@@ -1,6 +1,6 @@
-# 安全硬性规则（g-forge 项目自身）
+# 安全硬性规则（g-harness 项目自身）
 
-> 开发 g-forge 时 AI 必须遵守的安全规则。
+> 开发 g-harness 时 AI 必须遵守的安全规则。
 > 目标项目的安全规则见 `src/templates/.ai/rules/safety.md`。
 
 ---

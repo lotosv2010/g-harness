@@ -1,6 +1,6 @@
 # CLAUDE.md — Claude Code 项目配置
 
-> 由 G-Forge 生成。Claude Code 在此目录工作时自动加载。
+> 由 G-Harness 生成。Claude Code 在此目录工作时自动加载。
 > 通用 AI 规范见 `AGENTS.md`，本文件仅包含 Claude Code 特有的配置。
 
 ---

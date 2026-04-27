@@ -11,9 +11,6 @@
 tests/
 ├── e2e/                  # CLI 命令端到端测试
 ├── integration/          # 跨模块集成测试
-├── fixtures/             # 测试用的样本项目
-│   ├── react-project/    # React 示例项目
-│   └── empty-project/    # 空项目
 └── helpers/              # 测试辅助工具
 ```
 
@@ -35,5 +32,4 @@ pnpm test:e2e         # 运行 E2E 测试（待实现）
 
 - 每个 E2E 测试使用独立的临时目录
 - 测试完成后清理生成的文件
-- 使用 fixtures 目录中的样本项目作为测试输入
 - 测试应独立，无顺序依赖

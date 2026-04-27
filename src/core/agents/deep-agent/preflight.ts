@@ -3,7 +3,7 @@
 // 定位：
 // - 让用户在 Stage 6 预览时看到"预计花多少钱、跑多久"
 // - 预估源于三档 depth 的"基线系数"+ 项目规模（源文件数、README 行数、package 依赖数）
-// - 不精确、但稳定（后续 TASK-097 会用实测数据校准系数）
+// - 不精确、但稳定（系数为估算值，无自动化校准工具）
 // - 永不失败：任何异常都返回保守估计（本档上限）
 
 import { readdir, stat } from 'node:fs/promises'
@@ -26,7 +26,7 @@ export interface PreflightOptions {
   knownSampledFiles?: string[]
 }
 
-/** 三档基线系数（后续由 TASK-097 校准） */
+/** 三档基线系数（估算值；如需校准请在真实 API 环境下手工调整） */
 const DEPTH_BASELINE: Record<
   Depth,
   {

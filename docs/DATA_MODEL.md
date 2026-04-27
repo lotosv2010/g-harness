@@ -1,6 +1,6 @@
 # 数据模型规格
 
-> 定义 G-Forge 核心数据结构。
+> 定义 G-Harness 核心数据结构。
 > AI 在创建或修改数据相关代码时必须参考本文件。
 
 ---
@@ -120,7 +120,7 @@ interface ValidateOptions {
 
 ```typescript
 interface GenerateOptions {
-  gforgeRoot: string
+  harnessRoot: string
   preset: Preset | null
   targetDir: string
   scanResult: ScanResult
@@ -169,7 +169,7 @@ interface MigrateResult {
 ## 6. 数据流
 
 ```
-gforge init --preset vite-react
+g-harness init --preset vite-react
          │
          ▼
    Scanner.scan(targetDir)
@@ -178,7 +178,7 @@ gforge init --preset vite-react
    加载 Preset（src/presets/vite-react/preset.json）
          │ → Preset
          ▼
-   Generator.generate({ gforgeRoot, preset, targetDir, scanResult, overwrite, dryRun })
+   Generator.generate({ harnessRoot, preset, targetDir, scanResult, overwrite, dryRun })
          │ → GenerateResult
          ▼
    输出文件到目标项目

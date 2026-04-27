@@ -1,6 +1,6 @@
-# Prompt：g-forge Bug 报告
+# Prompt：g-harness Bug 报告
 
-> 向 Claude Code 报告 g-forge 自身 Bug 时使用。
+> 向 Claude Code 报告 g-harness 自身 Bug 时使用。
 
 ---
 
@@ -13,7 +13,7 @@
 [描述 Bug 的具体表现]
 
 ### 复现步骤
-1. [步骤 1，如：运行 `gforge validate`]
+1. [步骤 1，如：运行 `g-harness validate`]
 2. [步骤 2]
 
 ### 期望行为
@@ -28,7 +28,7 @@
 ### 环境信息
 - Node.js 版本：
 - 操作系统：
-- g-forge 版本：
+- g-harness 版本：
 
 ### 可能的相关文件
 - src/core/[相关模块]/

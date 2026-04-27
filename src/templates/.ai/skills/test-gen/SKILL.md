@@ -38,7 +38,7 @@ extensions:
 1. **优先读取索引**（`docs/PROJECT_MAP.md` / `docs/FEATURES.md`）
    - 通过 `$filepath` 反查所属模块及其公共 API，避免广度扫描
    - 若文件属于某模块的 `entry`，测试应覆盖其 exports 清单中的所有符号
-   - 若索引不存在或已过期（文件未收录），先提示用户运行 `gforge index`
+   - 若索引不存在或已过期（文件未收录），先提示用户运行 `g-harness index`
 2. 读取 `$filepath` 源文件
 3. 分析所有导出项（函数、类、接口）
 4. 对每个导出项分析：
@@ -49,7 +49,7 @@ extensions:
 5. 检查项目使用的测试框架（读取 package.json）
 6. 生成测试文件到对应位置
 7. 确保测试可独立运行
-8. **索引刷新提示**：若生成了新测试文件，提醒用户运行 `gforge index` 更新 PROJECT_MAP 的文件数
+8. **索引刷新提示**：若生成了新测试文件，提醒用户运行 `g-harness index` 更新 PROJECT_MAP 的文件数
 
 ## 测试文件位置
 
@@ -162,4 +162,4 @@ describe('functionWithSideEffects', () => {
 - 每个测试用例独立，无顺序依赖
 - 使用命名导入，与源码导出风格一致
 - 测试描述使用中文或英文，与项目现有测试保持一致
-- 生成完成后如新增了模块/文件，提示用户运行 `gforge index` 刷新索引
+- 生成完成后如新增了模块/文件，提示用户运行 `g-harness index` 刷新索引

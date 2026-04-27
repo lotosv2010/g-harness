@@ -6,15 +6,16 @@ import { detectProject } from '../scanner/detect-project.js'
 import { FileGenerator } from '../generator/file-generator.js'
 import { installPreCommitHook } from '../generator/hook-installer.js'
 import { loadPreset } from '../preset-loader.js'
-import { getGForgeRoot } from '../paths.js'
+import { getHarnessRoot } from '../paths.js'
 import { getAgent, getAgentOrThrow, listAgentIds } from '../agents/agent-registry.js'
 import {
   stage1DetectProject,
   stage2SelectAgents,
-  stage3SelectPreset,
+  stage3TechStack,
   stage4CollectMeta,
   stage5OutputConfig,
   stage6Confirm,
+  inferPresetFromText,
 } from './init-interactive.js'
 import type { AgentDefinition } from '../agents/agent-registry.js'
 import type { ConflictStrategy, ProjectMeta } from './init-interactive.js'
@@ -43,7 +44,7 @@ interface InitOptions {
 }
 
 export const initCommand = new Command('init')
-  .description('初始化 G-Forge 规范到项目中')
+  .description('初始化 G-Harness 规范到项目中')
   .option('--preset <name>', '使用预设（nextjs | nuxt | nestjs | vite-vue | vite-react | electron | tauri | react-native | miniprogram | vanilla | base）')
   .option('--agent <names>', 'AI 助手（claude,cursor,windsurf,copilot,trae,kimi,codex,generic），逗号分隔多选，默认 claude')
   .option('--name <name>', '项目名称')
@@ -61,10 +62,10 @@ export const initCommand = new Command('init')
   .option('-y, --yes', '跳过所有交互，使用默认值')
   .action(async (options: InitOptions) => {
     const targetDir = process.cwd()
-    const gforgeRoot = getGForgeRoot()
+    const harnessRoot = getHarnessRoot()
     const isInteractive = !options.yes && process.stdout.isTTY !== false
 
-    p.intro(pc.bold('G-Forge 初始化'))
+    p.intro(pc.bold('G-Harness 初始化'))
 
     // ── Stage 1: 项目检测 ──
     const scanner = new ProjectScanner()
@@ -99,28 +100,7 @@ export const initCommand = new Command('init')
       agents = [getAgentOrThrow('claude')]
     }
 
-    // ── Stage 3: 技术栈 & 预设 ──
-    let presetName: string
-    if (options.preset) {
-      presetName = options.preset
-    } else if (isInteractive) {
-      const selected = await stage3SelectPreset(detection, mode)
-      if (!selected) {
-        p.outro('已取消')
-        return
-      }
-      presetName = selected
-    } else {
-      presetName = detectPreset(scanResult.techStack.framework)
-    }
-
-    const preset = await loadPreset(gforgeRoot, presetName)
-    if (!preset) {
-      p.log.warn(pc.yellow(`未找到预设 "${presetName}"，使用 base 预设`))
-      presetName = 'base'
-    }
-
-    // ── Stage 4: 项目元信息 ──
+    // ── Stage 4: 项目元信息（先于技术栈，便于技术栈输入时带入上下文） ──
     let meta: ProjectMeta
     if (isInteractive) {
       const collected = await stage4CollectMeta(detection)
@@ -146,6 +126,35 @@ export const initCommand = new Command('init')
         srcDir: scanResult.structure.srcDir ?? 'src',
         source: autoDesc ? 'auto' : 'manual',
       }
+    }
+
+    // ── Stage 3: 技术栈自由文本（B 方案，ADR-007 修订） ──
+    // 交互模式：用户自由输入，内部反推预设
+    // 非交互模式：--preset 优先；否则按 scanner framework 推断
+    let presetName: string
+    let techStackText: string | undefined
+    if (options.preset) {
+      presetName = options.preset
+    } else if (isInteractive) {
+      const stack = await stage3TechStack(detection, mode)
+      if (!stack) {
+        p.outro('已取消')
+        return
+      }
+      techStackText = stack.techStack
+      presetName = stack.inferredPreset
+      meta.techStack = techStackText
+    } else {
+      // 非交互模式：用 scanner 识别 + 文本反推（若 --name/--description 未带技术栈则仅靠 scanner）
+      techStackText = inferTechStackFromScan(scanResult)
+      if (techStackText) meta.techStack = techStackText
+      presetName = inferPresetFromText(techStackText ?? '', scanResult.techStack.framework)
+    }
+
+    const preset = await loadPreset(harnessRoot, presetName)
+    if (!preset) {
+      p.log.warn(pc.yellow(`未找到预设 "${presetName}"，使用 base 预设`))
+      presetName = 'base'
     }
 
     // ── Stage 5: 输出配置 ──
@@ -215,12 +224,12 @@ export const initCommand = new Command('init')
     }
 
     // ── Stage 6: 确认预览 & 执行 ──
-    const effectivePreset = (await loadPreset(gforgeRoot, presetName)) ?? null
+    const effectivePreset = (await loadPreset(harnessRoot, presetName)) ?? null
     const generator = new FileGenerator()
 
     // dry-run 收集文件列表用于预览（deep-agent 模式下预览阶段不跑 agent，只列模板文件）
     const previewResult = await generator.generate({
-      gforgeRoot,
+      harnessRoot,
       preset: effectivePreset,
       targetDir,
       scanResult,
@@ -273,7 +282,7 @@ export const initCommand = new Command('init')
       : undefined
 
     const result = await generator.generate({
-      gforgeRoot,
+      harnessRoot,
       preset: effectivePreset,
       targetDir,
       scanResult,
@@ -338,7 +347,7 @@ export const initCommand = new Command('init')
 
     // 安装 git pre-commit hook
     if (installHook) {
-      const hookResult = await installPreCommitHook(gforgeRoot, targetDir, {
+      const hookResult = await installPreCommitHook(harnessRoot, targetDir, {
         overwrite: conflictStrategy === 'overwrite',
         dryRun: options.dryRun ?? false,
       })
@@ -422,21 +431,14 @@ function parseModelFlag(
   return { provider: inferred, model: modelFlag }
 }
 
-function detectPreset(framework: string | null): string {
-  if (!framework) return 'vanilla'
-  const map: Record<string, string> = {
-    'next.js': 'nextjs',
-    react: 'vite-react',
-    vue: 'vite-vue',
-    nuxt: 'nuxt',
-    electron: 'electron',
-    tauri: 'tauri',
-    'react native': 'react-native',
-    nestjs: 'nestjs',
-    nest: 'nestjs',
-    express: 'express',
-    fastify: 'express',
-    hono: 'express',
-  }
-  return map[framework.toLowerCase()] ?? 'vanilla'
+/** 非交互模式下从 scanner 结果合成一行技术栈文本（供 meta.techStack / Deep Agent 上下文使用） */
+function inferTechStackFromScan(scan: import('../scanner/project-scanner.js').ScanResult): string {
+  const t = scan.techStack
+  const parts: string[] = []
+  if (t.framework) parts.push(t.framework)
+  if (t.language) parts.push(t.language)
+  if (t.buildTool) parts.push(t.buildTool)
+  if (t.testRunner) parts.push(t.testRunner)
+  if (t.packageManager) parts.push(t.packageManager)
+  return parts.filter((v, i, a) => a.indexOf(v) === i).join(', ')
 }

@@ -32,7 +32,7 @@
 ## 执行方式
 
 - **自动**：PostToolUse(Write|Edit) hook 在每次文件写入后触发
-- **手动**：`gforge validate` 全量扫描，`gforge check` 增量扫描
+- **手动**：`g-harness validate` 全量扫描，`g-harness check` 增量扫描
 
 ## 自定义规则
 

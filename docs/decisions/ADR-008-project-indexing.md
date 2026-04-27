@@ -9,18 +9,18 @@ superseded_by: null
 
 ## 背景
 
-G-Forge 的目标是让 AI 在规范约束下持续输出高质量代码。v1.2 之前的痛点：
+G-Harness 的目标是让 AI 在规范约束下持续输出高质量代码。v1.2 之前的痛点：
 
 1. **AI 改动前广度扫描浪费 token**：AI 接到"修复路由 X 的 Bug"后，往往用 Glob/Grep 遍历整个仓库寻找定义，动辄消耗数千 token。
 2. **上下文切换无锚点**：CLAUDE.md 只描述了项目结构，没有"某功能入口在哪个文件"的直接索引。
 3. **协议未硬化读索引约定**：feature / bugfix 协议没有强制 AI 先读索引再定位代码，导致 AI 行为依赖模型的先验知识。
 4. **漂移无感知**：即使生成了索引文件，源码变动后索引很快过期，AI 仍读到陈旧信息。
 
-期望：为每个接入 G-Forge 的项目生成一套 AI 必读的索引文件，让 AI 改动前先读索引，并通过协议硬化 + 漂移检测保持索引实时性。
+期望：为每个接入 G-Harness 的项目生成一套 AI 必读的索引文件，让 AI 改动前先读索引，并通过协议硬化 + 漂移检测保持索引实时性。
 
 ## 决策
 
-采用 **`gforge index` 命令生成三件套索引文件**，并通过协议、watch 模式、drift 检测形成闭环。
+采用 **`g-harness index` 命令生成三件套索引文件**，并通过协议、watch 模式、drift 检测形成闭环。
 
 ### 三件套索引文件
 
@@ -32,9 +32,9 @@ G-Forge 的目标是让 AI 在规范约束下持续输出高质量代码。v1.2 
 
 ### 核心命令
 
-- `gforge index` — 全量重建三个索引文件
-- `gforge index --watch` — 监听 `src/` 递归变化，500ms 防抖增量更新；内容未变化时跳过写入避免下游 watcher 级联
-- `gforge index --check` — 漂移检测：对比索引 vs 实际代码，识别 `added` / `removed` / `dangling` 三类漂移，发现时 exit 1（CI 友好）
+- `g-harness index` — 全量重建三个索引文件
+- `g-harness index --watch` — 监听 `src/` 递归变化，500ms 防抖增量更新；内容未变化时跳过写入避免下游 watcher 级联
+- `g-harness index --check` — 漂移检测：对比索引 vs 实际代码，识别 `added` / `removed` / `dangling` 三类漂移，发现时 exit 1（CI 友好）
 
 ### 协议硬化
 
@@ -71,7 +71,7 @@ G-Forge 的目标是让 AI 在规范约束下持续输出高质量代码。v1.2 
 
 ### 方案 C：JSON 索引文件（机读优先）
 
-用 `gforge-index.json` 存索引。
+用 `g-harness-index.json` 存索引。
 
 - 优点：程序友好
 - 缺点：AI 阅读成本更高；非 Claude 系 agent 对 JSON 友好度参差；Markdown 表格 AI 解析更稳
@@ -83,7 +83,7 @@ G-Forge 的目标是让 AI 在规范约束下持续输出高质量代码。v1.2 
 ## 影响
 
 ### 正面
-- AI 改动前读一次索引即可定位代码，token 消耗可下降 30~60%（实测 g-forge 自身仓库）
+- AI 改动前读一次索引即可定位代码，token 消耗可下降 30~60%（实测 g-harness 自身仓库）
 - `--check` 模式在 CI 中强制索引与代码同步，避免陈旧文档
 - 三件套按语义拆分（模块 / 功能 / 路由），AI 可按需读取而非一次性加载所有索引
 - 索引文件是 Markdown 表格，对 Claude / Cursor / Kimi 等主流 agent 都友好

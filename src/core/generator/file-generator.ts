@@ -17,10 +17,12 @@ export interface ProjectMetaInput {
   projectName?: string
   projectDescription?: string
   srcDir?: string
+  /** 用户自由文本的技术栈（来自 Stage 3，如 "TypeScript, React, Next.js, Tailwind CSS"） */
+  techStack?: string
 }
 
 export interface GenerateOptions {
-  gforgeRoot: string
+  harnessRoot: string
   preset: Preset | null
   targetDir: string
   scanResult: ScanResult
@@ -59,6 +61,16 @@ export interface GenerateResult {
   created: string[]
   skipped: string[]
   overwritten: string[]
+}
+
+/** 把用户自填的逗号分隔技术栈文本转成多行列表（与 formatTechStack 保持同构） */
+function formatUserTechStack(text: string): string {
+  const items = text
+    .split(/[,，、]/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+  if (items.length === 0) return text.trim()
+  return items.map((s) => `- ${s}`).join('\n')
 }
 
 export class FileGenerator {
@@ -138,6 +150,7 @@ export class FileGenerator {
         provider: options.provider,
         model: options.model,
         apiKey: options.apiKey,
+        userTechStack: options.meta?.techStack,
       })
     } catch (err) {
       options.onDeepAgentResult?.({
@@ -223,6 +236,10 @@ export class FileGenerator {
       code_style_rules: this.formatCodeStyle(preset),
       commands: this.formatCommands(preset),
       module_map: completion.moduleBreakdown,
+      // 用户自填的技术栈（若有）作为 tech_stack 的优先来源
+      ...(meta?.techStack && meta.techStack.trim().length > 0
+        ? { tech_stack: formatUserTechStack(meta.techStack) }
+        : {}),
       reference_files: '',
       language_and_style: this.formatLanguageStyle(scanResult),
       naming_conventions: '- 文件名：kebab-case（`user-service.ts`）\n- 类名：PascalCase（`UserService`）\n- 函数/变量：camelCase（`getUserById`）\n- 常量：UPPER_SNAKE_CASE（`MAX_RETRY_COUNT`）\n- 接口：PascalCase，不加 I 前缀（`UserProfile`）',
@@ -295,8 +312,8 @@ export class FileGenerator {
   }
 
   private async collectFiles(options: GenerateOptions): Promise<FileEntry[]> {
-    const { gforgeRoot, agents } = options
-    const tplRoot = join(gforgeRoot, 'src', 'templates')
+    const { harnessRoot, agents } = options
+    const tplRoot = join(harnessRoot, 'src', 'templates')
     const adapter = new AgentAdapter()
     const files: FileEntry[] = []
 
@@ -322,7 +339,7 @@ export class FileGenerator {
     // 4. 为每个选中的 agent 生成入口文件 + 配置目录文件
     for (const agent of agents) {
       // 入口模板
-      const entry = await adapter.loadEntryTemplate(gforgeRoot, agent)
+      const entry = await adapter.loadEntryTemplate(harnessRoot, agent)
       if (entry) files.push(entry)
 
       // .ai/ 模板 → agent 特定配置目录
@@ -331,7 +348,7 @@ export class FileGenerator {
 
       // 预设特定规则 → agent 配置目录
       if (options.preset && agent.configDir) {
-        const presetRulesDir = join(gforgeRoot, 'src', 'presets', options.preset.name, 'rules')
+        const presetRulesDir = join(harnessRoot, 'src', 'presets', options.preset.name, 'rules')
         const presetFiles = await this.collectRecursive(presetRulesDir, presetRulesDir)
         for (const f of presetFiles) {
           files.push({ outputPath: `${agent.configDir}/rules/${f.outputPath}`, content: f.content })

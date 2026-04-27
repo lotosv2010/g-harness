@@ -1,18 +1,18 @@
 # API 契约定义
 
-> 定义 G-Forge CLI 工具的命令接口和 Node.js API 规格。
+> 定义 G-Harness CLI 工具的命令接口和 Node.js API 规格。
 > AI 在开发 CLI 命令时必须参考本文件。
 
 ---
 
 ## 1. CLI 命令接口
 
-### 1.1 gforge init
+### 1.1 g-harness init
 
-初始化 G-Forge 规范到目标项目中。
+初始化 G-Harness 规范到目标项目中。
 
 ```bash
-gforge init [options]
+g-harness init [options]
 
 选项：
   --preset <name>       使用预设（nextjs | nuxt | nestjs | vite-vue | vite-react | electron | tauri | react-native | miniprogram | vanilla | base）
@@ -22,10 +22,10 @@ gforge init [options]
   --full                输出完整文档体系（默认仅输出核心层）
 
 示例：
-  gforge init --preset vite-react
-  gforge init --scan
-  gforge init --dry-run
-  gforge init --full              # 输出全部文件（含护栏、技能、Prompt、扩展文档）
+  g-harness init --preset vite-react
+  g-harness init --scan
+  g-harness init --dry-run
+  g-harness init --full              # 输出全部文件（含护栏、技能、Prompt、扩展文档）
 ```
 
 **行为规格：**
@@ -73,12 +73,12 @@ gforge init [options]
   2 — 参数错误
 ```
 
-### 1.2 gforge validate
+### 1.2 g-harness validate
 
-校验目标项目是否符合 G-Forge 规则。
+校验目标项目是否符合 G-Harness 规则。
 
 ```bash
-gforge validate [options]
+g-harness validate [options]
 
 选项：
   --fix                 自动修复可修复的违规（R001、R002、R003）
@@ -92,42 +92,42 @@ gforge validate [options]
   R003  空 catch 块 → 添加 TODO 注释
 
 示例：
-  gforge validate
-  gforge validate --fix
-  gforge validate --format json --severity error
+  g-harness validate
+  g-harness validate --fix
+  g-harness validate --format json --severity error
 ```
 
-### 1.3 gforge check
+### 1.3 g-harness check
 
 轻量级增量校验，只检查 git diff 变更文件。
 
 ```bash
-gforge check [options]
+g-harness check [options]
 
 选项：
   --staged              仅检查暂存区文件（git diff --cached）
   --format <format>     输出格式（text | json），默认 text
 
 示例：
-  gforge check                    # 检查工作区变更
-  gforge check --staged           # 检查暂存区变更
-  gforge check --format json      # JSON 输出
+  g-harness check                    # 检查工作区变更
+  g-harness check --staged           # 检查暂存区变更
+  g-harness check --format json      # JSON 输出
 ```
 
-### 1.4 gforge context
+### 1.4 g-harness context
 
 管理 CLAUDE.md 上下文文件，确保与项目实际结构一致。
 
 ```bash
-gforge context <subcommand>
+g-harness context <subcommand>
 
 子命令：
   sync                  扫描项目结构，自动更新 CLAUDE.md 中的技术栈和模块地图
   check                 检查 CLAUDE.md 是否与代码结构一致，报告不一致项
 
 示例：
-  gforge context sync             # 自动更新 CLAUDE.md
-  gforge context check            # 检查一致性
+  g-harness context sync             # 自动更新 CLAUDE.md
+  g-harness context check            # 检查一致性
 ```
 
 **检查项：**
@@ -135,21 +135,21 @@ gforge context <subcommand>
 - 模块地图是否反映 src/ 目录结构
 - 引用的文件路径是否存在
 
-### 1.5 gforge migrate
+### 1.5 g-harness migrate
 
-规范版本升级时迁移目标项目的 G-Forge 配置文件。
+规范版本升级时迁移目标项目的 G-Harness 配置文件。
 
 ```bash
-gforge migrate [options]
+g-harness migrate [options]
 
 选项：
   --from <version>      源版本（省略则自动检测）
-  --to <version>        目标版本（默认使用当前 G-Forge 版本）
+  --to <version>        目标版本（默认使用当前 G-Harness 版本）
   --dry-run             仅预览迁移方案
 
 示例：
-  gforge migrate --from 0.1 --to 0.2
-  gforge migrate --dry-run
+  g-harness migrate --from 0.1 --to 0.2
+  g-harness migrate --dry-run
 ```
 
 ---
@@ -159,7 +159,7 @@ gforge migrate [options]
 ### 2.1 项目扫描
 
 ```typescript
-import { ProjectScanner } from 'gforge'
+import { ProjectScanner } from 'g-harness'
 
 interface ScanResult {
   techStack: TechStack
@@ -174,16 +174,16 @@ const result: ScanResult = await scanner.scan('/path/to/project')
 ### 2.2 文件生成
 
 ```typescript
-import { FileGenerator, ProjectScanner, loadPreset, getGForgeRoot } from 'gforge'
+import { FileGenerator, ProjectScanner, loadPreset, getHarnessRoot } from 'g-harness'
 
-const gforgeRoot = getGForgeRoot()
+const harnessRoot = getHarnessRoot()
 const scanner = new ProjectScanner()
 const scanResult = await scanner.scan('/path/to/project')
-const preset = await loadPreset(gforgeRoot, 'vite-react')
+const preset = await loadPreset(harnessRoot, 'vite-react')
 
 const generator = new FileGenerator()
 const result = await generator.generate({
-  gforgeRoot,
+  harnessRoot,
   preset,
   targetDir: '/path/to/project',
   scanResult,
@@ -196,7 +196,7 @@ const result = await generator.generate({
 ### 2.3 规范校验
 
 ```typescript
-import { RuleValidator } from 'gforge'
+import { RuleValidator } from 'g-harness'
 
 const validator = new RuleValidator()
 const result = await validator.validate('/path/to/project', {
@@ -208,7 +208,7 @@ const result = await validator.validate('/path/to/project', {
 ### 2.4 配置迁移
 
 ```typescript
-import { ConfigMigrator } from 'gforge'
+import { ConfigMigrator } from 'g-harness'
 
 interface MigrateResult {
   migrated: string[]

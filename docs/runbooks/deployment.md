@@ -1,6 +1,6 @@
 # 部署操作手册
 
-> 记录 G-Forge CLI 的发布流程和应急操作。
+> 记录 G-Harness CLI 的发布流程和应急操作。
 
 ---
 
@@ -39,7 +39,7 @@ git push --follow-tags
 
 ```bash
 # 如果发布了有问题的版本
-npm unpublish gforge@<version>  # 72 小时内有效
+npm unpublish g-harness@<version>  # 72 小时内有效
 # 或发布修复版本
 npm publish --tag latest
 ```

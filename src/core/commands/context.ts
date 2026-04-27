@@ -9,7 +9,7 @@ export const contextCommand = new Command('context')
       .description('扫描项目结构，更新 CLAUDE.md 中的动态段落')
       .action(async () => {
         const targetDir = process.cwd()
-        console.log(pc.bold('\n🔄 G-Forge Context Sync\n'))
+        console.log(pc.bold('\n🔄 G-Harness Context Sync\n'))
 
         const analyzer = new ContextAnalyzer()
         const result = await analyzer.sync(targetDir)
@@ -36,7 +36,7 @@ export const contextCommand = new Command('context')
       .description('检查 CLAUDE.md 是否与项目实际结构一致')
       .action(async () => {
         const targetDir = process.cwd()
-        console.log(pc.bold('\n🔍 G-Forge Context Check\n'))
+        console.log(pc.bold('\n🔍 G-Harness Context Check\n'))
 
         const analyzer = new ContextAnalyzer()
         const result = await analyzer.check(targetDir)
@@ -65,7 +65,7 @@ export const contextCommand = new Command('context')
           console.log()
         }
 
-        console.log(pc.dim('运行 gforge context sync 可自动修复部分问题\n'))
+        console.log(pc.dim('运行 g-harness context sync 可自动修复部分问题\n'))
         process.exitCode = errors.length > 0 ? 1 : 0
       }),
   )

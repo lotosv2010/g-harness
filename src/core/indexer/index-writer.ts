@@ -6,7 +6,7 @@ export function renderProjectMap(index: ProjectIndex): string {
   const lines: string[] = []
   lines.push('# 项目地图（PROJECT_MAP）')
   lines.push('')
-  lines.push('> 由 `gforge index` 自动生成。AI 在改动前应优先阅读本文件，避免整体扫描源码。')
+  lines.push('> 由 `g-harness index` 自动生成。AI 在改动前应优先阅读本文件，避免整体扫描源码。')
   lines.push(`> 生成时间：${index.generatedAt}`)
   lines.push('')
   lines.push('## 模块清单')
@@ -27,7 +27,7 @@ export function renderProjectMap(index: ProjectIndex): string {
   lines.push('')
   lines.push('- 修改某个模块前：先读该模块的入口文件（`index.ts`）了解公共 API')
   lines.push('- 新增模块：遵循 ARCHITECTURE.md 模块划分约束，更新本索引')
-  lines.push('- 索引过期：运行 `gforge index` 重新生成')
+  lines.push('- 索引过期：运行 `g-harness index` 重新生成')
   lines.push('')
   return lines.join('\n')
 }
@@ -36,7 +36,7 @@ export function renderFeatures(index: ProjectIndex): string {
   const lines: string[] = []
   lines.push('# 功能清单（FEATURES）')
   lines.push('')
-  lines.push('> 由 `gforge index` 自动生成。功能名 → 入口 + 相关文件的映射，便于 AI 快速定位。')
+  lines.push('> 由 `g-harness index` 自动生成。功能名 → 入口 + 相关文件的映射，便于 AI 快速定位。')
   lines.push(`> 生成时间：${index.generatedAt}`)
   lines.push('')
   lines.push('| 功能 | 入口 | 相关文件 | 状态 |')
@@ -51,7 +51,7 @@ export function renderFeatures(index: ProjectIndex): string {
   lines.push('')
   lines.push('## 如何扩展')
   lines.push('')
-  lines.push('- 新增功能：先更新 SPEC.md 的功能需求，再实现并运行 `gforge index` 刷新')
+  lines.push('- 新增功能：先更新 SPEC.md 的功能需求，再实现并运行 `g-harness index` 刷新')
   lines.push('- Bug 修复：在 FEATURES 中查找功能对应入口，缩小定位范围')
   lines.push('')
   return lines.join('\n')
@@ -61,7 +61,7 @@ export function renderRoutes(index: ProjectIndex): string {
   const lines: string[] = []
   lines.push('# 路由表（ROUTES）')
   lines.push('')
-  lines.push('> 由 `gforge index` 自动生成。路径 → handler 文件的映射。')
+  lines.push('> 由 `g-harness index` 自动生成。路径 → handler 文件的映射。')
   lines.push(`> 生成时间：${index.generatedAt}`)
   lines.push('')
 

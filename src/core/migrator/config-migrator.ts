@@ -1,7 +1,7 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises'
 import { join, dirname } from 'node:path'
 import { resolveVariables } from '../variables.js'
-import { scanManagedFiles, hasGForgeMarker } from './file-scanner.js'
+import { scanManagedFiles, hasHarnessMarker } from './file-scanner.js'
 import { diffAndMerge, needsManualReview } from './diff-engine.js'
 import { detectVersion, getCurrentVersion, needsMigration } from './version-detector.js'
 
@@ -9,8 +9,8 @@ import { detectVersion, getCurrentVersion, needsMigration } from './version-dete
 export interface MigrateOptions {
   /** 目标项目根目录 */
   targetDir: string
-  /** G-Forge 安装根目录 */
-  gforgeRoot: string
+  /** G-Harness 安装根目录 */
+  harnessRoot: string
   /** 源版本（为空时自动检测） */
   fromVersion: string
   /** 目标版本（为空时使用当前版本） */
@@ -40,8 +40,8 @@ export interface MigrateResult {
  * - AGENTS.md → src/templates/AGENTS.template.md
  * - docs/XXX.md → src/templates/docs/XXX.template.md
  */
-function resolveTemplatePath(gforgeRoot: string, outputPath: string): string {
-  const tplRoot = join(gforgeRoot, 'src', 'templates')
+function resolveTemplatePath(harnessRoot: string, outputPath: string): string {
+  const tplRoot = join(harnessRoot, 'src', 'templates')
 
   // .claude/ 目录映射回 .ai/
   if (outputPath.startsWith('.claude/')) {
@@ -100,7 +100,7 @@ function extractVariablesFromTemplate(
 }
 
 /**
- * 配置文件迁移器 — 在 G-Forge 规范版本升级时迁移目标项目的配置文件
+ * 配置文件迁移器 — 在 G-Harness 规范版本升级时迁移目标项目的配置文件
  */
 export class ConfigMigrator {
   /**
@@ -147,7 +147,7 @@ export class ConfigMigrator {
     result: MigrateResult,
   ): Promise<void> {
     // 读取对应的模板文件
-    const templatePath = resolveTemplatePath(options.gforgeRoot, relativePath)
+    const templatePath = resolveTemplatePath(options.harnessRoot, relativePath)
     const templateContent = await this.readTemplateSafe(templatePath)
 
     if (!templateContent) {
@@ -156,8 +156,8 @@ export class ConfigMigrator {
       return
     }
 
-    // 如果文件不包含 G-Forge 标记，可能是用户完全自定义的
-    if (!hasGForgeMarker(currentContent)) {
+    // 如果文件不包含 G-Harness 标记，可能是用户完全自定义的
+    if (!hasHarnessMarker(currentContent)) {
       result.skipped.push(relativePath)
       return
     }
@@ -199,9 +199,9 @@ export class ConfigMigrator {
     }
   }
 
-  /** 写入 .gforge-version 文件 */
+  /** 写入 .g-harness-version 文件 */
   private async writeVersionFile(targetDir: string, version: string): Promise<void> {
-    const versionPath = join(targetDir, '.gforge-version')
+    const versionPath = join(targetDir, '.g-harness-version')
     await writeFile(versionPath, `${version}\n`, 'utf-8')
   }
 }

@@ -55,5 +55,5 @@ extensions:
 ## 后果
 
 - **正面**：Skill 文件可被任意 AI 工具解析通用部分，工具专有配置隔离不污染
-- **负面**：已有 Claude Code 项目需迁移（通过 `gforge migrate` 处理）
+- **负面**：已有 Claude Code 项目需迁移（通过 `g-harness migrate` 处理）
 - **注意**：Claude Code 解析器需同时兼容新旧格式

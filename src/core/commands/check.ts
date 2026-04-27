@@ -46,14 +46,14 @@ function filterSourceFiles(files: string[]): string[] {
 }
 
 export const checkCommand = new Command('check')
-  .description('校验 git 变更文件是否符合 G-Forge 规则（轻量级增量检查）')
+  .description('校验 git 变更文件是否符合 G-Harness 规则（轻量级增量检查）')
   .option('--staged', '仅检查暂存区文件（git diff --cached）')
   .option('--format <fmt>', '输出格式（text | json）', 'text')
   .action(async (options: CliCheckOptions) => {
     const targetDir = process.cwd()
     const staged = options.staged ?? false
 
-    console.log(pc.bold(`\n🔍 G-Forge 增量校验${staged ? '（暂存区）' : '（工作区）'}\n`))
+    console.log(pc.bold(`\n🔍 G-Harness 增量校验${staged ? '（暂存区）' : '（工作区）'}\n`))
 
     // 获取变更文件
     let changedFiles: string[]

@@ -1,6 +1,6 @@
-# G-Forge 产品说明书 & 需求规格说明书
+# G-Harness 产品说明书 & 需求规格说明书
 
-> 本文件是 G-Forge 项目的核心需求文档，合并产品定义与需求规格。
+> 本文件是 G-Harness 项目的核心需求文档，合并产品定义与需求规格。
 > AI 在做任何功能决策、架构决策前必须参考本文件。
 
 ---
@@ -9,7 +9,7 @@
 
 ### 1.1 产品定位
 
-G-Forge 是一套**面向 AI 编程助手优化的通用工程化规范框架 + CLI 工具**（Harness Engineering 范式），旨在通过结构化的规则、协议、模板和预设，引导 AI 在任意技术栈的项目中持续输出一致的、生产级的代码。
+G-Harness 是一套**面向 AI 编程助手优化的通用工程化规范框架 + CLI 工具**（Harness Engineering 范式），旨在通过结构化的规则、协议、模板和预设，引导 AI 在任意技术栈的项目中持续输出一致的、生产级的代码。
 
 **一句话定义：** 让 AI 遵守你的工程规范，而不是你适应 AI 的输出。
 
@@ -27,19 +27,19 @@ G-Forge 是一套**面向 AI 编程助手优化的通用工程化规范框架 + 
 
 | 用户画像 | 核心需求 | 使用场景 |
 |----------|----------|----------|
-| 技术团队 Leader | 统一团队 AI 开发规范 | 团队全员接入 G-Forge，降低代码审查成本 |
+| 技术团队 Leader | 统一团队 AI 开发规范 | 团队全员接入 G-Harness，降低代码审查成本 |
 | 架构师 | 维持 AI 协作下的架构完整性 | 通过规则和护栏约束 AI 不破坏架构边界 |
-| 独立开发者 | 快速搭建最佳实践项目结构 | `gforge init` 一键初始化规范 |
-| AI 工具开发者 | 集成 G-Forge 规范到工具链 | 通过 Node.js API 程序化调用 |
+| 独立开发者 | 快速搭建最佳实践项目结构 | `g-harness init` 一键初始化规范 |
+| AI 工具开发者 | 集成 G-Harness 规范到工具链 | 通过 Node.js API 程序化调用 |
 
 ### 1.4 产品边界
 
-**G-Forge 是：**
+**G-Harness 是：**
 - 一套通用规范文件集合（规则、协议、模板、Prompt）
 - 一个 CLI 工具，将规范初始化、校验、同步到目标项目
 - 一个预设系统，支持不同技术栈开箱即用
 
-**G-Forge 不是：**
+**G-Harness 不是：**
 - 不是 UI 组件库
 - 不是构建工具（不替代 Vite / Webpack / Turbo）
 - 不是 CI/CD 系统
@@ -54,7 +54,7 @@ G-Forge 是一套**面向 AI 编程助手优化的通用工程化规范框架 + 
 
 ### 2.1 功能需求
 
-#### FR-01：项目初始化（gforge init）
+#### FR-01：项目初始化（g-harness init）
 
 **优先级：** P0
 
@@ -111,11 +111,11 @@ G-Forge 是一套**面向 AI 编程助手优化的通用工程化规范框架 + 
 - [x] 确认预览：执行前展示文件树和配置摘要
 - [x] `--yes` 跳过所有交互、`--name` 指定项目名、`--conflict` 指定冲突策略
 
-#### FR-02：规范校验（gforge validate）
+#### FR-02：规范校验（g-harness validate）
 
 **优先级：** P0
 
-**描述：** 检查目标项目源码是否符合 G-Forge 规则。
+**描述：** 检查目标项目源码是否符合 G-Harness 规则。
 
 **内置校验规则：**
 
@@ -148,7 +148,7 @@ G-Forge 是一套**面向 AI 编程助手优化的通用工程化规范框架 + 
 - [x] 校验器自身源码通过自检（无误报）
 - [x] `--fix` 自动修复基础规则（R001、R002、R003）
 
-#### FR-03：上下文同步（gforge context）
+#### FR-03：上下文同步（g-harness context）
 
 **优先级：** P1
 
@@ -163,18 +163,18 @@ G-Forge 是一套**面向 AI 编程助手优化的通用工程化规范框架 + 
 - [x] `check` 能报告过期的配置项
 - [x] 不覆盖用户手动编辑的内容
 
-#### FR-04：规范迁移（gforge migrate）
+#### FR-04：规范迁移（g-harness migrate）
 
 **优先级：** P1
 
-**描述：** G-Forge 版本升级时，迁移目标项目的规范文件。
+**描述：** G-Harness 版本升级时，迁移目标项目的规范文件。
 
 **验收标准：**
 - [x] 支持版本间差量迁移（section-level 合并）
 - [x] `--dry-run` 预览迁移方案
 - [x] 无法自动迁移的项标记为 `manualRequired`
 
-#### FR-06：项目索引（gforge index）
+#### FR-06：项目索引（g-harness index）
 
 **优先级：** P0（v1.3）
 
@@ -190,7 +190,7 @@ G-Forge 是一套**面向 AI 编程助手优化的通用工程化规范框架 + 
 - `--check` — 漂移检测：对比索引 vs 实际代码，发现 `added` / `removed` / `dangling` 项时 exit 1
 
 **验收标准：**
-- [x] 首次 `gforge index` 能为 g-forge 自身生成三份与实际代码一致的索引
+- [x] 首次 `g-harness index` 能为 g-harness 自身生成三份与实际代码一致的索引
 - [x] `--watch` 启动即全量刷新，文件变化触发增量重建，Ctrl+C 优雅退出
 - [x] `--check` 识别三类漂移并返回非零退出码
 - [x] 协议硬化：feature / bugfix 协议阶段 1 显式要求读索引，禁止未读索引就整库扫描
@@ -241,7 +241,7 @@ G-Forge 是一套**面向 AI 编程助手优化的通用工程化规范框架 + 
 **Human-in-the-loop：** askUser 工具可选启用，shallow 禁用 / medium 最多 2 次 / deep 最多 3 次；非交互模式静默禁用。
 
 **可观测性：**
-- 运行时写 `docs/.gforge/agent-trace-{ts}.jsonl`，每行一条 step；末尾 summary 记录步数 / 费用 / 降级原因
+- 运行时写 `docs/.g-harness/agent-trace-{ts}.jsonl`，每行一条 step；末尾 summary 记录步数 / 费用 / 降级原因
 - Stage 6 预览展示预估 token / 费用 / 耗时（`preflight.ts::estimateRun`）+ 降级策略说明
 - `onDeepAgentResult` 回调实时反馈成功草稿数、成本、trace 路径或降级原因
 
@@ -300,8 +300,8 @@ src/presets/<name>/
 
 | 指标 | 目标值 |
 |------|--------|
-| `gforge init` 耗时 | 新项目 < 5 秒，已有项目 < 10 秒 |
-| `gforge validate` 耗时 | 1000 文件以下 < 10 秒 |
+| `g-harness init` 耗时 | 新项目 < 5 秒，已有项目 < 10 秒 |
+| `g-harness validate` 耗时 | 1000 文件以下 < 10 秒 |
 | CLI 启动时间 | < 500ms |
 | 内存占用 | < 256MB |
 
@@ -322,9 +322,9 @@ src/presets/<name>/
 
 #### NFR-04：可维护性
 
-- 所有源码遵循 G-Forge 自身规范（吃自己的狗粮）
+- 所有源码遵循 G-Harness 自身规范（吃自己的狗粮）
 - 核心模块测试覆盖率 > 80%
-- 代码质量通过 `gforge validate` 零违规
+- 代码质量通过 `g-harness validate` 零违规
 
 #### NFR-05：可扩展性
 
@@ -342,7 +342,7 @@ src/presets/<name>/
 | v1.0 | 16 个预设全部落地 + 多 AI 助手适配层 | 已完成 |
 | v1.1 | Init 交互流程重设计（6 阶段 Wizard，ADR-007） | 已完成 |
 | v1.2 | 工程生命周期补全（4 skill + 3 protocol） | 已完成 |
-| v1.3 | 智能补全 + 项目索引（gforge index / LLM 增强层 / 老项目 auto-describe） | 已完成 |
+| v1.3 | 智能补全 + 项目索引（g-harness index / LLM 增强层 / 老项目 auto-describe） | 已完成 |
 | v1.4 | Deep Agent 驱动规范生成（LangGraph.js + deepagents，三档 depth，三级降级链，ADR-010） | 已完成 |
 | v1.4.1 | Provider / Model / API Key 交互选择（ADR-011） | 已完成 |
 | v2.0 | 生产就绪，完整文档、示例项目、自定义规则 API | 计划中 |
@@ -352,7 +352,7 @@ src/presets/<name>/
 | 指标 | 目标 |
 |------|------|
 | 初始化耗时 | 新项目 < 5 秒 |
-| AI 代码合规率 | 使用 G-Forge 后架构违规降低 80% |
-| 采纳成本 | 第 1 天即可体验价值（仅需 `gforge init`） |
+| AI 代码合规率 | 使用 G-Harness 后架构违规降低 80% |
+| 采纳成本 | 第 1 天即可体验价值（仅需 `g-harness init`） |
 | 技术栈覆盖 | v1.0 支持 React、Vue、Node.js 三大预设 |
-| 自检通过率 | G-Forge 自身源码零违规 |
+| 自检通过率 | G-Harness 自身源码零违规 |

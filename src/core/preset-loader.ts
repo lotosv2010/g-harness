@@ -23,11 +23,11 @@ export interface Preset {
 }
 
 export async function loadPreset(
-  gforgeRoot: string,
+  harnessRoot: string,
   presetName: string,
 ): Promise<Preset | null> {
   try {
-    const presetPath = join(gforgeRoot, 'src', 'presets', presetName, 'preset.json')
+    const presetPath = join(harnessRoot, 'src', 'presets', presetName, 'preset.json')
     const content = await readFile(presetPath, 'utf-8')
     return JSON.parse(content) as Preset
   } catch {

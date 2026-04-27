@@ -82,6 +82,7 @@ export async function runDeepAgent(options: DeepAgentOptions): Promise<DeepAgent
     presetName: options.preset?.name ?? null,
     depth: options.depth,
     techStack: extractStack(options),
+    userTechStack: options.userTechStack,
     hasIndex,
     outputWhitelist: [...OUTPUT_WHITELIST_DEFAULT],
   })
@@ -202,7 +203,7 @@ async function invokeAgent(args: {
   const { runnable, prompt, signal, cost, steps, emit } = args
   const r = runnable as LangGraphRunnable
   const input = { messages: [{ role: 'user', content: prompt }] }
-  const cfg = { signal, configurable: { thread_id: `gforge-${Date.now()}` } }
+  const cfg = { signal, configurable: { thread_id: `g-harness-${Date.now()}` } }
 
   let lastState: Record<string, unknown> = {}
   if (typeof r.stream === 'function') {

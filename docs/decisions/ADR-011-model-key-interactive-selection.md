@@ -61,7 +61,7 @@ v1.4 完成 Deep Agent（ADR-010）与 v1.3 完成窄增强（ADR-009）后，�
 
 - 交互流完整：从"选模式"到"跑 agent"不再有隐藏自动推断
 - 成本可预期：用户知道选的是哪档模型、每千 token 多少钱
-- CI 可脚本化：`gforge init --deep-agent --depth deep --model claude-sonnet-4-5 --yes`
+- CI 可脚本化：`g-harness init --deep-agent --depth deep --model claude-sonnet-4-5 --yes`
 - 风险可控：key 始终通过 env / stdin 交付，不走 CLI argv
 
 ### 负面影响 / 权衡

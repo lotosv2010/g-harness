@@ -9,7 +9,7 @@
 
 ### 阶段 1：复现与定位
 - [ ] 确认 Bug 具体表现（错误信息、复现步骤）
-- [ ] **读 `docs/PROJECT_MAP.md` + `docs/FEATURES.md` + `docs/ROUTES.md` 定位涉及的模块与文件**（索引缺失时运行 `gforge index`）
+- [ ] **读 `docs/PROJECT_MAP.md` + `docs/FEATURES.md` + `docs/ROUTES.md` 定位涉及的模块与文件**（索引缺失时运行 `g-harness index`）
 - [ ] 使用搜索工具定位具体代码行（基于索引提供的文件路径）
 - [ ] 分析根因（非表面症状）
 - [ ] 检查相关测试用例

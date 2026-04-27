@@ -14,14 +14,14 @@
 
 ## 项目概述
 
-G-Forge 是一套 AI 驱动的工程化规范框架 + CLI 工具（Harness Engineering 范式），旨在通过结构化的规则、协议、模板和预设，引导 AI 在任意技术栈的项目中持续输出一致的、生产级的代码。
+G-Harness 是一套 AI 驱动的工程化规范框架 + CLI 工具（Harness Engineering 范式），旨在通过结构化的规则、协议、模板和预设，引导 AI 在任意技术栈的项目中持续输出一致的、生产级的代码。
 
-**G-Forge 是：**
+**G-Harness 是：**
 - 一套通用规范文件集合（规则、协议、模板、Prompt）
 - 一个 CLI 工具，将规范初始化、校验、同步到目标项目
 - 一个预设系统，支持不同技术栈（React、Vue、Node.js 等）
 
-**G-Forge 不是：**
+**G-Harness 不是：**
 - 一个含有 web/server 等业务包的应用
 - 一个特定技术栈的框架
 - 一个 Monorepo 运行时
@@ -38,7 +38,7 @@ G-Forge 是一套 AI 驱动的工程化规范框架 + CLI 工具（Harness Engin
 ## 目录结构
 
 ```
-g-forge/
+g-harness/
 ├── AGENTS.md                  # 通用 AI 开发规范
 ├── CLAUDE.md                  # Claude Code 专用配置（本文件）
 ├── README.md                  # 项目说明
@@ -61,7 +61,7 @@ g-forge/
 │   ├── rules/                 # 硬性规则
 │   ├── protocols/             # 任务执行协议
 │   ├── skills/                # 可复用能力模板
-│   ├── prompts/               # AI 开发 Prompt（g-forge 专用）
+│   ├── prompts/               # AI 开发 Prompt（g-harness 专用）
 │   ├── guardrails/            # 自动约束检查
 │   └── hooks/                 # 事件钩子
 │
@@ -148,15 +148,15 @@ pnpm typecheck        # 类型检查
 
 | 目录 | 用途 | 面向 | 特点 |
 |------|------|------|------|
-| `.claude/rules/` | 开发 g-forge 本身的规则 | 本项目 | 具体化，g-forge 特定 |
+| `.claude/rules/` | 开发 g-harness 本身的规则 | 本项目 | 具体化，g-harness 特定 |
 | `src/templates/.ai/rules/` | 输出给目标项目的规则 | 目标项目 | 通用化，带 `{{variable}}` 占位符 |
-| `.claude/protocols/` | 开发 g-forge 本身的协议 | 本项目 | 具体化 |
+| `.claude/protocols/` | 开发 g-harness 本身的协议 | 本项目 | 具体化 |
 | `src/templates/.ai/protocols/` | 输出给目标项目的协议 | 目标项目 | 通用化 |
 | `src/templates/` | 所有可分发内容，1:1 镜像目标项目 | 目标项目 | 技术栈无关 |
 | `src/presets/` | 技术栈预设，CLI init 时选择 | 目标项目 | 补充 templates 的栈特定内容 |
 
 > **设计说明：**
-> - 根 `.claude/` 是 g-forge 项目自身的具体规则（如引用 `src/core/`）。
+> - 根 `.claude/` 是 g-harness 项目自身的具体规则（如引用 `src/core/`）。
 > - `src/templates/.ai/` 是面向任意目标项目的通用版本（使用 `{{variable}}`）。
 > - 模板源码使用 `.ai/` 命名以表达"AI 通用"语义，生成器输出时自动映射为 `.claude/`。
 

@@ -3,7 +3,7 @@
 > 本文件定义所有 AI 编程助手（Claude Code、Cursor、Copilot、Windsurf 等）共同遵守的开发规范。
 > 与具体 AI 工具无关，是团队与 AI 协作的基础契约。
 > 
-> 注意：本文件为开发 g-forge 项目本身的规范。
+> 注意：本文件为开发 g-harness 项目本身的规范。
 > 目标项目的通用规范模板见 `src/templates/AGENTS.template.md`。
 
 ---
@@ -63,7 +63,7 @@ AI 在执行任何代码变更前，必须：
 
 ### 2.3 文件组织
 
-g-forge 项目的目录职责：
+g-harness 项目的目录职责：
 
 | 目录 | 职责 | 允许的内容 |
 |------|------|-----------|
@@ -71,7 +71,7 @@ g-forge 项目的目录职责：
 | `src/core/` | 核心逻辑模块 | 命令、扫描、生成、校验、迁移、工具函数 |
 | `src/presets/` | 技术栈预设 | preset.json + 栈特定规范 |
 | `src/templates/` | 可分发的模板 | 镜像目标项目结构：`.claude/`（规则/协议/护栏/Prompt）、`docs/`、模板文件 |
-| `.claude/` | Claude Code 配置 | 开发 g-forge 自身的规则/协议 |
+| `.claude/` | Claude Code 配置 | 开发 g-harness 自身的规则/协议 |
 | `tools/` | 工具层 | Prompt 模板 + 自动化脚本 |
 
 ---

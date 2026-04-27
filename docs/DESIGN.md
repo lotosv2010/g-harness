@@ -1,6 +1,6 @@
 # 技术 / UI 设计文档
 
-> 记录 G-Forge 的技术设计决策和界面设计规范。
+> 记录 G-Harness 的技术设计决策和界面设计规范。
 > AI 在做设计类决策时参考本文件。
 
 ---
@@ -17,11 +17,11 @@
 ### 1.2 命令结构
 
 ```
-gforge <command> [options]
+g-harness <command> [options]
 
 命令层级不超过两层：
-  gforge init         # 一级命令
-  gforge context sync # 二级命令（子命令）
+  g-harness init         # 一级命令
+  g-harness context sync # 二级命令（子命令）
 ```
 
 ### 1.3 退出码

@@ -65,3 +65,17 @@ Feature 模块之间禁止直接导入：
 - 代码检查配置（eslint、prettier 等）
 - 包管理配置（package.json 的 scripts 和 dependencies）
 - AI 规则文件
+
+## A007：测试文件统一放置于根 `{{tests_dir}}/`
+
+所有 `*.test.*` / `*.spec.*` 测试文件必须放在项目根 `{{tests_dir}}/` 目录下，**禁止**在 `{{src_dir}}/` 或其他业务目录下创建测试文件。
+
+理由：
+- 保持业务代码目录整洁，不混杂测试产物
+- 测试集中管理，便于 CI 配置、覆盖率统计与发布时排除
+- 避免模板/构建产物被测试文件污染
+
+要求：
+- 新增测试一律写入 `{{tests_dir}}/<模块路径>/<name>.test.<ext>`
+- 被测模块路径与 `{{src_dir}}/` 结构保持镜像，例如 `{{src_dir}}/features/auth/login.ts` → `{{tests_dir}}/features/auth/login.test.ts`
+- 若框架约定使用 `__tests__/` 同级目录（如部分 React 项目），以 `docs/SPEC.md` 的明确约定为准并在此规则处记录豁免

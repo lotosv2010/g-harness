@@ -11,8 +11,8 @@ import { indexCommand } from './commands/index-cmd.js'
 const program = new Command()
 
 program
-  .name('gforge')
-  .description('AI 驱动的工程化规范框架 CLI')
+  .name('g-harness')
+  .description('AI 驱动的工程化规范框架 CLI（Harness Engineering）')
   .version('0.1.0')
 
 program.addCommand(initCommand)

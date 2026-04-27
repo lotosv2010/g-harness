@@ -1,10 +1,10 @@
 {
-  "name": "gforge",
+  "name": "g-harness",
   "version": "0.1.0",
-  "description": "AI 驱动的工程化规范框架 + CLI 工具",
+  "description": "AI 驱动的工程化规范框架 + CLI 工具（Harness Engineering）",
   "type": "module",
   "bin": {
-    "gforge": "./dist/core/index.js"
+    "g-harness": "./dist/core/index.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -27,7 +27,7 @@
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit",
     "link": "pnpm run build && npm link",
-    "unlink": "npm unlink -g gforge",
+    "unlink": "npm unlink -g g-harness",
     "prepare": "pnpm run build"
   },
   "keywords": [

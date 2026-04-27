@@ -54,7 +54,7 @@ export class ContextAnalyzer {
     const changes: string[] = []
 
     if (!(await fileExists(claudeMdPath))) {
-      return { updated: false, changes: ['CLAUDE.md 不存在，请先运行 gforge init'] }
+      return { updated: false, changes: ['CLAUDE.md 不存在，请先运行 g-harness init'] }
     }
 
     let content = await readFile(claudeMdPath, 'utf-8')

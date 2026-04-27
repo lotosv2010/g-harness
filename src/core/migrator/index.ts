@@ -2,7 +2,7 @@
 export { ConfigMigrator } from './config-migrator.js'
 export type { MigrateOptions, MigrateResult } from './config-migrator.js'
 export { detectVersion, getCurrentVersion, needsMigration } from './version-detector.js'
-export { scanManagedFiles, hasGForgeMarker } from './file-scanner.js'
+export { scanManagedFiles, hasHarnessMarker } from './file-scanner.js'
 export { diffAndMerge, needsManualReview, parseSections } from './diff-engine.js'
 export type { DiffResult, Section } from './diff-engine.js'
 export {

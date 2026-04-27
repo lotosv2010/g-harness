@@ -2,14 +2,18 @@ import { readFile } from 'node:fs/promises'
 import { join, relative } from 'node:path'
 import { fileExists, readDirSafe, statSafe, isDirectory } from '../fs-utils.js'
 
-/** G-Forge 管理文件的标记模式 */
-const GFORGE_MARKERS = [
+/** G-Harness 管理文件的标记模式 */
+const HARNESS_MARKERS = [
+  '由 G-Harness 生成',
+  'G-Harness generated',
+  'g-harness-version:',
+  // 向后兼容旧版 G-Forge 标记
   '由 G-Forge 生成',
   'G-Forge generated',
   'gforge-version:',
 ]
 
-/** G-Forge 已知的管理路径（相对于目标项目根目录） */
+/** G-Harness 已知的管理路径（相对于目标项目根目录） */
 const MANAGED_PATHS = [
   'CLAUDE.md',
   'AGENTS.md',
@@ -33,12 +37,12 @@ export interface ManagedFile {
   relativePath: string
   /** 文件内容 */
   content: string
-  /** 是否包含 G-Forge 标记 */
+  /** 是否包含 G-Harness 标记 */
   hasMarker: boolean
 }
 
 /**
- * 扫描目标项目中所有受 G-Forge 管理的文件
+ * 扫描目标项目中所有受 G-Harness 管理的文件
  */
 export async function scanManagedFiles(targetDir: string): Promise<ManagedFile[]> {
   const results: ManagedFile[] = []
@@ -60,12 +64,12 @@ export async function scanManagedFiles(targetDir: string): Promise<ManagedFile[]
 }
 
 /**
- * 检测文件内容是否包含 G-Forge 管理标记
+ * 检测文件内容是否包含 G-Harness 管理标记
  */
-export function hasGForgeMarker(content: string): boolean {
+export function hasHarnessMarker(content: string): boolean {
   // 只检查文件前 500 个字符（标记通常在头部）
   const header = content.slice(0, 500)
-  return GFORGE_MARKERS.some((marker) => header.includes(marker))
+  return HARNESS_MARKERS.some((marker) => header.includes(marker))
 }
 
 /** 递归收集目录中的所有文件 */
@@ -105,7 +109,7 @@ async function readManagedFile(
     return {
       relativePath,
       content,
-      hasMarker: hasGForgeMarker(content),
+      hasMarker: hasHarnessMarker(content),
     }
   } catch {
     return null

@@ -30,7 +30,7 @@ extensions:
 
 ```
 /feat 设计一下初始化时的交互流程，支持新建和老项目
-/feat 新增 gforge diff 命令，对比本地规范与最新模板的差异
+/feat 新增 g-harness diff 命令，对比本地规范与最新模板的差异
 /feat 支持自定义模板变量的校验规则
 ```
 

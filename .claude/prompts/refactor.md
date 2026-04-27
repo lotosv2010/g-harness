@@ -1,6 +1,6 @@
-# Prompt：g-forge 重构请求
+# Prompt：g-harness 重构请求
 
-> 请求 Claude Code 对 g-forge 代码进行重构时使用。
+> 请求 Claude Code 对 g-harness 代码进行重构时使用。
 
 ---
 

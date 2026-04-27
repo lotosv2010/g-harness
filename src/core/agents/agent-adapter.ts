@@ -45,10 +45,10 @@ export class AgentAdapter {
   }
 
   // 加载 agent 专属的入口模板
-  async loadEntryTemplate(gforgeRoot: string, agent: AgentDefinition): Promise<FileEntry | null> {
+  async loadEntryTemplate(harnessRoot: string, agent: AgentDefinition): Promise<FileEntry | null> {
     if (!agent.entryTemplate || !agent.entryFile) return null
 
-    const templatePath = join(gforgeRoot, 'src', 'templates', 'entries', agent.entryTemplate)
+    const templatePath = join(harnessRoot, 'src', 'templates', 'entries', agent.entryTemplate)
     try {
       const content = await readFile(templatePath, 'utf-8')
       return { outputPath: agent.entryFile, content }

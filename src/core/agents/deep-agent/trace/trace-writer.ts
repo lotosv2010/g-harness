@@ -1,11 +1,11 @@
 // Trace 写入器 —— 按时间戳写 JSONL 追踪文件
 //
 // 设计要点：
-// - 每次 runDeepAgent 独立一份 `docs/.gforge/agent-trace-{ts}.jsonl`
+// - 每次 runDeepAgent 独立一份 `docs/.g-harness/agent-trace-{ts}.jsonl`
 // - 每行一条 step（thought / tool_call / tool_result / message / error）
 // - 末尾额外写一行 summary（steps/tokens/duration/status）
 // - 使用 stream append，避免内存中聚合；CLI 崩溃也能保留已写入的步骤
-// - 路径固定在目标项目下的 docs/.gforge/，便于追溯；需要确保目录存在
+// - 路径固定在目标项目下的 docs/.g-harness/，便于追溯；需要确保目录存在
 
 import { appendFile, mkdir } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
@@ -35,7 +35,7 @@ export class TraceWriter {
   constructor(opts: TraceWriterOptions) {
     this.startedAt = opts.startedAt ?? Date.now()
     const ts = new Date(this.startedAt).toISOString().replace(/[:.]/g, '-')
-    this.path = join(opts.targetDir, 'docs', '.gforge', `agent-trace-${ts}.jsonl`)
+    this.path = join(opts.targetDir, 'docs', '.g-harness', `agent-trace-${ts}.jsonl`)
   }
 
   get filePath(): string {

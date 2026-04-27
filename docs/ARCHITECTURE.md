@@ -1,6 +1,6 @@
 # 架构白皮书
 
-> 定义 G-Forge 框架的技术架构、模块划分与部署方案。
+> 定义 G-Harness 框架的技术架构、模块划分与部署方案。
 > AI 在做任何架构决策前必须参考本文件。
 
 ---
@@ -9,7 +9,7 @@
 
 ### 1.1 五层 Harness 架构
 
-G-Forge 通过五层结构将规范应用到目标项目：
+G-Harness 通过五层结构将规范应用到目标项目：
 
 ```
 ┌──────────────────────────────────────────┐
@@ -28,7 +28,7 @@ G-Forge 通过五层结构将规范应用到目标项目：
 ### 1.2 项目结构
 
 ```
-g-forge/
+g-harness/
 ├── AGENTS.md / CLAUDE.md / README.md
 ├── docs/                      # 约束与规格层
 ├── .claude/                   # Claude 行为控制层
@@ -62,7 +62,7 @@ g-forge/
         └── CLAUDE.template.md
 ```
 
-## 2. 技术栈（g-forge 自身）
+## 2. 技术栈（g-harness 自身）
 
 | 层级 | 技术选型 | 理由 |
 |------|----------|------|
@@ -175,7 +175,7 @@ indexer/
 输入：`rootDir` + `ScanResult`
 输出：`docs/PROJECT_MAP.md`、`docs/FEATURES.md`、`docs/ROUTES.md`
 
-命令：`gforge index` / `gforge index --watch` / `gforge index --check`
+命令：`g-harness index` / `g-harness index --watch` / `g-harness index --check`
 
 ### 3.8 src/templates/ — 可分发内容
 
@@ -232,12 +232,12 @@ src/core/agents/deep-agent/
 - 全量 optional：`deepagents` / `@langchain/*` / `zod` 缺失均不反杀主流程
 - 路径安全：所有工具输入路径必须通过 `assertPathSafe`，黑名单 `.env*` / 私钥 / `.git` / `node_modules` / `dist` / `coverage`
 - 输出白名单 10 份；越界输出被 `extractDrafts` 过滤
-- 三级降级由 `fallback.ts` 编排，主流程永远能完成 `gforge init`
+- 三级降级由 `fallback.ts` 编排，主流程永远能完成 `g-harness init`
 
 ## 4. 数据流
 
 ```
-用户运行 gforge init --preset vite-react
+用户运行 g-harness init --preset vite-react
          │
          ▼
    CLI 解析命令参数
@@ -268,7 +268,7 @@ src/core/agents/deep-agent/
 ### 5.1 CLI 工具（主要分发方式）
 
 ```
-npm publish → npmjs.com → npx gforge init
+npm publish → npmjs.com → npx g-harness init
 ```
 
 CLI 是纯本地工具，不需要服务端。

@@ -8,7 +8,7 @@
 ## 检查清单
 
 ### 阶段 1：理解需求
-- [ ] **先读 `docs/PROJECT_MAP.md` 定位相关模块**（索引缺失时先运行 `gforge index`）
+- [ ] **先读 `docs/PROJECT_MAP.md` 定位相关模块**（索引缺失时先运行 `g-harness index`）
 - [ ] 读 `docs/FEATURES.md` 找到已有功能入口，避免重复实现
 - [ ] 读 `docs/ROUTES.md`（若涉及路由改动）
 - [ ] 阅读任务追踪文件，确认当前上下文
@@ -55,6 +55,6 @@
 - [ ] 新增 API → 更新 API 规格文档
 - [ ] 数据模型变更 → 更新数据模型文档
 - [ ] 架构级决策 → 新增 ADR
-- [ ] **新增模块/路由时运行 `gforge index` 刷新索引**（PROJECT_MAP / FEATURES / ROUTES）
+- [ ] **新增模块/路由时运行 `g-harness index` 刷新索引**（PROJECT_MAP / FEATURES / ROUTES）
 
 **完成标志：** `[✓ 阶段5-文档]` 或 `[✓ 阶段5-无需文档更新]`

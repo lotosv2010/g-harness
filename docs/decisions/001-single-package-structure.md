@@ -8,7 +8,7 @@ date: 2026-04-23
 
 ## 背景
 
-G-Forge 是规范框架 + CLI 工具，不是含前后端业务模块的应用。早期的 Monorepo（packages/web, server, ai, shared）引入了不必要的复杂度。
+G-Harness 是规范框架 + CLI 工具，不是含前后端业务模块的应用。早期的 Monorepo（packages/web, server, ai, shared）引入了不必要的复杂度。
 
 ## 决策
 
@@ -29,7 +29,7 @@ src/
 
 - 简单：无 workspace 配置，单次 `tsc` 构建
 - 清晰：根目录是 AI 指导层，`src/` 是产品交付层
-- 一致：G-Forge 自身目录结构与它 init 输出给目标项目的结构对齐
+- 一致：G-Harness 自身目录结构与它 init 输出给目标项目的结构对齐
 
 ## AI 指引
 

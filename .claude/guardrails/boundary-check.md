@@ -1,6 +1,6 @@
-# 边界检查守卫（g-forge 项目自身）
+# 边界检查守卫（g-harness 项目自身）
 
-> AI 编写 g-forge 代码时的自动边界检查。
+> AI 编写 g-harness 代码时的自动边界检查。
 > 目标项目的边界检查见 `src/templates/.ai/guardrails/boundary-check.md`。
 
 ---

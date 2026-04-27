@@ -69,7 +69,7 @@ Deep Agent 路径**全量取代模板变量替换**：对每个输出文件，Ag
 
 **两种触发方式并存：**
 
-1. **CLI flag**：`gforge init --deep-agent [--depth shallow|medium|deep]`（默认 medium）
+1. **CLI flag**：`g-harness init --deep-agent [--depth shallow|medium|deep]`（默认 medium）
 2. **交互式**：Stage 5 新增"生成模式"选择：
    - `template`（默认）：模板 + 规则版补全
    - `llm-enhance`：模板 + 窄 LLM 增强（v1.3 现状）
@@ -85,7 +85,7 @@ Stage 6 预览额外展示：预计 token / 预估费用（基于模型价目）
   - 循环步数：浅 ≤ 10 / 中 ≤ 25 / 深 ≤ 60
   - 总 token：超阈值自动停止并降级到模板路径
   - 单次请求超时：60s；总执行超时：浅 2min / 中 5min / 深 10min
-- **Trace 落盘**：`docs/.gforge/agent-trace-{timestamp}.jsonl`，每行一条 step（thought/tool_call/tool_result/message），便于 debug
+- **Trace 落盘**：`docs/.g-harness/agent-trace-{timestamp}.jsonl`，每行一条 step（thought/tool_call/tool_result/message），便于 debug
 - **流式输出**：CLI 实时打印 Agent 思考 + 工具调用（`p.log.step`），失败时保留部分产出
 
 ### 预设新职责（对应用户 Q7）
@@ -111,7 +111,7 @@ Deep Agent 可产出的文件：
 Deep Agent 路径任何失败都透明降级：
 - LLM provider 不可用 → 降级到 `llm-enhance` 模式
 - `llm-enhance` 也失败 → 降级到 `template` 模式
-- 降级时 CLI 显式打印降级原因，保留 partial 产出到 `docs/.gforge/agent-drafts/`
+- 降级时 CLI 显式打印降级原因，保留 partial 产出到 `docs/.g-harness/agent-drafts/`
 
 ## 备选方案
 
@@ -196,7 +196,7 @@ src/core/agents/deep-agent/
 │   ├── step-limiter.ts         # 循环步数上限
 │   └── timeout.ts              # AbortController 管理
 ├── trace/
-│   └── trace-writer.ts         # 写 docs/.gforge/agent-trace-*.jsonl
+│   └── trace-writer.ts         # 写 docs/.g-harness/agent-trace-*.jsonl
 └── fallback.ts                 # 降级到 llm-enhance / template
 ```
 

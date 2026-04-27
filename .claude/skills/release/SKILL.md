@@ -56,7 +56,7 @@ extensions:
 - [ ] `pnpm typecheck` 通过
 - [ ] `pnpm test` 通过（含覆盖率）
 - [ ] `pnpm lint` 通过
-- [ ] `gforge validate` 零违规
+- [ ] `g-harness validate` 零违规
 
 **文档同步：**
 - [ ] `docs/SPEC.md` 验收标准与实际一致

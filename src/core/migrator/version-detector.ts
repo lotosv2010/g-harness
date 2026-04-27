@@ -1,27 +1,27 @@
 import { readFile } from 'node:fs/promises'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { getGForgeRoot } from '../paths.js'
+import { getHarnessRoot } from '../paths.js'
 
 /** 默认版本号（未检测到时使用） */
 const UNKNOWN_VERSION = '0.0.0'
 
-/** .gforge-version 文件名 */
-const VERSION_FILE = '.gforge-version'
+/** .g-harness-version 文件名 */
+const VERSION_FILE = '.g-harness-version'
 
 /** CLAUDE.md 中版本注释的正则模式 */
-const VERSION_COMMENT_PATTERN = /gforge-version:\s*([\d.]+)/
+const VERSION_COMMENT_PATTERN = /g-harness-version:\s*([\d.]+)/
 
 /**
- * 从目标项目中自动检测当前 G-Forge 版本
+ * 从目标项目中自动检测当前 G-Harness 版本
  *
  * 检测顺序：
- * 1. .gforge-version 文件
+ * 1. .g-harness-version 文件
  * 2. CLAUDE.md 中的版本注释
  * 3. 返回未知版本 '0.0.0'
  */
 export async function detectVersion(targetDir: string): Promise<string> {
-  // 优先检查 .gforge-version 文件
+  // 优先检查 .g-harness-version 文件
   const fromFile = await readVersionFile(targetDir)
   if (fromFile) return fromFile
 
@@ -33,14 +33,14 @@ export async function detectVersion(targetDir: string): Promise<string> {
 }
 
 /**
- * 获取 G-Forge CLI 自身的当前版本
+ * 获取 G-Harness CLI 自身的当前版本
  */
 let cachedVersion: string | null = null
 
 export function getCurrentVersion(): string {
   if (cachedVersion) return cachedVersion
   try {
-    const pkgPath = join(getGForgeRoot(), 'package.json')
+    const pkgPath = join(getHarnessRoot(), 'package.json')
     const content = readFileSync(pkgPath, 'utf-8')
     const pkg = JSON.parse(content) as { version?: string }
     cachedVersion = pkg.version ?? '0.0.0'
@@ -85,7 +85,7 @@ function parseVersion(version: string): VersionParts {
   }
 }
 
-/** 从 .gforge-version 文件读取版本 */
+/** 从 .g-harness-version 文件读取版本 */
 async function readVersionFile(targetDir: string): Promise<string | null> {
   try {
     const content = await readFile(join(targetDir, VERSION_FILE), 'utf-8')

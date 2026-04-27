@@ -19,6 +19,8 @@ export interface SystemPromptContext {
     runtime: string | null
     packageManager: string | null
   }
+  /** 用户在 Stage 3 自填的技术栈原文（优先于 scanner 识别） */
+  userTechStack?: string
   /** 是否已检测到项目索引 —— 若已有索引，优先读索引再决定是否深入 */
   hasIndex: boolean
   /** 输出文件白名单（预先由上层按目标 Agent 决定） */
@@ -47,13 +49,17 @@ export function buildSystemPrompt(ctx: SystemPromptContext): string {
     ? '项目已存在索引（PROJECT_MAP / FEATURES / ROUTES 至少一个）。**必须首先调用 read_index 工具**，再决定是否深入。'
     : '项目暂无索引，需要通过 read_package_json、read_readme、list_dir 建立基线认知。'
 
-  return `你是 **g-forge 规范生成 Deep Agent**，负责为目标项目撰写一套贴合其实际情况的 AI 协作规范文件。
+  const userStackLine = ctx.userTechStack && ctx.userTechStack.trim().length > 0
+    ? `\n- 用户声明技术栈（权威，优先采纳）：${ctx.userTechStack.trim()}`
+    : ''
+
+  return `你是 **g-harness 规范生成 Deep Agent**，负责为目标项目撰写一套贴合其实际情况的 AI 协作规范文件。
 
 ## 项目上下文
 - 名称：${ctx.projectName}
 - 描述：${ctx.projectDescription || '（未提供）'}
 - 预设：${ctx.presetName ?? '未指定'}
-- 技术栈：${stack}
+- 技术栈（来自扫描）：${stack}${userStackLine}
 - 本次分析深度：**${ctx.depth}**（${depthHint}）
 
 ## 输出契约（严格遵守）

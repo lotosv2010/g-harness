@@ -2,7 +2,7 @@
 //
 // 设计要点：
 // - deepagents / @langchain/* / zod 均为 optionalDependencies
-// - 任一缺失都不能导致 g-forge 主流程崩溃（呼应 ADR-010 三级降级链）
+// - 任一缺失都不能导致 g-harness 主流程崩溃（呼应 ADR-010 三级降级链）
 // - 单次进程内结果缓存，避免重复 import
 // - 仅在 deep-agent 路径启用时调用
 
