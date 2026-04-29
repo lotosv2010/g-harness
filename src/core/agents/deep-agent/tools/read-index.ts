@@ -8,11 +8,11 @@
 // 5. 以上全部缺失时，降级为根目录清单（剔除 node_modules / dist / .git 等）
 //
 // 注意：本工具只做只读汇总，不做深度扫描；文件大小截断到 4KB 防止 prompt 溢出。
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { readFile, readdir, stat } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { ToolContext, ToolSpec } from './types.js'
+import type { ZodLike } from '../langchain-shims.js'
 
 /** 文档索引候选（优先级从高到低） */
 const DOC_INDEX_FILES = [
@@ -63,7 +63,7 @@ const ROUTE_DIR_CANDIDATES = [
 
 const MAX_CHUNK_BYTES = 4 * 1024 // 单文件最多贴 4KB，防 prompt 膨胀
 
-export function createReadIndexTool(ctx: ToolContext, z: any): ToolSpec {
+export function createReadIndexTool(ctx: ToolContext, z: ZodLike): ToolSpec {
   return {
     name: 'readIndex',
     description:

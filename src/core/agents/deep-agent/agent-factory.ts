@@ -1,12 +1,17 @@
 // Deep Agent 工厂：将 ToolSpec + system prompt + subAgents 装配为可执行 agent。
 //
 // 注意：本模块不应在未加载 optional deps 的情况下被 import；由 index.ts 守门。
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { buildToolSpecs, type ToolContext, type ToolSpec } from './tools/index.js'
 import { buildSystemPrompt } from './prompts/system-prompt.js'
 import { SUBAGENTS } from './prompts/subagent-prompts.js'
 import { DEFAULT_MODELS, PROVIDER_REGISTRY } from './config.js'
+import {
+  asChatModelCtor,
+  asDeepAgentFactory,
+  asToolFactory,
+  type DeepAgentGraph,
+} from './langchain-shims.js'
 import type { DeepAgentDeps } from './lazy-import.js'
 import type { AgentDefinition } from '../agent-registry.js'
 import type { AgentProvider, Depth } from './types.js'
@@ -31,7 +36,7 @@ export interface BuildAgentInput {
 
 export interface BuiltAgent {
   /** deepagents 返回的 graph 实例（具 invoke / stream 方法） */
-  graph: any
+  graph: DeepAgentGraph
   systemPrompt: string
   toolSpecs: ToolSpec[]
   /** 实际使用的模型 ID */
@@ -53,8 +58,8 @@ function buildChatModel(input: BuildAgentInput): unknown {
 
   switch (cfg.protocol) {
     case 'anthropic-compat': {
-      const Ctor = deps.ChatAnthropic as any
-      if (!Ctor) throw new MissingChatModelError(provider, '@langchain/anthropic')
+      if (!deps.ChatAnthropic) throw new MissingChatModelError(provider, '@langchain/anthropic')
+      const Ctor = asChatModelCtor(deps.ChatAnthropic)
       return new Ctor({
         modelName: model,
         anthropicApiKey: apiKey,
@@ -65,8 +70,8 @@ function buildChatModel(input: BuildAgentInput): unknown {
     }
 
     case 'openai-compat': {
-      const Ctor = deps.ChatOpenAI as any
-      if (!Ctor) throw new MissingChatModelError(provider, '@langchain/openai')
+      if (!deps.ChatOpenAI) throw new MissingChatModelError(provider, '@langchain/openai')
+      const Ctor = asChatModelCtor(deps.ChatOpenAI)
       const extraKwargs = cfg.extraKwargs
       return new Ctor({
         model,
@@ -80,8 +85,8 @@ function buildChatModel(input: BuildAgentInput): unknown {
     }
 
     case 'deepseek': {
-      const Ctor = deps.ChatDeepSeek as any
-      if (!Ctor) throw new MissingChatModelError(provider, '@langchain/deepseek')
+      if (!deps.ChatDeepSeek) throw new MissingChatModelError(provider, '@langchain/deepseek')
+      const Ctor = asChatModelCtor(deps.ChatDeepSeek)
       return new Ctor({
         apiKey,
         model,
@@ -90,17 +95,15 @@ function buildChatModel(input: BuildAgentInput): unknown {
     }
 
     case 'google': {
-      const Ctor = deps.ChatGoogleGenerativeAI as any
-      if (!Ctor) throw new MissingChatModelError(provider, '@langchain/google-genai')
-      return new Ctor({
-        apiKey,
-        model,
-      })
+      if (!deps.ChatGoogleGenerativeAI)
+        throw new MissingChatModelError(provider, '@langchain/google-genai')
+      const Ctor = asChatModelCtor(deps.ChatGoogleGenerativeAI)
+      return new Ctor({ apiKey, model })
     }
 
     case 'ollama': {
-      const Ctor = deps.ChatOllama as any
-      if (!Ctor) throw new MissingChatModelError(provider, '@langchain/ollama')
+      if (!deps.ChatOllama) throw new MissingChatModelError(provider, '@langchain/ollama')
+      const Ctor = asChatModelCtor(deps.ChatOllama)
       return new Ctor({
         model,
         baseUrl: effectiveBaseUrl,
@@ -118,7 +121,7 @@ function buildChatModel(input: BuildAgentInput): unknown {
 
 /** 将 ToolSpec 列表包装为 deepagents 的 LangChain tool */
 function wrapTools(deps: DeepAgentDeps, specs: ToolSpec[]): unknown[] {
-  const tool = deps.tool as any
+  const tool = asToolFactory(deps.tool)
   return specs.map((spec) =>
     tool(spec.handler, {
       name: spec.name,
@@ -143,7 +146,7 @@ export function buildDeepAgent(input: BuildAgentInput): BuiltAgent {
   const llmTools = wrapTools(input.deps, toolSpecs)
   const chatModel = buildChatModel({ ...input, model })
 
-  const createDeepAgent = input.deps.createDeepAgent as any
+  const createDeepAgent = asDeepAgentFactory(input.deps.createDeepAgent)
   // deepagents@1.x 参数名为 systemPrompt（不是 instructions），字符串会被包装进 SystemMessage
   const graph = createDeepAgent({
     model: chatModel,

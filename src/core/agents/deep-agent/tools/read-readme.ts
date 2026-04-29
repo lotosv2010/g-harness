@@ -1,11 +1,11 @@
 // readReadme 工具：读 README.md 前 250 行
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { ToolContext, ToolSpec } from './types.js'
+import type { ZodLike } from '../langchain-shims.js'
 
-export function createReadReadmeTool(ctx: ToolContext, z: any): ToolSpec {
+export function createReadReadmeTool(ctx: ToolContext, z: ZodLike): ToolSpec {
   return {
     name: 'readReadme',
     description: '读取目标项目 README.md 的前 250 行；不存在则返回占位文本',

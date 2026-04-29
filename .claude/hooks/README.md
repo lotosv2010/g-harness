@@ -1,6 +1,7 @@
-# Claude Code 事件钩子
+# Claude Code 事件钩子（规划中 · v0.3）
 
-> 本目录存放 Claude Code Hooks 的实现脚本。
+> **当前状态：** 仅保留文档，尚无实装脚本。计划在 v0.3 里程碑交付。
+> 本目录未来用于存放 Claude Code Hooks 实现脚本。
 > 钩子在 `.claude/settings.json` 中注册，由 Claude Code 在特定事件时自动调用。
 
 ---

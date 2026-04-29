@@ -1,11 +1,11 @@
 // readPresetKnowledge：读预设内置知识库（位于 harnessRoot/src/core/agents/deep-agent/knowledge/）
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { ToolContext, ToolSpec } from './types.js'
+import type { ZodLike } from '../langchain-shims.js'
 
-export function createReadPresetKnowledgeTool(ctx: ToolContext, z: any): ToolSpec {
+export function createReadPresetKnowledgeTool(ctx: ToolContext, z: ZodLike): ToolSpec {
   return {
     name: 'readPresetKnowledge',
     description: '读取内置预设知识库（最佳实践、陷阱、分层建议），缺失则返回提示而非报错',

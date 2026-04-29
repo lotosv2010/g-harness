@@ -1,11 +1,11 @@
 // listDir 工具：列目录，过滤敏感与无关路径
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { readdir } from 'node:fs/promises'
 import type { ToolContext, ToolSpec } from './types.js'
+import type { ZodLike } from '../langchain-shims.js'
 import { assertPathSafe } from './security.js'
 
-export function createListDirTool(ctx: ToolContext, z: any): ToolSpec {
+export function createListDirTool(ctx: ToolContext, z: ZodLike): ToolSpec {
   return {
     name: 'listDir',
     description: '列出目标项目内某目录的第一层条目（过滤 node_modules / .git / dist / coverage / .env 等）',

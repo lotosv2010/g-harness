@@ -1,11 +1,11 @@
 // readFile 工具：读单个文件，受 depth 行数上限约束
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { readFile } from 'node:fs/promises'
 import type { ToolContext, ToolSpec } from './types.js'
+import type { ZodLike } from '../langchain-shims.js'
 import { assertPathSafe } from './security.js'
 
-export function createReadFileTool(ctx: ToolContext, z: any): ToolSpec {
+export function createReadFileTool(ctx: ToolContext, z: ZodLike): ToolSpec {
   return {
     name: 'readFile',
     description: '读取目标项目内的单个文件（路径必须在 targetDir 内且不在黑名单），受行数上限约束',

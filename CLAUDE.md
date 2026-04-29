@@ -63,7 +63,7 @@ g-harness/
 │   ├── skills/                # 可复用能力模板
 │   ├── prompts/               # AI 开发 Prompt（g-harness 专用）
 │   ├── guardrails/            # 自动约束检查
-│   └── hooks/                 # 事件钩子
+│   └── hooks/                 # 事件钩子（规划中 · v0.3）
 │
 ├── tools/                     # 工具层
 │   ├── prompts/               # 通用 Prompt（非 Claude 专用）

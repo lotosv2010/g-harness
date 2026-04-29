@@ -1,9 +1,9 @@
 // askUser：Human-in-the-loop 提问（仅在 enableAskUser 且次数未耗尽时可用）
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import type { ToolContext, ToolSpec } from './types.js'
+import type { ZodLike } from '../langchain-shims.js'
 
-export function createAskUserTool(ctx: ToolContext, z: any): ToolSpec {
+export function createAskUserTool(ctx: ToolContext, z: ZodLike): ToolSpec {
   return {
     name: 'askUser',
     description: '向用户提问以获取决策输入；受 depth 上限约束，超限或非交互模式下自动拒绝',

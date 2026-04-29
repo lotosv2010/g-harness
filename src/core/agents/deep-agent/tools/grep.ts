@@ -1,14 +1,14 @@
 // grep 工具：纯 JS 实现（不依赖 rg），递归搜索符合 glob 的文件
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { readdir, readFile, stat } from 'node:fs/promises'
 import { join, relative } from 'node:path'
 import type { ToolContext, ToolSpec } from './types.js'
+import type { ZodLike } from '../langchain-shims.js'
 import { assertPathSafe } from './security.js'
 
 const SKIP_DIRS = new Set(['node_modules', '.git', 'dist', 'coverage', '.next', '.turbo'])
 
-export function createGrepTool(ctx: ToolContext, z: any): ToolSpec {
+export function createGrepTool(ctx: ToolContext, z: ZodLike): ToolSpec {
   return {
     // 注意：deepagents@1.x 内置 `grep` 工具（作用于虚拟 FS），此处改名避免 TOOL_NAME_COLLISION
     name: 'projectGrep',

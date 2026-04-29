@@ -25,7 +25,23 @@ G-Harness 通过五层结构将规范应用到目标项目：
 └──────────────────────────────────────────┘
 ```
 
-### 1.2 项目结构
+### 1.2 五层 → 目录/文件映射
+
+五层是**抽象视角**，CLI 引擎（`src/core/*`）是**跨层执行基座**，不归属任一层。
+
+| 层 | 职责 | 对应文件/目录 |
+|----|------|---------------|
+| **应用层 Application** | 用户的项目源码 | 目标项目的 `src/`（g-harness 自身不含；由 CLI 生成的规范注入目标项目） |
+| **工作流层 Workflow** | 标准化任务执行流程 | `.claude/protocols/{feature,bugfix,refactor,review,api-design,deployment,incident,migration,requirements,testing}.md`、`.claude/skills/{analyze,debt,feat,pr,release,scaffold,security,test-gen}/`、`.claude/hooks/`（规划中 · v0.3） |
+| **约定层 Convention** | 可复用模板与 Prompt | `src/templates/{shared,claude,cursor,copilot,windsurf,trae,kimi,codex}/`、`src/presets/`、`.claude/prompts/{bug-report,code-review,feature-dev,refactor}.md`、`tools/prompts/` |
+| **约束层 Constraint** | 硬性规则与自动校验 | `.claude/rules/{architecture,code-quality,safety}.md`、`.claude/guardrails/{boundary-check,pre-commit}.md`、`src/core/validator/` |
+| **上下文层 Context** | 项目元信息与决策记录 | `CLAUDE.md`、`AGENTS.md`、`docs/{SPEC,ARCHITECTURE,DESIGN,API,DATA_MODEL}.md`、`docs/decisions/`、`docs/team/`、`docs/tasks/{BOARD,CURRENT}.md` |
+
+**CLI 引擎（跨层基座）：** `src/core/{commands,scanner,generator,indexer,agents,analyzer,migrator,context,validator}` — 负责把上述五层的规范读取、生成、校验、迁移到目标项目。
+
+**分发路径说明：** 根目录 `.claude/` 是 g-harness **自身开发**使用的具体规则；`src/templates/shared/.ai/` 是**面向目标项目**的通用版本（带 `{{variable}}` 占位符），生成时由 `AgentAdapter` 映射为目标 agent 的 `configDir`（Claude → `.claude/`，Cursor → `.cursor/rules/` 等）。
+
+### 1.3 项目结构
 
 ```
 g-harness/

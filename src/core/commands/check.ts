@@ -34,7 +34,7 @@ async function getChangedFiles(staged: boolean): Promise<string[]> {
       .filter((line) => line.length > 0)
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error)
-    throw new Error(`无法获取 git diff：${message}`)
+    throw new Error(`无法获取 git diff：${message}`, { cause: error })
   }
 }
 

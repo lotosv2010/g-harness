@@ -35,6 +35,8 @@ G-Harness 是一套**面向 AI 编程助手优化的通用工程化规范框架*
 └──────────────────────────────────────────┘
 ```
 
+> 五层与具体文件/目录的完整映射见 [`docs/ARCHITECTURE.md § 1.2 五层 → 目录/文件映射`](docs/ARCHITECTURE.md#12-五层--目录文件映射)。
+
 ## 目录结构
 
 ```
@@ -60,7 +62,7 @@ g-harness/
 │   ├── skills/                # 可复用能力模板
 │   ├── prompts/               # AI 开发 Prompt
 │   ├── guardrails/            # 自动约束检查
-│   └── hooks/                 # 事件钩子
+│   └── hooks/                 # 事件钩子（规划中 · v0.3）
 │
 ├── tools/                     # 工具层
 │   ├── prompts/               # 通用 Prompt（非 Claude 专用）
@@ -152,7 +154,7 @@ npx g-harness context sync
 
 | AI 助手 | 参数 | 入口文件 | 规则 | 钩子/协议/技能 |
 |---------|------|----------|------|---------------|
-| Claude Code | `--agent claude` | `CLAUDE.md` | `.claude/rules/` | 完整支持 |
+| Claude Code | `--agent claude` | `CLAUDE.md` | `.claude/rules/` | protocols / skills / guardrails 完整；hooks v0.3 规划中 |
 | Cursor | `--agent cursor` | `.cursorrules` | `.cursor/rules/` | — |
 | Windsurf | `--agent windsurf` | `.windsurfrules` | `.windsurf/rules/` | — |
 | GitHub Copilot | `--agent copilot` | `.github/copilot-instructions.md` | `.github/rules/` | — |

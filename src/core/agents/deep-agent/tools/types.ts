@@ -20,9 +20,9 @@ export interface ToolContext {
 export interface ToolSpec {
   name: string
   description: string
-  /** zod schema 对象（由工厂创建时传入 z 引用） */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  schema: any
+  /** zod schema 对象（由工厂创建时传入 z 引用）。
+   * 运行时形态由 zod 决定；shim 层将其收敛为 unknown，跨文件传递时不做类型约束。 */
+  schema: unknown
   /** 同步或异步处理函数 */
   handler: (input: Record<string, unknown>) => Promise<string>
 }
