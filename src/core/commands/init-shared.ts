@@ -4,6 +4,7 @@ import { basename, resolve } from 'node:path'
 import * as p from '@clack/prompts'
 import pc from 'picocolors'
 import { AGENT_REGISTRY } from '../agents/agent-registry.js'
+import { TEMPLATE_CATEGORIES } from '../template-categories.js'
 import { resolveProjectMode } from '../scanner/detect-project.js'
 import { ProjectScanner } from '../scanner/project-scanner.js'
 import { detectProject } from '../scanner/detect-project.js'
@@ -89,6 +90,10 @@ export async function previewAndConfirm(result: WizardResult, ctx: WizardContext
   lines.push(`- 选中的 agent：${result.agents.map((a) => a.name).join(', ') || '（无）'}`)
   lines.push(`- 预设：${pc.cyan(result.presetName)}`)
   lines.push(`- 模式：${pc.cyan(result.mode)}${result.depth ? `（深度 ${result.depth}）` : ''}`)
+  const catLabels = Object.keys(result.templateSelection)
+    .map((id) => TEMPLATE_CATEGORIES.find((c) => c.id === id)?.label ?? id)
+    .join(', ')
+  lines.push(`- 模板模块：${pc.cyan(catLabels)}`)
   lines.push(`- 冲突策略：${result.conflict}`)
   if (result.provider) lines.push(`- LLM 供应商：${result.provider}（模型 ${result.model ?? '默认'}）`)
   p.note(lines.join('\n'), 'Preview')

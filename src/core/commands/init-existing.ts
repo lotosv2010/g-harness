@@ -1,4 +1,4 @@
-// 已有项目 6 阶段 Wizard（re-author）
+// 已有项目 7 阶段 Wizard（re-author）
 
 import * as p from '@clack/prompts'
 import { AGENT_REGISTRY } from '../agents/agent-registry.js'
@@ -12,6 +12,8 @@ import {
   getModelChoices,
   readProviderEnv,
 } from '../agents/deep-agent/config.js'
+import { buildDefaultSelection } from '../template-categories.js'
+import { askTemplateCategories } from './init-categories.js'
 import pc from 'picocolors'
 import { isCancelled, inferProjectName } from './init-shared.js'
 import type { WizardContext, WizardResult, GenerateMode } from './init-types.js'
@@ -47,6 +49,9 @@ export async function runExistingProjectWizard(
   const presetPick = await resolvePreset(ctx)
   if (!presetPick) return null
 
+  const templateSelection = await askTemplateCategories(agents)
+  if (templateSelection === null) return null
+
   const conflict = await askConflictStrategy(isReinit)
   if (conflict === null) return null
 
@@ -65,6 +70,7 @@ export async function runExistingProjectWizard(
     },
     mode: llm.mode,
     depth: llm.depth,
+    templateSelection,
     conflict,
     full: ctx.cli.full,
     installHook: false,
@@ -329,6 +335,7 @@ async function buildNonInteractiveResult(
     },
     mode: ctx.cli.mode ?? 'template',
     depth: ctx.cli.depth,
+    templateSelection: buildDefaultSelection(),
     conflict: ctx.cli.conflict ?? (isReinit ? 'skip' : 'prompt'),
     full: ctx.cli.full,
     installHook: false,

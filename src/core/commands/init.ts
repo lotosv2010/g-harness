@@ -135,6 +135,7 @@ async function runInit(rawFlags: RawCliFlags, targetDirArg?: string): Promise<vo
       scanResult: ctx.scanResult,
       mode: result.mode,
       conflict: result.conflict,
+      templateSelection: result.templateSelection,
       dryRun: cli.dryRun,
       depth: result.depth,
       provider: result.provider,

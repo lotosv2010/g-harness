@@ -1,9 +1,11 @@
-// 薄派发器：策略选择 → produce → 冲突解决 → 写盘。
+// 薄派发器：策略选择 → produce → 类别过滤 → 冲突解决 → 写盘。
 
 import { mkdir, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { fileExists } from '../fs-utils.js'
 import { buildVariables } from './variables-builder.js'
+import { filterBySelection } from '../template-categories.js'
+import type { CategorySelectionMap } from '../template-categories.js'
 import { TemplateStrategy } from './strategies/template-strategy.js'
 import { LlmEnhanceStrategy } from './strategies/llm-enhance-strategy.js'
 import { DeepAgentStrategy } from './strategies/deep-agent-strategy.js'
@@ -28,6 +30,8 @@ export interface GenerateOptions {
   scanResult: ScanResult
   mode: GenerateMode
   conflict: ConflictStrategy
+  /** 用户模板选择结果 */
+  templateSelection?: CategorySelectionMap
   /** dry-run：只产出 drafts，不写盘 */
   dryRun?: boolean
   /** LLM / Deep Agent 参数 */
@@ -98,6 +102,11 @@ export class FileGenerator {
 
     const strategy = pickStrategy(opts.mode)
     const outcome = await strategy.produce(ctx)
+
+    // 按用户模板选择过滤 drafts
+    if (opts.templateSelection) {
+      outcome.drafts = filterBySelection(outcome.drafts, opts.templateSelection) as DraftFile[]
+    }
 
     const written: WrittenFile[] = []
     if (!opts.dryRun) {

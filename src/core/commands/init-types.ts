@@ -5,6 +5,7 @@ import type { AgentProvider, Depth } from '../agents/deep-agent/types.js'
 import type { Preset } from '../preset-loader.js'
 import type { ProjectDetection } from '../scanner/detect-project.js'
 import type { ScanResult } from '../scanner/project-scanner.js'
+import type { CategorySelectionMap } from '../template-categories.js'
 
 /** 生成模式：三档可选，默认 template */
 export type GenerateMode = 'template' | 'llm-enhance' | 'deep-agent'
@@ -66,6 +67,8 @@ export interface WizardResult {
   conflict: ConflictStrategy
   full: boolean
   installHook: boolean
+  /** 用户模板选择结果：类别 id → 选中子项 id 列表 */
+  templateSelection: CategorySelectionMap
   provider?: AgentProvider
   model?: string
   apiKey?: string

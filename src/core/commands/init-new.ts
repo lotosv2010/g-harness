@@ -12,6 +12,8 @@ import {
   getModelChoices,
   readProviderEnv,
 } from '../agents/deep-agent/config.js'
+import { buildDefaultSelection } from '../template-categories.js'
+import { askTemplateCategories } from './init-categories.js'
 import { isCancelled, inferProjectName } from './init-shared.js'
 import type {
   WizardContext,
@@ -46,6 +48,10 @@ export async function runNewProjectWizard(ctx: WizardContext): Promise<WizardRes
   if (!presetPick) return null
   const techStackText = await askTechStack(presetPick.preset)
   if (techStackText === null) return null
+
+  // Q6.5：选择安装哪些模板模块
+  const templateSelection = await askTemplateCategories(agents)
+  if (templateSelection === null) return null
 
   // Q7：是否启用 LLM 增强
   const enableLlm = await p.confirm({
@@ -157,6 +163,7 @@ export async function runNewProjectWizard(ctx: WizardContext): Promise<WizardRes
     },
     mode,
     depth,
+    templateSelection,
     conflict: ctx.cli.conflict ?? 'prompt',
     full: ctx.cli.full,
     installHook: false,
@@ -262,6 +269,7 @@ function buildNonInteractiveResult(ctx: WizardContext): WizardResult {
     },
     mode,
     depth: ctx.cli.depth,
+    templateSelection: buildDefaultSelection(),
     conflict: ctx.cli.conflict ?? 'skip',
     full: ctx.cli.full,
     installHook: false,
