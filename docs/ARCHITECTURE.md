@@ -32,10 +32,10 @@ G-Harness 通过五层结构将规范应用到目标项目：
 | 层 | 职责 | 对应文件/目录 |
 |----|------|---------------|
 | **应用层 Application** | 用户的项目源码 | 目标项目的 `src/`（g-harness 自身不含；由 CLI 生成的规范注入目标项目） |
-| **工作流层 Workflow** | 标准化任务执行流程 | `.claude/protocols/{feature,bugfix,refactor,review,api-design,deployment,incident,migration,requirements,testing}.md`、`.claude/skills/{analyze,debt,feat,pr,release,scaffold,security,test-gen}/`、`.claude/hooks/`（规划中 · v0.3） |
+| **工作流层 Workflow** | 标准化任务执行流程 | `.claude/protocols/{feature,bugfix,refactor,review,testing,migration,incident,hotfix,rollback,api-design,deployment,requirements}.md`、`.claude/skills/{analyze,debt,feat,pr,release,scaffold,security,test-gen}/`、`.claude/hooks/{pre-task,post-task,pre-commit,pre-merge,pre-release,post-deploy,on-error}.md` + 运行时脚本 `{pre-tool-check,post-write-validate,on-stop-summary}.mjs` |
 | **约定层 Convention** | 可复用模板与 Prompt | `src/templates/{shared,claude,cursor,copilot,windsurf,trae,kimi,codex}/`、`src/presets/`、`.claude/prompts/{bug-report,code-review,feature-dev,refactor}.md`、`tools/prompts/` |
-| **约束层 Constraint** | 硬性规则与自动校验 | `.claude/rules/{architecture,code-quality,safety}.md`、`.claude/guardrails/{boundary-check,pre-commit}.md`、`src/core/validator/` |
-| **上下文层 Context** | 项目元信息与决策记录 | `CLAUDE.md`、`AGENTS.md`、`docs/{SPEC,ARCHITECTURE,DESIGN,API,DATA_MODEL}.md`、`docs/decisions/`、`docs/team/`、`docs/tasks/{BOARD,CURRENT}.md` |
+| **约束层 Constraint** | 硬性规则与自动校验 | `.claude/rules/{architecture,code-quality,safety,git,dependency}.md`、`.claude/guardrails/{boundary-check,pre-commit,secret-scan,file-size,coverage-gate}.md`、`src/core/validator/` |
+| **上下文层 Context** | 项目元信息与决策记录 | `CLAUDE.md`、`AGENTS.md`、`docs/{SPEC,ARCHITECTURE,DESIGN,API,DATA_MODEL,SDLC-MAP}.md`、`docs/decisions/`、`docs/team/`、`docs/tasks/{BOARD,CURRENT}.md`、`docs/runbooks/{deployment,rollback,incident-response}.md` |
 
 **CLI 引擎（跨层基座）：** `src/core/{commands,scanner,generator,indexer,agents,analyzer,migrator,context,validator}` — 负责把上述五层的规范读取、生成、校验、迁移到目标项目。
 
@@ -224,9 +224,9 @@ src/templates/
 ├── shared/                    # 所有 agent 共用
 │   ├── AGENTS.template.md     # → 目标项目 AGENTS.md
 │   ├── .ai/
-│   │   ├── rules/             # architecture / code-quality / safety
-│   │   ├── protocols/         # feature / bugfix
-│   │   └── guardrails/        # boundary-rules.json
+│   │   ├── rules/             # architecture / code-quality / safety / git / dependency
+│   │   ├── protocols/         # feature / bugfix / refactor / review / testing / migration / incident / hotfix / rollback
+│   │   └── guardrails/        # boundary-rules.json / pre-commit / secret-scan / file-size / coverage-gate
 │   └── docs/
 │       ├── SPEC.template.md
 │       ├── ARCHITECTURE.template.md

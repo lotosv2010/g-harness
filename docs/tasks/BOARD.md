@@ -31,6 +31,7 @@
 
 | ID | 任务 | 完成日期 | 备注 |
 |----|------|----------|------|
+| TASK-300 | v0.3.0 Hooks 运行时 + SDLC 全覆盖 | 2026-05-06 | Hooks 实装（3 脚本 + settings.json 合并）；SDLC 模板补全；README merge 策略；categories 默认精简 |
 | TASK-200 | v0.2.0 全栈重写（Stage 1–7） | 2026-04-27 | 策略模式生成器 + 动态 Deep Agent 白名单 + per-agent 模板目录 + 12 键变量 schema + 9 问新建向导 |
 
 ---

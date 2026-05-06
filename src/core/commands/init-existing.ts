@@ -15,8 +15,8 @@ import {
 import { buildDefaultSelection } from '../template-categories.js'
 import { askTemplateCategories } from './init-categories.js'
 import pc from 'picocolors'
-import { isCancelled, inferProjectName } from './init-shared.js'
-import type { WizardContext, WizardResult, GenerateMode } from './init-types.js'
+import { isCancelled, inferProjectName, askReadmeStrategy } from './init-shared.js'
+import type { WizardContext, WizardResult, GenerateMode, ReadmeStrategy } from './init-types.js'
 import type { AgentDefinition } from '../agents/agent-registry.js'
 import type { Preset } from '../preset-loader.js'
 import type { AgentProvider, Depth } from '../agents/deep-agent/types.js'
@@ -55,6 +55,9 @@ export async function runExistingProjectWizard(
   const conflict = await askConflictStrategy(isReinit)
   if (conflict === null) return null
 
+  const readmeStrategy = await askReadmeStrategy(ctx.targetDir)
+  if (readmeStrategy === null) return null
+
   const llm = await askLlmConfig(ctx)
   if (llm === null) return null
 
@@ -72,6 +75,7 @@ export async function runExistingProjectWizard(
     depth: llm.depth,
     templateSelection,
     conflict,
+    readmeStrategy,
     full: ctx.cli.full,
     installHook: false,
     provider: llm.provider,
@@ -337,6 +341,7 @@ async function buildNonInteractiveResult(
     depth: ctx.cli.depth,
     templateSelection: buildDefaultSelection(),
     conflict: ctx.cli.conflict ?? (isReinit ? 'skip' : 'prompt'),
+    readmeStrategy: 'skip',
     full: ctx.cli.full,
     installHook: false,
     provider: ctx.cli.provider,

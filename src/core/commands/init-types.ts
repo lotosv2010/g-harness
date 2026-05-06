@@ -13,6 +13,9 @@ export type GenerateMode = 'template' | 'llm-enhance' | 'deep-agent'
 /** 冲突策略 */
 export type ConflictStrategy = 'skip' | 'overwrite' | 'prompt'
 
+/** README.md 处理策略 */
+export type ReadmeStrategy = 'merge' | 'skip' | 'overwrite'
+
 /** 项目元信息（面向模板变量的 source of truth） */
 export interface ProjectMeta {
   /** 项目名（package.json / 目录名 / 用户输入） */
@@ -69,6 +72,8 @@ export interface WizardResult {
   installHook: boolean
   /** 用户模板选择结果：类别 id → 选中子项 id 列表 */
   templateSelection: CategorySelectionMap
+  /** README.md 处理策略 */
+  readmeStrategy: ReadmeStrategy
   provider?: AgentProvider
   model?: string
   apiKey?: string

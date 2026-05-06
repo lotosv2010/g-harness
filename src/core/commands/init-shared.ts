@@ -9,8 +9,10 @@ import { resolveProjectMode } from '../scanner/detect-project.js'
 import { ProjectScanner } from '../scanner/project-scanner.js'
 import { detectProject } from '../scanner/detect-project.js'
 import { listPresets } from '../preset-loader.js'
+import { fileExists } from '../fs-utils.js'
 import type {
   InitCliOptions,
+  ReadmeStrategy,
   WizardContext,
   WizardResult,
 } from './init-types.js'
@@ -116,4 +118,23 @@ export function inferProjectName(ctx: WizardContext): string {
   if (ctx.cli.name) return ctx.cli.name
   const dir = basename(resolve(ctx.targetDir))
   return dir || 'untitled'
+}
+
+/** 询问 README.md 处理策略：检测已有 README 时弹出确认 */
+export async function askReadmeStrategy(targetDir: string): Promise<ReadmeStrategy | null> {
+  const readmePath = resolve(targetDir, 'README.md')
+  const exists = await fileExists(readmePath)
+  if (!exists) return 'overwrite'
+
+  const answer = await p.select({
+    message: '检测到已有 README.md，如何处理？',
+    initialValue: 'merge' as const,
+    options: [
+      { value: 'merge' as const, label: 'merge — 将规范信息追加到现有 README 末尾' },
+      { value: 'skip' as const, label: 'skip — 保留原 README 不动' },
+      { value: 'overwrite' as const, label: 'overwrite — 用模板全量替换' },
+    ],
+  })
+  if (isCancelled(answer)) return null
+  return answer as ReadmeStrategy
 }

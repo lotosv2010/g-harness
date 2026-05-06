@@ -27,5 +27,7 @@
 - `src/` 中的 TS 文件：kebab-case（`file-generator.ts`）
 - `src/templates/` 中的目录：kebab-case（`code-quality.md`）
 - `src/presets/` 中的目录：kebab-case（`vite-react/`）
-- `src/templates/docs/` 中的文档模板：`*.template.md`
-- `src/templates/.ai/` 中的规范文件：普通 `.md`（不带 `.template` 后缀）
+- `src/templates/shared/docs/` 中的文档模板：`*.template.md`
+- `src/templates/shared/.ai/rules/` 中的规则模板：`*.template.md`
+- `src/templates/shared/.ai/protocols/` 中的协议模板：`*.template.md`
+- `src/templates/shared/.ai/guardrails/` 中的守卫模板：`*.template.md` 或 `*.template.json`

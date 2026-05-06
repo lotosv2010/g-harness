@@ -144,10 +144,10 @@ describe('buildDefaultSelection', () => {
     expect('hooks' in sel).toBe(false)
   })
 
-  it('skills 默认只选 feat 和 test-gen', () => {
+  it('skills 默认只选 feat', () => {
     const sel = buildDefaultSelection()
     expect(sel.skills).toContain('feat')
-    expect(sel.skills).toContain('test-gen')
+    expect(sel.skills).not.toContain('test-gen')
     expect(sel.skills).not.toContain('pr')
     expect(sel.skills).not.toContain('release')
     expect(sel.skills).not.toContain('scaffold')

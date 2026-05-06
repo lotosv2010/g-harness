@@ -63,7 +63,7 @@ g-harness/
 │   ├── skills/                # 可复用能力模板
 │   ├── prompts/               # AI 开发 Prompt（g-harness 专用）
 │   ├── guardrails/            # 自动约束检查
-│   └── hooks/                 # 事件钩子（规划中 · v0.3）
+│   └── hooks/                 # 事件钩子（已实装）
 │
 ├── tools/                     # 工具层
 │   ├── prompts/               # 通用 Prompt（非 Claude 专用）
@@ -168,6 +168,7 @@ pnpm typecheck        # 类型检查
 - 技术 / UI 设计：`docs/DESIGN.md`
 - API 契约：`docs/API.md`
 - 数据模型：`docs/DATA_MODEL.md`
+- SDLC 阶段映射：`docs/SDLC-MAP.md`
 - 任务看板：`docs/tasks/BOARD.md`
 - 活跃任务：`docs/tasks/CURRENT.md`
 - 快速入门：`GETTING_STARTED.md`

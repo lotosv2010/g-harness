@@ -392,6 +392,7 @@ src/presets/<name>/
 | v1.4 | Deep Agent 驱动规范生成（LangGraph.js + deepagents，三档 depth，三级降级链） | 已完成 |
 | v1.4.1 | Provider / Model / API Key 交互选择 | 已完成 |
 | v0.2.0 | 全栈重写：策略模式生成器 + 动态 Deep Agent 白名单 + per-agent 模板目录 + 12 键变量 schema + 9 问新建向导 | 已完成（2026-04-27） |
+| v0.3.0 | Hooks 运行时实装 + SDLC 全覆盖（rules/protocols/guardrails/skills/hooks/docs 补全） + README 合并 + 模板类别精简 | 已完成（2026-05-06） |
 | v1.0 | 生产就绪，完整文档、示例项目、自定义规则 API | 计划中 |
 
 ### 2.4 成功指标
