@@ -4,7 +4,8 @@
 import { readFileSync } from 'node:fs'
 import { resolve, basename } from 'node:path'
 
-const input = JSON.parse(readFileSync('/dev/stdin', 'utf-8'))
+// 用 fd 0 读 stdin，跨平台兼容（Windows 不支持 /dev/stdin 路径）
+const input = JSON.parse(readFileSync(0, 'utf-8'))
 const toolName = input?.tool_name || ''
 const toolInput = input?.tool_input || {}
 

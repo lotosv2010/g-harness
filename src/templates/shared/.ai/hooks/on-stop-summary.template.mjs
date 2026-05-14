@@ -3,7 +3,8 @@
 
 import { readFileSync } from 'node:fs'
 
-const input = JSON.parse(readFileSync('/dev/stdin', 'utf-8'))
+// 用 fd 0 读 stdin，跨平台兼容（Windows 不支持 /dev/stdin 路径）
+const input = JSON.parse(readFileSync(0, 'utf-8'))
 const reason = input?.stop_reason || 'unknown'
 
 const reminders = []

@@ -1,16 +1,21 @@
 ---
 name: feat
-description: 端到端需求交付流程：需求分析 → ADR 设计 → 任务拆解 → 用户 Review → 逐任务实现。输入需求描述即自动驱动全流程。
+description: |
+  Load when 用户请求端到端交付一个功能，或提到「需求分析 / 任务拆解 / PRD / ARD / 写测试 / Code Review」中任意阶段。
+  本 Skill 串起 6 个阶段并保持跨阶段可追溯：需求 → 任务 → PRD/ARD → 编码 → 测试 → CR。
+  即使只触发其中一个阶段（"只帮我写 PRD"），也加载本 Skill 以复用前序上下文。
 triggers:
-  - 新需求
-  - 新功能
-  - 实现需求
-  - 需求交付
-  - 做一个功能
+  - 帮我做这个需求
+  - 帮我实现 / 帮我开发 / 帮我编码
+  - 拆分任务 / 拆 story
+  - 写 PRD / 写 ARD / 写需求文档
+  - 写测试用例 / 单元测试 / 集成测试
+  - 做 code review / CR / 审查这段代码
+  - 验收标准 / 用户故事 / 接口设计
 invocable: true
 arguments:
   - name: requirement
-    hint: "<需求描述>"
+    hint: "<需求描述 或 阶段指令>"
     required: true
 capabilities:
   - read
@@ -22,186 +27,215 @@ extensions:
     allowed-tools: "Read Write Edit Glob Grep Bash Agent"
 ---
 
-# 端到端需求交付（feat）
+# feat — 端到端需求交付
 
-将一句话需求驱动成完整的设计 → 拆解 → 实现流程。
+将一句话需求驱动为「需求 → 设计 → 拆解 → 编码 → 测试 → CR」全流程，每阶段可独立触发。
 
-## 用法
+## 适用边界（Hero Queries / Out of Scope）
+
+**应触发：**
+- "帮我做 / 实现 / 开发 …" — 完整功能交付
+- "分析这个需求 / 拆任务 / 写 PRD / 写 ARD" — 单阶段切入
+- "review / 审查 / 评分这段代码" — 仅触发阶段 6
+- "为 X 模块补测试用例" — 仅触发阶段 5
+
+**不应触发（交给其他 Skill）：**
+- 改 1~2 行的小修复 → 直接编辑，不走流程
+- 纯重构 / 性能优化 → `protocols/refactor.md`
+- 线上事故响应 → `protocols/incident.md`
+- 仅生成 commit message → `zcf:git-commit`
+- 发版 / changelog → `release` skill
+
+## 流程总览
 
 ```
-/feat 设计一下初始化时的交互流程，支持新建和老项目
-/feat 新增 g-harness diff 命令，对比本地规范与最新模板的差异
-/feat 支持自定义模板变量的校验规则
+[1] 需求分析 → [2] 任务拆解 → [3] PRD/ARD → [4] 编码 → [5] 测试 → [6] Code Review
+     ▼              ▼               ▼            ▼          ▼            ▼
+  REQ-XXX        TASK-XXX        docs/        feature      TC-XXX     CR-XXX
+                BOARD.md       (ADR/PRD/      protocol               评分 + 行动项
+                               ARD)
 ```
 
-## 流程概览
+**核心原则**
+- 先定边界，再产内容；模糊点优先追问（最多 3 条），不假设。
+- 每个产出物带 ID，可追溯回上游需求（见末尾「追溯链」）。
+- 阶段切换前必须用户确认（仅 Phase 1 无疑问可跳过）。
 
-```
-Phase 1: 需求理解 ──→ Phase 2: 方案设计（ADR）──→ Phase 3: 任务拆解
-     │                       │                           │
-     ▼                       ▼                           ▼
-  上下文收集            写入 docs/decisions/         写入 BOARD.md + CURRENT.md
-  需求复述确认          等待用户 Review               等待用户 Review
-                        ↻ 修改直到确认                ↻ 修改直到确认
-                                                          │
-                                                          ▼
-                                              Phase 4: 逐任务实现
-                                                   遵循 feature protocol
-                                                   每个任务完成后更新看板
-```
+---
 
-## Phase 1: 需求理解
+## Phase 1 — 需求分析（5W1H）
 
-**目标**：确保对需求的理解无偏差。
+**目标**：把模糊输入转为结构化理解，识别歧义和风险。
 
-**步骤：**
-1. 读取上下文文件（按优先级）：
-   - `CLAUDE.md` — 项目配置
-   - `docs/SPEC.md` — 产品规格（确认需求在范围内）
-   - `docs/ARCHITECTURE.md` — 架构约束
-   - `docs/tasks/CURRENT.md` — 当前进行中的工作（避免冲突）
-   - `docs/tasks/BOARD.md` — 已有任务（避免重复）
-   - `docs/decisions/` — 相关 ADR（已有决策不重复）
-2. 分析需求涉及的模块和边界
-3. 输出需求理解确认：
+**先读上下文**（按顺序）：
+`CLAUDE.md` → `docs/SPEC.md` → `docs/ARCHITECTURE.md` → `docs/tasks/CURRENT.md` → `docs/tasks/BOARD.md` → `docs/decisions/`
+
+**5W1H 拆解**：Who / What / Why / When / Where / How（方向，不是代码）。
+
+**输出**：
 
 ```markdown
-## 需求理解
+## 需求理解 REQ-[流水号]
 
-**需求概述**：[一句话总结]
+**核心理解**：[1~3 句概括]
+**涉及模块**：[模块 → 影响]
+**In Scope**：[做什么]
+**Out of Scope**：[本期不做]
 
-**涉及模块**：
-- [模块 1] — [影响说明]
-- [模块 2] — [影响说明]
+**假设与风险**
+| 编号 | 内容 | 影响 | 优先级 |
+| A1 | …  | …  | 高/中/低 |
 
-**关键约束**：
-- [约束 1]
-- [约束 2]
-
-**疑问（如有）**：
-- [问题 1]
-
-理解正确吗？确认后进入方案设计阶段。
+**追问清单（最多 3 条）**
+1. …
 ```
 
-**卡点规则**：如有疑问必须等用户回答后再继续。无疑问则直接进入 Phase 2。
+**卡点**：所有 High 优先级假设必须澄清后才进 Phase 2。
 
-## Phase 2: 方案设计（ADR）
+---
 
-**目标**：产出架构决策记录，作为实现的契约。
+## Phase 2 — 任务拆解（INVEST + 垂直切片）
 
-**步骤：**
-1. 确定 ADR 编号：读取 `docs/decisions/` 取最大编号 + 1
-2. 设计 1~3 个备选方案，每个方案包含：
-   - 技术选型和实现路径
-   - 优点 / 缺点 / 权衡
-   - 对现有架构的影响
-3. 推荐一个方案并说明理由
-4. 按 `docs/decisions/template.md` 格式写入 ADR 文件
-5. 输出 ADR 摘要并请求 Review：
+**目标**：把需求拆成可独立交付、可验收的任务。
+
+**拆解原则**
+- INVEST：Independent / Negotiable / Valuable / Estimable / Small / Testable
+- 垂直切片：每个 Story 独立交付业务价值，避免纯技术 Task
+- 粒度：单任务 ≤ 1 天（AI 约 1~2 轮对话）；超过继续拆
+- 测试随功能同步，不单独拆「补测试」任务
+- 依赖显式：`depends_on: TASK-XXX`
+
+**层级**：Epic → Story（1~3 天）→ Task（≤1 天）→ Sub-task（可选）
+
+**编号规则**：读 `docs/tasks/BOARD.md` 取最大 TASK 编号 + 1，不与已有冲突。
+
+**输出**：写入 `docs/tasks/BOARD.md`（TODO 区）+ `docs/tasks/CURRENT.md`，每条形如：
 
 ```markdown
-## ADR-XXX 已写入
-
-**决策**：[一句话]
-**推荐方案**：[方案名]
-**文件**：docs/decisions/ADR-XXX-xxx.md
-
-请 Review ADR，确认或提出修改意见。确认后进入任务拆解。
+- [ ] **TASK-XXX** — [标题]（S/M/L） ← 源自 REQ-XXX
+  - 输入：[依赖]    输出：[产物]    验收：[Given/When/Then]
+  - depends_on：[TASK-YYY 或 无]
 ```
 
-**卡点规则**：必须等用户确认 ADR 后才进入 Phase 3。用户要求修改时更新 ADR 并重新请求确认。
+**卡点**：等用户确认任务清单后再进 Phase 3 或 Phase 4。
 
-## Phase 3: 任务拆解
+---
 
-**目标**：将 ADR 中的方案拆成可独立交付、有明确验收标准的任务。
+## Phase 3 — PRD / ARD（按需）
 
-**拆解原则：**
-- 每个任务 1~2 小时可完成（对 AI 而言约 1 轮对话）
-- 任务之间有清晰的依赖顺序
-- 每个任务有明确的输入/输出/验收标准
-- 底层模块先于上层模块（先核心再胶水再 UI）
-- 测试随功能同步，不单独拆为"补测试"任务
+**何时写**
+- **PRD**：C 端 / B 端产品功能 → `references/prd-template.md`
+- **ARD**：API / 后端服务 / 第三方集成 → `references/ard-template.md`
+- 两者都需要：先 PRD 再 ARD
+- 仅内部模块改造、无对外契约：可跳过 PRD/ARD，但仍需写 ADR
 
-**步骤：**
-1. 读取 `docs/tasks/BOARD.md` 取当前最大 TASK 编号
-2. 拆解任务列表，每个任务格式：
+**ADR**（架构决策记录）
+- 路径：`docs/decisions/ADR-XXX-[slug].md`
+- 模板：`docs/decisions/template.md`
+- 编号：读现有最大编号 + 1
+- 内容：1~3 备选方案 + 推荐方案 + AI 指引
 
-```markdown
-- [ ] **TASK-XXX** — [标题]（[预估复杂度 S/M/L]）
-  - 输入：[依赖什么]
-  - 输出：[产出什么文件/模块]
-  - 验收：[验收标准]
-  - 依赖：[前置任务 ID，无则"无"]
+**质量门禁**
+- [ ] REQ 已确认
+- [ ] 所有 High 风险已澄清
+- [ ] In/Out Scope 已锁定
+
+**卡点**：PRD/ARD/ADR 写完必须等用户 Review 确认后再进 Phase 4。
+
+---
+
+## Phase 4 — 编码
+
+**复用** `.claude/protocols/feature.md`（不在此重复），本 Skill 仅补充：
+- 每个 Task 开始前：BOARD.md 中将该任务从 TODO 移到 IN PROGRESS
+- 完成后：移到 DONE 并附完成日期
+- 严格遵循 `.claude/rules/`（A001 目录、R001 类型、R002 命名导出、R004 文件 ≤300 行 等）
+- 注释语言：中文（与现有代码库一致）
+- 不引入未在 ADR 讨论的新依赖
+
+**最小实现优先**：先让验收标准通过，再优化。
+
+---
+
+## Phase 5 — 测试用例
+
+**测试金字塔**
+
+```
+       /\   E2E 10%       端到端用户场景，对应 Story 级 AC
+      /  \  集成 30%      模块间交互、API 契约
+     /____\ 单元 60%      函数 / 类级独立测试
 ```
 
-3. 将任务写入 `docs/tasks/BOARD.md`（TODO 区）
-4. 更新 `docs/tasks/CURRENT.md`（活跃任务索引）
-5. 输出任务清单并请求 Review：
+**用例设计 6 维度**：Happy Path / 边界值 / 异常输入 / 并发竞态 / 权限安全 / 性能边界。
 
-```markdown
-## 任务拆解完成
+**编号 + 追溯**：`TC-U01 / TC-I01 / TC-E01`，必须标注覆盖的 `TASK-XXX` 或 `AC-XXX`。
 
-共 N 个任务（TASK-XXX ~ TASK-YYY），已写入看板。
+**与 g-harness 项目约定一致**：
+- 测试文件统一放 `tests/` 根目录（见 `.claude/rules/architecture.md` A005）
+- 路径镜像 `src/`：`src/core/foo.ts` → `tests/core/foo.test.ts`
+- 框架：Vitest
 
-[任务列表摘要]
+---
 
-请 Review 任务拆解，确认或调整后开始实现。
+## Phase 6 — Code Review（评分 + 行动项）
+
+**评分维度（满分 100）**
+
+| 维度 | 权重 | 检查点 |
+| 正确性 | 25 | 逻辑、边界、异常路径 |
+| 可读性 | 20 | 命名、结构、注释（中文）|
+| 可维护性 | 20 | 耦合、单一职责、扩展性 |
+| 安全性 | 15 | 输入校验、注入、敏感信息 |
+| 性能 | 10 | 复杂度、资源、瓶颈 |
+| 测试覆盖 | 10 | 可测性、现有用例质量 |
+
+**评级**：≥90 ✅ 直接合并 · 75~89 🟡 小改 · 60~74 🟠 较多修改 · <60 🔴 重构
+
+**严重度**：🔴 Critical（必改）· 🟠 Major（强烈建议）· 🟡 Minor · 🔵 Nitpick
+
+**输出要求**
+- 每个扣分项必须附 文件:行号 + 代码证据 + Before/After 修改建议
+- 必须有「亮点」段落，避免单方面负面反馈
+- 末尾输出 Blocker / Non-blocker 行动项 + 「下次注意」沉淀
+
+**编号**：`CR-C01 / CR-M01 / CR-N01`，关联到具体 `TASK-XXX` 或 `TC-XXX`。
+
+---
+
+## 跨阶段追溯链
+
+```
+REQ-001 → TASK-001 ⇒ ADR-005 ⇒ PRD/ARD ⇒ 代码（feature protocol）⇒ TC-U01 ⇒ CR-C01
+   ↑__________________________________________________________________________|
+                              （任何节点出问题都能反查）
 ```
 
-**卡点规则**：必须等用户确认任务拆解后才进入 Phase 4。
+每个产出物在文档/注释/PR 中保留上游 ID，便于回溯和影响分析。
 
-## Phase 4: 逐任务实现
+---
 
-**目标**：按依赖顺序逐个交付任务。
+## 单阶段切入
 
-**每个任务的执行流程（遵循 feature protocol）：**
-1. 将任务从 TODO 移到 IN PROGRESS（更新 BOARD.md）
-2. 按 `.claude/protocols/feature.md` 执行：
-   - 确认要创建/修改的文件
-   - 编码 + 同步编写测试
-   - 遵循 `.claude/rules/` 所有规则
-3. 验证：
-   - `pnpm typecheck`
-   - `pnpm test`
-   - `pnpm lint`
-4. 将任务从 IN PROGRESS 移到 DONE（更新 BOARD.md，附完成日期）
-5. 简要报告任务完成情况，然后继续下一个任务
+| 用户说 | 直接进 | 前置检查 |
+| 只帮我写 PRD | Phase 3 | 若无 REQ-XXX 上下文，先反问 1 句确认 In/Out Scope |
+| 帮我 review 这段代码 | Phase 6 | 先识别被审查范围（文件/PR/diff）|
+| 补 X 模块的测试 | Phase 5 | 若无 TASK 关联，标 `TC-* (orphan)` 提醒补追溯 |
+| 拆任务 | Phase 2 | 若无 REQ-XXX，先做 Phase 1 简版（5W1H） |
 
-**流转规则：**
-- 任务按依赖顺序执行，无依赖的任务可以合并执行
-- 每个任务完成后立即更新看板状态
-- 如遇阻塞（技术障碍、需求歧义），暂停并询问用户
-- 全部任务完成后，输出整体交付摘要
+---
 
-## Phase 5: 交付确认
+## 约束（与本仓库规则对齐）
 
-全部任务完成后输出：
+- 遵循 `.claude/rules/` 全部硬性规则（架构 / 代码质量 / 依赖 / Git / 安全）
+- 遵循 `.claude/protocols/feature.md` 实现细节（Phase 4 不在本文重复）
+- ADR / PRD / ARD 必须使用 `references/` 或 `docs/decisions/template.md` 提供的模板
+- 任务 ID、ADR 编号、CR 编号递增，绝不与已有冲突
+- **不自动执行 `git commit` / `git push`**（除非用户明确要求）
+- 阶段切换必须用户确认（Phase 1 无疑问时可直接续）
 
-```markdown
-## 交付摘要
+## 参考模板
 
-**需求**：[原始需求]
-**ADR**：docs/decisions/ADR-XXX-xxx.md
-**任务**：TASK-XXX ~ TASK-YYY（共 N 个，全部完成）
-
-**变更清单**：
-- 新增：[文件列表]
-- 修改：[文件列表]
-
-**验证状态**：
-- typecheck: PASS
-- test: PASS
-- lint: PASS
-
-如需提交代码，请告诉我。
-```
-
-## 约束
-
-- 遵循 `.claude/rules/` 所有硬性规则
-- 遵循 `.claude/protocols/feature.md` 实现协议
-- ADR 必须使用 `docs/decisions/template.md` 格式
-- 任务 ID 必须递增，不与 BOARD.md 中已有 ID 冲突
-- 不自动执行 git commit / push（除非用户明确要求）
-- 每个阶段切换前必须有用户确认（Phase 1 无疑问时可跳过）
+- PRD：[`references/prd-template.md`](references/prd-template.md)
+- ARD：[`references/ard-template.md`](references/ard-template.md)
+- ADR：`docs/decisions/template.md`

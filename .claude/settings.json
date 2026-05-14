@@ -3,19 +3,34 @@
     "PreToolUse": [
       {
         "matcher": "Bash|Write|Edit",
-        "command": "node .claude/hooks/pre-tool-check.mjs"
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/pre-tool-check.mjs"
+          }
+        ]
       }
     ],
     "PostToolUse": [
       {
         "matcher": "Write|Edit",
-        "command": "node .claude/hooks/post-write-validate.mjs"
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/post-write-validate.mjs"
+          }
+        ]
       }
     ],
     "Stop": [
       {
         "matcher": "",
-        "command": "node .claude/hooks/on-stop-summary.mjs"
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/on-stop-summary.mjs"
+          }
+        ]
       }
     ]
   }
